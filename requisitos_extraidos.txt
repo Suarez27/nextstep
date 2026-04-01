@@ -1,0 +1,647 @@
+NEXTSTEP -
+PLATAFORMA DE
+GESTIÓN
+PRÁCTICAS
+Desarrollo de Aplicaciones
+Web
+Tutor: Pablo González
+Sánchez
+Curso Académico: 2024/2025
+Trabajo presentado por:
+- Camila González Patchón
+- Amette Irak Suarez
+- Stefano Alderete Campos
+
+-- 1 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	2
+“Dímelo y lo olvido, enséñame y lo recuerdo, involúcrame y lo aprendo.”
+[Benjamin Franklin] (1706-1790)
+
+-- 2 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	3
+Índice
+NEXTSTEP - PLATAFORMA DE GESTIÓN DE PRÁCTICAS 	1
+1. CONTEXTUALIZACIÓN EMPRESARIAL 	4
+1.1 Denominación. 	4
+1.2 Justificación de la idea del proyecto. 	4
+1.3. Estudio de la competencia. 	4
+1.4 Oportunidad de negocio 	4
+1.5 Obligaciones fiscales 	4
+1.6 Financiación, ayudas y subvenciones 	4
+2. DISEÑO DEL PROYECTO 	4
+2.1. Infraestructura e instalaciones necesarios 	4
+2.2 Recursos materiales y personales 	4
+2.3 Tecnologías y lenguajes a emplear 	4
+3. DESARROLLO DEL SERVICIO/PRODUCTO 	4
+4. PROCEDIMIENTOS Y CONTROLES DE CALIDAD 	4
+5. DOCUMENTACIÓN 	5
+6. ANEXOS 	5
+7. REFERENCIAS BIBLIOGRÁFICAS 	5
+
+-- 3 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	4
+1. CONTEXTUALIZACIÓN EMPRESARIAL
+1.1 Denominación.
+Para nuestro proyecto hemos elegido como nombre comercial NextStep, lo cual representa
+de forma clara el objetivo principal de la plataforma: acompañar el centro de estudios, la
+empresa y aún más importante, al estudiante en el proceso de transición entre la formación
+académica y la incorporación al mundo laboral. Consideramos que se trata de un nombre
+moderno, fácil de recordar y alineado con el enfoque tecnológico del proyecto.
+En cuanto a la razón social, proponemos NextStep Gestión de Prácticas Educativas, S.L., una
+denominación más extensa y descriptiva que permite identificar con mayor precisión la
+actividad de la empresa. Esta diferenciación entre nombre comercial y denominación
+jurídica resulta especialmente útil tanto a nivel legal como estratégico.
+Además, antes de su registro definitivo, será necesario verificar la disponibilidad del nombre
+mediante el Certificado Negativo de Denominación Social, así como realizar
+comprobaciones en organismos oficiales y en dominios digitales. Esto permitirá garantizar
+la viabilidad legal de la marca y facilitar su futura presencia online.
+Desde una perspectiva estratégica, el nombre también contribuye a construir una identidad
+de marca orientada a la innovación educativa y al desarrollo profesional, lo cual puede
+resultar clave en fases posteriores del proyecto.
+1.2 Justificación de la idea del proyecto.
+La idea de desarrollar NextStep surge tras analizar el funcionamiento actual del sistema de
+gestión de prácticas dentro de la Formación Profesional. Durante este proceso, observamos
+que la coordinación entre centros educativos, estudiantes y empresas colaboradoras suele
+apoyarse en múltiples herramientas y procedimientos que no siempre están integrados
+entre sí.
+
+-- 4 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	5
+En muchos casos, cada fase del proceso —desde la búsqueda de empresas hasta el
+seguimiento del estudiante durante las prácticas— se gestiona mediante aplicaciones
+distintas o incluso mediante procesos manuales. Esta situación puede generar
+fragmentación de la información, duplicidad de tareas administrativas y dificultades en la
+coordinación entre los distintos agentes implicados.
+Además, se ha observado que el seguimiento del estudiante a lo largo del periodo de
+prácticas no siempre cuenta con una trazabilidad clara y centralizada. La información
+relevante, como informes de seguimiento, evaluaciones o documentación del estudiante,
+puede encontrarse dispersa, lo que dificulta el acceso a datos actualizados y la
+comunicación fluida entre centro educativo, empresa y alumno.
+Otro aspecto relevante es el proceso de captación y gestión de empresas colaboradoras.
+Cada curso académico, muchos centros educativos deben dedicar una cantidad significativa
+de tiempo a contactar con empresas, gestionar convenios y coordinar la asignación de
+estudiantes. Al mismo tiempo, las empresas que ya han colaborado previamente suelen
+depender de que el centro educativo les proporcione la información del alumnado para
+poder valorar posibles incorporaciones.
+A partir de esta situación surge la propuesta de NextStep, una plataforma digital diseñada
+para centralizar y optimizar la gestión de las prácticas formativas. La plataforma permitiría
+integrar en un mismo entorno a centros educativos, estudiantes y empresas, facilitando la
+gestión de la información y reduciendo la carga administrativa asociada a estos procesos.
+Una de las funcionalidades clave de la plataforma sería la posibilidad de que los propios
+estudiantes pudieran registrar y actualizar su perfil académico y profesional, incluyendo su
+currículum y competencias. Esta información podría ser posteriormente verificada por el
+centro educativo y, una vez validada, estar disponible para las empresas colaboradoras.
+De esta forma, las empresas tendrían acceso a un espacio donde consultar perfiles de
+estudiantes que están próximos a realizar sus prácticas, lo que facilitaría el proceso de
+selección y permitiría descubrir nuevos talentos. Al mismo tiempo, nuevas empresas
+podrían conocer la plataforma, explorar los perfiles disponibles y valorar su incorporación
+como entidades colaboradoras.
+
+-- 5 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	6
+Este enfoque permite transformar el proceso tradicional de gestión de prácticas en un
+sistema más dinámico y conectado, donde la información fluye de forma más eficiente
+entre todos los participantes. Además, la plataforma podría evolucionar hacia un
+ecosistema de colaboración entre centros educativos y empresas, funcionando también
+como un punto de encuentro para la captación de talento joven.
+En este sentido, NextStep no solo busca digitalizar el proceso existente, sino también
+aportar valor añadido mediante la centralización de la información, la automatización de
+tareas administrativas y la creación de nuevas oportunidades de conexión entre el ámbito
+educativo y el entorno empresarial.
+1.3. Estudio de la competencia.
+El análisis de la competencia nos ha permitido comprender mejor el entorno en el que se
+sitúa nuestro proyecto y detectar oportunidades de diferenciación.
+Actualmente, existen soluciones que abordan parcialmente el problema, pero pocas
+ofrecen una respuesta completa. Algunas plataformas están orientadas a la búsqueda de
+empleo o prácticas, mientras que otras forman parte de sistemas más amplios de gestión
+educativa.
+Sin embargo, muchas de estas herramientas presentan limitaciones importantes, como la
+falta de especialización, una excesiva complejidad o la ausencia de funcionalidades clave
+para el seguimiento del alumno.
+A partir de este análisis, identificamos que el mercado se divide en dos grandes grupos:
+● Herramientas generalistas, que no están adaptadas a la realidad de la Formación
+Profesional.
+● Sistemas complejos tipo ERP, que pueden resultar poco accesibles o
+sobredimensionados para ciertos centros.
+En este contexto, NextStep se posiciona como una solución intermedia que combina
+especialización y usabilidad, ofreciendo una herramienta centrada específicamente en la
+gestión de prácticas, pero sin la complejidad de los sistemas tradicionales.
+
+-- 6 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	7
+Además, nuestra propuesta incorpora un enfoque centrado en la experiencia del usuario, lo
+que supone un valor añadido frente a muchas soluciones actuales que priorizan la
+funcionalidad sobre la usabilidad.
+Aquí hemos usado un benchmarking con el objetivo de comparar diferentes propuestas:
+Solución Tipo 	Propuesta de
+valor
+Precio visible
+en web
+Canales de
+venta/captació
+n
+Debilidades
+observadas
+NEXTSTE
+P
+Directa
+propuest
+a
+Plataforma
+especializada en
+la gestión
+integral de
+prácticas para
+institutos y
+centros de FP.
+Centraliza
+captación de
+empresas,
+documentación
+del alumnado,
+matching, control
+de cupos,
+coordinación de
+entrevistas,
+acuerdos de
+horas/calendario
+y seguimiento en
+un único flujo.
+SaaS B2B por
+suscripción, con
+tarifa modular
+por centro y
+volumen de
+alumnado.
+Propuesta para
+lanzamiento:
+demo gratuita +
+plan anual
+personalizado.
+Venta directa a
+institutos y
+centros de FP;
+captación
+mediante
+demostraciones,
+pilotos y
+acuerdos con
+centros
+educativos.
+Proyecto en
+fase inicial, sin
+tracción
+comercial
+todavía.
+Necesita
+validar
+integraciones,
+confianza
+institucional,
+protección de
+datos y política
+de precios.
+DUALSAP
+P
+Directa 	Plataforma
+orientada a la
+gestión de
+prácticas duales.
+Su web destaca
+la centralización
+de alumnos,
+documentación y
+ofertas, además
+de dar más
+autonomía al
+alumnado para
+aplicar a ofertas
+y reducir la
+Ofrece una
+tarifa gratuita
+hasta 50
+alumnos y, a
+partir de 51, una
+tarifa de 2,00 €
+por alumno/mes
+o 1,60 € por
+alumno/mes con
+pago anticipado
+del curso.
+También indica
+que el coste
+total es de 22 €
+Captación a
+través de su web
+propia, con
+mensajes
+específicos para
+centros,
+profesores,
+empresas y
+alumnos, además
+de registro
+directo en
+plataforma.
+Su propuesta
+pública se
+centra mucho
+en ofertas,
+candidaturas y
+autonomía del
+alumno.
+Muestra
+menos énfasis
+en la
+planificación
+global de
+cupos por
+clase, el
+
+-- 7 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	8
+intermediación
+del profesorado.
+por
+alumno/curso o
+17,60 € con
+descuento
+anual.
+reparto de
+plazas cuando
+faltan
+empresas o la
+visión de carga
+tutorial del
+centro. Esta
+debilidad es
+una inferencia
+estratégica a
+partir de su
+posicionamient
+o público.
+Dotia 	Directa
+ampliada
+Software integral
+para la gestión
+de prácticas y
+empleo en
+universidades,
+centros de
+estudios
+superiores y
+centros de FP.
+Incluye ofertas,
+candidaturas,
+documentación,
+convenios,
+tutores,
+asignación de
+horas, informes
+automatizados y
+módulo para la
+gestión
+automatizada de
+la Seguridad
+Social.
+Tarifa cerrada.
+Su web orienta
+a “solicitar una
+demostración” o
+recibir
+“consultoría
+gratuita”, por lo
+que el precio
+parece ser
+personalizado a
+medida.
+Venta consultiva
+B2B, dirigida a
+departamentos
+de prácticas y
+empleo,
+universidades y
+centros
+superiores; usa
+como palanca
+comercial la
+demo y la
+consultoría
+previa. Además,
+exhibe una
+cartera amplia de
+clientes
+institucionales.
+Es una
+solución muy
+completa, pero
+puede
+percibirse
+como una
+herramienta
+más
+departamental
+o enterprise,
+especialmente
+orientada a
+universidades
+y grandes
+centros. Esta
+debilidad es
+una inferencia
+estratégica a
+partir de su
+posicionamient
+o público y
+amplitud
+funcional.
+1.4 Oportunidad de negocio
+Con el aumento de estudiantes y la complejidad asociada a la gestión de prácticas, surge la
+necesidad de una solución que integre y simplifique todo el proceso: NextStep. Este
+
+-- 8 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	9
+crecimiento conlleva un incremento directo en la gestión de prácticas en empresas,
+convirtiendo este proceso en un elemento clave dentro del sistema formativo.
+Además, la tendencia hacia la digitalización de procesos en todos los sectores, incluida la
+educación, favorece la adopción de herramientas tecnológicas capaces de mejorar la
+eficiencia y reducir costes operativos. En este contexto, se abre la puerta a modelos de
+negocio basados en suscripción, que permitan a centros educativos y empresas acceder a
+funcionalidades avanzadas de gestión, optimización y conexión con talento, generando un
+servicio de valor continuo.
+El entorno empresarial también demanda soluciones que faciliten la colaboración con los
+centros educativos, así como herramientas que les permitan acceder de forma ágil a perfiles
+de estudiantes cualificados, optimizando sus procesos de selección y captación de talento
+joven. A medida que más centros educativos y empresas se incorporen a la plataforma, se
+genera un ecosistema digital cuyo valor aumenta progresivamente, favoreciendo la creación
+de una red de colaboración estable y escalable.
+Otro factor relevante es el marco legal, que exige un control más riguroso y una
+formalización más estricta de las prácticas, incrementando la complejidad del proceso y
+reforzando la necesidad de herramientas especializadas.
+En este sentido, NextStep no solo responde a una necesidad actual, sino que se alinea con
+una tendencia de crecimiento sostenido, lo que refuerza su viabilidad no solo como
+solución tecnológica, sino también como un modelo de negocio sostenible y escalable en el
+tiempo.
+Para evaluar la viabilidad de NextStep como proyecto empresarial, resulta adecuado aplicar
+un análisis PESTEL, ya que esta herramienta permite estudiar de forma estructurada los
+factores externos que pueden favorecer o dificultar el desarrollo del proyecto.
+PESTEL
+Factor 	Análisis aplicado a NextStep
+Político 	Las políticas educativas actuales impulsan una relación más estrecha entre
+
+-- 9 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	10
+el ámbito académico y el empresarial, especialmente en enseñanzas
+donde las prácticas tienen un peso relevante. Esto genera un contexto
+favorable para herramientas que faciliten la coordinación entre centros,
+alumnado y entidades colaboradoras.
+Económico Los centros educativos y las empresas necesitan optimizar tiempo y
+recursos en procesos administrativos cada vez más complejos. En este
+escenario, una solución digital como NextStep puede aportar eficiencia
+operativa y justificar un modelo de ingresos basado en suscripción o
+licencia de uso.
+Social 	Existe una mayor preocupación por la empleabilidad del alumnado y por la
+necesidad de mejorar su transición hacia el entorno laboral. Al mismo
+tiempo, estudiantes, tutores y empresas están cada vez más habituados a
+interactuar mediante plataformas digitales, lo que favorece la aceptación
+de una herramienta como NextStep.
+Tecnológico La digitalización de procesos administrativos y de gestión se ha
+consolidado en prácticamente todos los sectores. Esto abre la posibilidad
+de implantar plataformas centralizadas, accesibles y escalables que
+automaticen tareas, reduzcan errores y mejoren la trazabilidad del
+proceso de prácticas.
+Ecológico 	La sustitución de trámites presenciales, impresiones y documentación en
+papel por flujos digitales contribuye a una gestión más sostenible.
+NextStep encaja en esta tendencia al reducir el uso de recursos físicos y
+promover una administración más eficiente.
+Legal 	La gestión de prácticas exige cada vez más control documental,
+seguimiento formal y cumplimiento normativo. Esta mayor exigencia
+administrativa refuerza la necesidad de herramientas especializadas que
+permitan registrar información, ordenar procesos y garantizar un mayor
+nivel de control y organización.
+1.5 Obligaciones fiscales
+Como empresa de nueva creación, NextStep deberá cumplir con las obligaciones fiscales y
+contables propias de una Sociedad de Responsabilidad Limitada (S.L.), asegurando tanto la
+legalidad como la sostenibilidad de su actividad. Estas obligaciones no solo garantizan el
+cumplimiento de la normativa, sino que también permiten establecer un control claro sobre
+los recursos económicos y facilitar la toma de decisiones estratégicas.
+
+-- 10 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	11
+Entre los principales compromisos se encuentra el Impuesto sobre Sociedades, que grava
+los beneficios obtenidos por la empresa. Una planificación adecuada de este impuesto es
+clave para mantener la liquidez y permitir la reinversión en el desarrollo de la plataforma.
+De forma paralela, será necesario gestionar el Impuesto sobre el Valor Añadido (IVA)
+derivado de la prestación de servicios digitales, lo que implica controlar la facturación,
+emitir las declaraciones periódicas y asegurar que la información esté siempre disponible y
+correctamente registrada.
+En caso de crecimiento del proyecto y contratación de personal, NextStep deberá atender
+también las obligaciones relacionadas con el IRPF y la Seguridad Social, integrando estos
+costes en su planificación financiera y garantizando un cumplimiento transparente con la
+normativa laboral.
+Además, la empresa tendrá que cumplir con obligaciones contables como el registro de
+operaciones, la elaboración de libros contables y la presentación de cuentas anuales ante el
+Registro Mercantil. Mantener estos registros correctamente no solo es un requisito legal,
+sino que permite generar confianza frente a clientes, colaboradores y posibles inversores.
+Para facilitar la gestión de todas estas obligaciones, NextStep podría apoyarse en un asesor
+fiscal o en soluciones de software especializadas, asegurando que los procesos contables y
+fiscales se lleven a cabo de manera eficiente sin comprometer los recursos internos.
+De este modo, una gestión fiscal y contable adecuada desde el inicio se convierte en un pilar
+fundamental para la profesionalización de la empresa, asegurando su viabilidad económica,
+su crecimiento estable y la posibilidad de consolidar NextStep como una plataforma
+sostenible y confiable en el ámbito educativo y empresarial.
+1.6 Financiación, ayudas y subvenciones
+La estrategia de financiación de NextStep se plantea de forma progresiva y adaptada a las
+distintas fases del proyecto, con el objetivo de minimizar riesgos y optimizar recursos.
+En una fase inicial, se estima un capital total de 3.000 €, aportado por los tres socios,
+destinado a cubrir los gastos de constitución de la empresa, el desarrollo inicial de la
+
+-- 11 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	12
+plataforma y la gestión administrativa mínima. Esta inversión permite desarrollar una
+primera versión funcional de la plataforma sin depender de agentes externos, lo que resulta
+clave para validar la idea y demostrar su viabilidad.
+A continuación, se presenta un cuadro con los principales gastos iniciales estimados:
+Concepto
+Coste
+(€) 	Comentario / Justificación
+Registro de la empresa (S.L.) 	1000
+Incluye tasas de Notaría (~300 €), Registro Mercantil (~200 €) y
+asesoría inicial (~500 €)
+Hosting y dominio web 	150 Dominio propio y hosting cloud para el desarrollo inicial
+Software y herramientas 	200
+Licencias de diseño, gestión de proyectos y herramientas de
+desarrollo
+Marketing y comunicación 	150 Publicidad inicial en redes sociales y materiales promocionales
+Gastos administrativos y
+contables 	100
+Asesoría fiscal y contable básica para cumplir obligaciones
+legales y contables
+Materiales y oficina básica 	100 Papelería, impresiones y equipamiento básico
+Fondo de reserva /
+imprevistos 	1300
+Para cubrir posibles gastos adicionales o pequeñas incidencias
+iniciales
+Total 	3000
+Una vez alcanzado este punto, se contempla el acceso a financiación pública, especialmente
+orientada a proyectos tecnológicos e innovadores. Entre las opciones disponibles se
+encuentran subvenciones de Red.es o programas autonómicos que aportan entre 2.000 y
+5.000 €, así como incentivos para jóvenes emprendedores, como bonificaciones en la
+Seguridad Social. Estas ayudas permiten impulsar el crecimiento sin asumir un elevado nivel
+de endeudamiento.
+En fases posteriores, y en función de la evolución del proyecto, se valorará la incorporación
+de financiación externa, mediante entidades financieras o inversores privados. Este tipo de
+financiación permitiría acelerar el desarrollo del producto, ampliar su alcance y fortalecer el
+modelo de negocio basado en suscripciones para centros educativos y empresas.
+
+-- 12 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	13
+Además, se tendrá en cuenta la posibilidad de acogerse a programas específicos para
+startups, que no solo aportan financiación, sino también asesoramiento estratégico y
+mentoría, contribuyendo a profesionalizar la gestión del proyecto y a crear una red de
+contactos clave para su consolidación.
+En conjunto, esta planificación permite adaptar los recursos económicos a las necesidades
+reales del proyecto en cada momento, asegurando un crecimiento sostenible y la viabilidad
+de NextStep como una plataforma tecnológica escalable y confiable.
+2. DISEÑO DEL PROYECTO
+2.1. Infraestructura e instalaciones necesarios
+Dado que NextStep es una plataforma digital orientada a la gestión de prácticas entre
+centros educativos, alumnado y empresas, la infraestructura inicial del proyecto no requiere
+una oficina física permanente. En su fase de lanzamiento, la actividad se plantea bajo un
+modelo de trabajo mayoritariamente remoto, tanto para las tareas de desarrollo técnico
+como para la coordinación interna, la atención comercial y la captación de clientes. Esta
+decisión responde a criterios de eficiencia, flexibilidad y optimización de recursos,
+especialmente en una etapa inicial en la que el proyecto cuenta con una estructura reducida
+y un presupuesto limitado.
+En este contexto, la infraestructura de NextStep se apoyará principalmente en un entorno
+digital de trabajo, compuesto por equipos informáticos personales, conexión estable a
+Internet, servicios de almacenamiento en la nube, herramientas de comunicación online y
+plataformas de gestión colaborativa. Este modelo permite que los integrantes del proyecto
+puedan desarrollar, coordinar y mantener la plataforma sin necesidad de compartir un
+espacio físico fijo, facilitando además una organización más ágil y adaptable a las
+necesidades reales del proyecto.
+
+-- 13 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	14
+No obstante, aunque el funcionamiento operativo sea remoto, la empresa deberá disponer
+de un domicilio social y fiscal, necesario para su constitución legal, recepción de
+notificaciones administrativas y gestión contable o mercantil. Este domicilio podrá coincidir,
+en la fase inicial, con la dirección de uno de los socios fundadores o con un servicio de
+domiciliación empresarial, sin que ello implique una oficina de uso diario.
+En relación con la actividad comercial, la captación de centros educativos y empresas se
+realizará principalmente mediante correo electrónico, llamadas telefónicas,
+videollamadas y demostraciones online. Sin embargo, se contempla también la
+posibilidad de mantener reuniones presenciales puntuales cuando sea conveniente para
+cerrar acuerdos, presentar la plataforma o reforzar la relación con clientes institucionales.
+En estos casos, las reuniones podrán llevarse a cabo en las instalaciones del propio cliente
+o, si fuera necesario, en espacios de coworking o salas de reuniones alquiladas por horas.
+Desde el punto de vista técnico, la infraestructura necesaria incluirá asimismo un servicio
+de hosting cloud, dominio web, base de datos, sistema de copias de seguridad y entorno
+de pruebas, elementos imprescindibles para garantizar la disponibilidad, escalabilidad y
+mantenimiento de la plataforma. De esta forma, la principal “instalación” de NextStep no
+será una oficina tradicional, sino una infraestructura tecnológica en la nube,
+complementada con un modelo de trabajo remoto y una presencia presencial selectiva
+cuando la actividad comercial o institucional lo requiera.
+2.2 Recursos materiales y personales
+2.3 Tecnologías y lenguajes a emplear
+Para el desarrollo de la plataforma NextStep, hemos seleccionado un conjunto de
+tecnologías modernas orientadas a la creación de aplicaciones web escalables, mantenibles
+y seguras. La elección del stack tecnológico se ha realizado teniendo en cuenta factores
+como la facilidad de desarrollo, la eficiencia, la compatibilidad entre herramientas y la
+posibilidad de crecimiento futuro del proyecto.
+
+-- 14 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	15
+En primer lugar, para el desarrollo del frontend, se optará por el uso de tecnologías
+estándar como HTML5, CSS3 y JavaScript, complementadas con un framework moderno
+como React o Vue.js. Estas herramientas permiten crear interfaces dinámicas, intuitivas y
+adaptadas a distintos dispositivos, mejorando la experiencia de usuario. Además, el uso de
+componentes reutilizables facilita la organización del código y su mantenimiento a largo
+plazo.
+En cuanto al backend, se plantea el uso de Node.js junto con un framework como Express,
+lo que permite desarrollar una arquitectura basada en servicios eficiente y flexible. Esta
+combinación es especialmente adecuada para aplicaciones web modernas, ya que facilita la
+gestión de peticiones, la integración con bases de datos y la creación de APIs REST que
+conecten el frontend con la lógica de negocio.
+Para la gestión de datos, se utilizará una base de datos relacional como MySQL o
+PostgreSQL, debido a la necesidad de estructurar información compleja relacionada con
+usuarios, empresas, centros educativos, prácticas y seguimiento del alumnado. Este tipo de
+bases de datos permite mantener la integridad de los datos y realizar consultas eficientes.
+Además, se contempla el uso de APIs para la integración de funcionalidades externas, como
+sistemas de autenticación, servicios de correo electrónico o almacenamiento en la nube.
+Esto permitirá ampliar las capacidades de la plataforma sin necesidad de desarrollar todas
+las funcionalidades desde cero.
+En el ámbito de la seguridad, se implementarán mecanismos como la autenticación
+mediante tokens (por ejemplo, JWT), el cifrado de contraseñas mediante algoritmos seguros
+como bcrypt y la validación de datos tanto en cliente como en servidor. Estas medidas son
+fundamentales para proteger la información sensible de los usuarios y garantizar un uso
+seguro de la plataforma. Asimismo, se incorporarán sistemas de control de acceso basados
+en roles (por ejemplo, administrador, centro educativo, empresa y alumno), con el fin de
+restringir el acceso a determinadas funcionalidades según el tipo de usuario. También se
+aplicarán medidas de protección frente a ataques comunes en aplicaciones web, como la
+inyección SQL, ataques XSS (Cross-Site Scripting) y CSRF (Cross-Site Request Forgery),
+mediante la correcta validación y sanitización de los datos. Por otro lado, se garantizará la
+
+-- 15 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	16
+seguridad en la comunicación mediante el uso de protocolos HTTPS, asegurando el cifrado
+de los datos transmitidos entre cliente y servidor. Además, se podrán implementar
+limitaciones de intentos de acceso para prevenir ataques de fuerza bruta, así como registros
+de actividad (logs) que permitan detectar comportamientos sospechosos. Finalmente, se
+tendrá en cuenta el cumplimiento de la normativa vigente en materia de protección de
+datos, como el RGPD, asegurando un tratamiento adecuado de la información personal y
+reforzando la confianza de los usuarios en la plataforma.
+Por otro lado, se emplearán herramientas de control de versiones como Git, junto con
+plataformas como GitHub, lo que facilitará el trabajo colaborativo entre los miembros del
+equipo, el seguimiento de cambios y la gestión del código fuente.
+Finalmente, se considerará el uso de metodologías de desarrollo ágiles y herramientas de
+gestión de proyectos, que permitan organizar las tareas, realizar un seguimiento del
+progreso y adaptarse a posibles cambios durante el desarrollo.
+En conjunto, la selección de estas tecnologías proporciona una base sólida para el
+desarrollo de NextStep, permitiendo construir una plataforma robusta, escalable y alineada
+con las necesidades actuales del entorno digital.
+
+-- 16 of 17 --
+
+NEXTSTEP Plataforma de Prácticas
+Desarrollo de Aplicaciones Web 	17
+3. DESARROLLO DEL
+SERVICIO/PRODUCTO
+4. PROCEDIMIENTOS Y CONTROLES DE
+CALIDAD
+5. DOCUMENTACIÓN
+6. ANEXOS
+7. REFERENCIAS BIBLIOGRÁFICAS
+
+-- 17 of 17 --
+
