@@ -23,7 +23,7 @@ const MYSQL_PORT = Number(process.env.MYSQL_PORT || 3306);
 const MYSQL_USER = process.env.MYSQL_USER || "root";
 const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD || "";
 const MYSQL_DATABASE = process.env.MYSQL_DATABASE || "nextstep";
-const MYSQL_BIN = process.env.MYSQL_BIN || "C:\\wamp64\\bin\\mysql\\mysql8.4.7\\bin\\mysql.exe";
+const MYSQL_BIN = process.env.MYSQL_BIN || "C:\\wamp64\\bin\\mysql\\mysql9.1.0\\bin\\mysql.exe";
 const DB_PATH = process.env.NEXTSTEP_DB_PATH
   ? path.resolve(process.env.NEXTSTEP_DB_PATH)
   : path.join(__dirname, "..", "data", "nextstep.sqlite");
