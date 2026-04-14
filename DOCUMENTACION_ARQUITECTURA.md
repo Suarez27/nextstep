@@ -475,3 +475,80 @@ Internships.jsx (y otras páginas)
 
 **Última actualización:** Marzo 2026
 
+
+--------------------------------------------------
+
+## Arquitectura base H1
+
+### Objetivo
+Estandarizar la arquitectura base del proyecto para que frontend y backend crezcan por módulos, evitando duplicación de lógica y facilitando el trabajo en equipo.
+
+---
+
+## Frontend
+
+### Estructura base
+
+```text
+client/src/
+  app/
+    providers/
+    router/
+
+  modules/
+    auth/
+      context/
+      pages/
+    home/
+      pages/
+    dashboard/
+      pages/
+    internships/
+      pages/
+    applications/
+      pages/
+    profile/
+      pages/
+    students/
+      pages/
+    interviews/
+      pages/
+    agreements/
+      pages/
+
+  shared/
+    layouts/
+    router/
+    styles/
+
+  services/
+
+
+## Estado de migración H1
+### Código real ya movido a la arquitectura nueva
+
+#### Global
+- `modules/auth/context/AuthContext.jsx`
+- `shared/layouts/AppLayout.jsx`
+- `shared/config/navigation.js`
+
+#### Páginas ya migradas
+- `modules/home/pages/HomePage.jsx`
+- `modules/auth/pages/LoginPage.jsx`
+- `modules/dashboard/pages/DashboardPage.jsx`
+- `modules/internships/pages/InternshipsPage.jsx`
+- `modules/applications/pages/ApplicationsPage.jsx`
+- `modules/profile/pages/ProfilePage.jsx`
+- `modules/students/pages/StudentsPage.jsx`
+- `modules/interviews/pages/InterviewsPage.jsx`
+- `modules/agreements/pages/AgreementsPage.jsx`
+
+### Carpetas temporales que siguen existiendo por compatibilidad
+- `pages/`
+- `components/`
+- `context/`
+
+### Regla a partir de ahora
+- Todo código nuevo debe crearse en `app/`, `modules/`, `shared/` o `services/`.
+- `pages/`, `components/` y `context/` quedan en modo compatibilidad temporal.
+- Cuando una pieza ya esté migrada, el archivo antiguo debe quedar solo como wrapper.
