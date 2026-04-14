@@ -1802,3 +1802,6 @@ input:focus, select:focus, textarea:focus {
     align-items: flex-start;
   }
 }
+.mb-sm {
+  margin-bottom: 12px;
+}

@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import {
+  Button,
+  EmptyState,
+  FormField,
+  FormRow,
+  LoadingState,
+  Modal,
+  PageHeader,
+} from '../../../shared/components/ui';
 
 function NewInternshipModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ title: '', description: '', hours_total: 300, schedule: '', slots: 1 });
@@ -28,45 +37,80 @@ function NewInternshipModal({ onClose, onCreated }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Nueva oferta de prácticas</h2>
-          <button className="modal-close" onClick={onClose}>&#10005;</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="field">
-            <label>Título</label>
-            <input name="title" value={form.title} onChange={handleChange} required placeholder="Ej: Prácticas Frontend Junior" />
-          </div>
-          <div className="field">
-            <label>Descripción</label>
-            <textarea name="description" value={form.description} onChange={handleChange} required rows={4} placeholder="Descripción del puesto, tareas..." />
-          </div>
-          <div className="field-row">
-            <div className="field">
-              <label>Horas totales</label>
-              <input name="hours_total" type="number" min={1} max={2000} value={form.hours_total} onChange={handleChange} required />
-            </div>
-            <div className="field">
-              <label>Plazas</label>
-              <input name="slots" type="number" min={1} max={50} value={form.slots} onChange={handleChange} required />
-            </div>
-          </div>
-          <div className="field">
-            <label>Horario</label>
-            <input name="schedule" value={form.schedule} onChange={handleChange} placeholder="Ej: L-V 09:00-14:00" />
-          </div>
-          {err && <div className="form-error">{err}</div>}
-          <div className="modal-actions">
-            <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Publicando...' : 'Publicar oferta'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal
+      title="Nueva oferta de prácticas"
+      onClose={onClose}
+      actions={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="new-internship-form" disabled={loading}>
+            {loading ? 'Publicando...' : 'Publicar oferta'}
+          </Button>
+        </>
+      }
+    >
+      <form id="new-internship-form" onSubmit={handleSubmit}>
+        <FormField label="Título">
+          <input
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            required
+            placeholder="Ej: Prácticas Frontend Junior"
+          />
+        </FormField>
+
+        <FormField label="Descripción">
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            required
+            rows={4}
+            placeholder="Descripción del puesto, tareas..."
+          />
+        </FormField>
+
+        <FormRow>
+          <FormField label="Horas totales">
+            <input
+              name="hours_total"
+              type="number"
+              min={1}
+              max={2000}
+              value={form.hours_total}
+              onChange={handleChange}
+              required
+            />
+          </FormField>
+
+          <FormField label="Plazas">
+            <input
+              name="slots"
+              type="number"
+              min={1}
+              max={50}
+              value={form.slots}
+              onChange={handleChange}
+              required
+            />
+          </FormField>
+        </FormRow>
+
+        <FormField label="Horario">
+          <input
+            name="schedule"
+            value={form.schedule}
+            onChange={handleChange}
+            placeholder="Ej: L-V 09:00-14:00"
+          />
+        </FormField>
+
+        {err && <Alert variant="error">{err}</Alert>}
+      </form>
+    </Modal>
   );
 }
 
@@ -109,19 +153,15 @@ export default function Internships() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">
-            {user.role === 'empresa' ? 'Mis Prácticas' : 'Ofertas de Prácticas'}
-          </h1>
-          <p className="page-sub">{internships.length} oferta{internships.length !== 1 ? 's' : ''} disponible{internships.length !== 1 ? 's' : ''}</p>
-        </div>
-        {user.role === 'empresa' && (
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
-            + Nueva oferta
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title={user.role === 'empresa' ? 'Mis Prácticas' : 'Ofertas de Prácticas'}
+        subtitle={`${internships.length} oferta${internships.length !== 1 ? 's' : ''} disponible${internships.length !== 1 ? 's' : ''}`}
+        actions={
+          user.role === 'empresa' ? (
+            <Button onClick={() => setShowModal(true)}>+ Nueva oferta</Button>
+          ) : null
+        }
+      />
 
       <div className="search-bar">
         <input
@@ -135,17 +175,18 @@ export default function Internships() {
       {msg && <div className="alert-success" onClick={() => setMsg('')}>{msg} (clic para cerrar)</div>}
 
       {loading ? (
-        <div className="loading">Cargando...</div>
+        <LoadingState />
       ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">&#128188;</div>
-          <p>No hay ofertas que coincidan con tu búsqueda.</p>
+        <EmptyState
+          icon="💼"
+          message="No hay ofertas que coincidan con tu búsqueda."
+        >
           {user.role === 'empresa' && (
-            <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Button onClick={() => setShowModal(true)}>
               Publicar primera oferta
-            </button>
+            </Button>
           )}
-        </div>
+        </EmptyState>
       ) : (
         <div className="cards-grid">
           {filtered.map((item) => (
@@ -164,9 +205,9 @@ export default function Internships() {
                 {item.schedule && <span className="tag tag-gray">{item.schedule}</span>}
               </div>
               {user.role === 'alumno' && (
-                <button className="btn-primary btn-full mt" onClick={() => applyTo(item.id)}>
+                <Button fullWidth className="mt" onClick={() => applyTo(item.id)}>
                   Postularme
-                </button>
+                </Button>
               )}
             </div>
           ))}

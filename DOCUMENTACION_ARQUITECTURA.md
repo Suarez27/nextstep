@@ -552,3 +552,68 @@ client/src/
 - Todo código nuevo debe crearse en `app/`, `modules/`, `shared/` o `services/`.
 - `pages/`, `components/` y `context/` quedan en modo compatibilidad temporal.
 - Cuando una pieza ya esté migrada, el archivo antiguo debe quedar solo como wrapper.
+
+## Sistema de diseño base H2
+
+### Objetivo
+Crear una base de componentes UI reutilizables apoyada en las clases CSS existentes, para evitar duplicación de estructura visual y preparar una futura evolución del diseño sin rehacer todas las páginas.
+
+### Componentes base creados
+- `Button`
+- `PageHeader`
+- `StatusBadge`
+- `EmptyState`
+- `LoadingState`
+- `SectionCard`
+
+### Regla
+- Todo componente visual nuevo compartido debe crearse en `shared/components/ui`.
+- Las páginas deben reutilizar esta base antes de crear nuevos botones, headers o estados vacíos.
+- En esta fase se reutilizan las clases actuales del proyecto para no romper el diseño existente.
+
+### Componentes UI añadidos en H2 paso 2
+- `StatCard`
+- `SectionHeader`
+
+### Páginas integradas con la base UI
+- `InternshipsPage`
+- `ApplicationsPage`
+- `AgreementsPage`
+- `InterviewsPage`
+- `DashboardPage`
+
+### Regla
+Antes de crear una nueva estructura visual repetida, revisar si puede resolverse con:
+- `PageHeader`
+- `Button`
+- `StatusBadge`
+- `EmptyState`
+- `LoadingState`
+- `SectionCard`
+- `SectionHeader`
+- `StatCard`
+
+### Componentes UI añadidos en H2 paso 3
+- `FormField`
+- `FormRow`
+- `FormActions`
+- `Alert`
+- `Modal`
+
+### Páginas / módulos integrados en H2 paso 3
+- `LoginPage`
+- `ProfilePage`
+- `StudentsPage` (parcial)
+- modal de `InternshipsPage`
+- modal de `InterviewsPage`
+- modal de `AgreementsPage`
+
+### Cierre de H2
+El sistema de diseño base queda preparado para:
+- páginas
+- formularios
+- estados de feedback
+- modales
+- tarjetas y bloques de panel
+
+A partir de este punto, nuevas pantallas o CRUDs deben construirse apoyándose primero en la base de `shared/components/ui`.

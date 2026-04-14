@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import {
+  Alert,
+  Button,
+  FormActions,
+  FormField,
+  FormRow,
+  LoadingState,
+  PageHeader,
+} from '../../../shared/components/ui';
 
 function StudentProfile() {
   const { user } = useAuth();
@@ -20,7 +29,7 @@ function StudentProfile() {
         setCvPdfUrl(p.cv_pdf_url || '');
         setValidated(!!p.validated);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -71,21 +80,21 @@ function StudentProfile() {
     }
   }
 
-  if (loading) return <div className="loading">Cargando...</div>;
+  if (loading) return <LoadingState />;
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Mi Perfil</h1>
-          <p className="page-sub">Mantén tu perfil actualizado para que las empresas puedan encontrarte</p>
-        </div>
-        {validated ? (
-          <span className="badge badge-green badge-lg">&#9989; Validado</span>
-        ) : (
-          <span className="badge badge-amber badge-lg">&#9203; Pendiente de validación</span>
-        )}
-      </div>
+      <PageHeader
+        title="Mi Perfil"
+        subtitle="Mantén tu perfil actualizado para que las empresas puedan encontrarte"
+        actions={
+          validated ? (
+            <span className="badge badge-green badge-lg">&#9989; Validado</span>
+          ) : (
+            <span className="badge badge-amber badge-lg">&#9203; Pendiente de validación</span>
+          )
+        }
+      />
 
       <div className="profile-card">
         <div className="profile-avatar-big">{user?.name?.[0]?.toUpperCase()}</div>
@@ -97,8 +106,10 @@ function StudentProfile() {
       </div>
 
       <form onSubmit={handleSubmit} className="form-card">
-        <div className="field">
-          <label>Currículum (CV)</label>
+        <FormField
+          label="Currículum (CV)"
+          hint={`${form.cv_text.length}/6000 caracteres`}
+        >
           <textarea
             value={form.cv_text}
             onChange={(e) => setForm((f) => ({ ...f, cv_text: e.target.value }))}
@@ -106,28 +117,29 @@ function StudentProfile() {
             placeholder="Describe tu formación, experiencia, proyectos..."
             maxLength={6000}
           />
-          <span className="field-hint">{form.cv_text.length}/6000 caracteres</span>
-        </div>
+        </FormField>
 
-        <div className="field">
-          <label>CV en PDF</label>
+        <FormField
+          label="CV en PDF"
+          hint={uploadingPdf ? 'Subiendo PDF...' : 'Maximo 5MB. Formato permitido: PDF.'}
+        >
           <input
             type="file"
             accept="application/pdf,.pdf"
             onChange={handleCvPdfChange}
             disabled={uploadingPdf}
           />
-          <span className="field-hint">Maximo 5MB. Formato permitido: PDF.</span>
-          {uploadingPdf && <span className="field-hint">Subiendo PDF...</span>}
           {cvPdfUrl && (
             <a href={cvPdfUrl} target="_blank" rel="noreferrer">
               Ver CV PDF actual
             </a>
           )}
-        </div>
+        </FormField>
 
-        <div className="field">
-          <label>Habilidades</label>
+        <FormField
+          label="Habilidades"
+          hint="Separa las habilidades con comas"
+        >
           <input
             type="text"
             value={form.skills}
@@ -135,8 +147,7 @@ function StudentProfile() {
             placeholder="JavaScript, React, SQL, Python..."
             maxLength={1500}
           />
-          <span className="field-hint">Separa las habilidades con comas</span>
-        </div>
+        </FormField>
 
         {form.skills && (
           <div className="skills-preview">
@@ -146,14 +157,14 @@ function StudentProfile() {
           </div>
         )}
 
-        {msg && <div className="alert-success">{msg}</div>}
-        {err && <div className="form-error">{err}</div>}
+        {msg && <Alert>{msg}</Alert>}
+        {err && <Alert variant="error">{err}</Alert>}
 
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={saving}>
+        <FormActions>
+          <Button type="submit" disabled={saving}>
             {saving ? 'Guardando...' : 'Guardar perfil'}
-          </button>
-        </div>
+          </Button>
+        </FormActions>
       </form>
     </div>
   );
@@ -172,7 +183,7 @@ function CompanyProfile() {
       .then((p) => {
         if (p) setForm({ company_name: p.company_name || '', sector: p.sector || '', city: p.city || '' });
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -190,16 +201,14 @@ function CompanyProfile() {
     }
   }
 
-  if (loading) return <div className="loading">Cargando...</div>;
+  if (loading) return <LoadingState />;
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Perfil de Empresa</h1>
-          <p className="page-sub">Información visible para alumnos y centros educativos</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Perfil de Empresa"
+        subtitle="Información visible para alumnos y centros educativos"
+      />
 
       <div className="profile-card">
         <div className="profile-avatar-big company">{user?.name?.[0]?.toUpperCase()}</div>
@@ -211,8 +220,7 @@ function CompanyProfile() {
       </div>
 
       <form onSubmit={handleSubmit} className="form-card">
-        <div className="field">
-          <label>Nombre de la empresa</label>
+        <FormField label="Nombre de la empresa">
           <input
             type="text"
             value={form.company_name}
@@ -221,10 +229,9 @@ function CompanyProfile() {
             maxLength={200}
             placeholder="Nombre de tu empresa"
           />
-        </div>
-        <div className="field-row">
-          <div className="field">
-            <label>Sector</label>
+        </FormField>
+        <FormRow>
+          <FormField label="Sector">
             <input
               type="text"
               value={form.sector}
@@ -232,9 +239,9 @@ function CompanyProfile() {
               maxLength={120}
               placeholder="Tecnología, Salud, Comercio..."
             />
-          </div>
-          <div className="field">
-            <label>Ciudad</label>
+          </FormField>
+
+          <FormField label="Ciudad">
             <input
               type="text"
               value={form.city}
@@ -242,17 +249,17 @@ function CompanyProfile() {
               maxLength={120}
               placeholder="Madrid, Barcelona..."
             />
-          </div>
-        </div>
+          </FormField>
+        </FormRow>
 
-        {msg && <div className="alert-success">{msg}</div>}
-        {err && <div className="form-error">{err}</div>}
+        {msg && <Alert>{msg}</Alert>}
+        {err && <Alert variant="error">{err}</Alert>}
 
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={saving}>
+        <FormActions>
+          <Button type="submit" disabled={saving}>
             {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
+          </Button>
+        </FormActions>
       </form>
     </div>
   );
@@ -271,7 +278,7 @@ function CenterProfile() {
       .then((p) => {
         if (p) setForm({ center_name: p.center_name || '', city: p.city || '' });
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -289,16 +296,14 @@ function CenterProfile() {
     }
   }
 
-  if (loading) return <div className="loading">Cargando...</div>;
+  if (loading) return <LoadingState />;
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Perfil del Centro</h1>
-          <p className="page-sub">Datos del centro educativo al que se vinculan tus alumnos</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Perfil del Centro"
+        subtitle="Datos del centro educativo al que se vinculan tus alumnos"
+      />
 
       <div className="profile-card">
         <div className="profile-avatar-big company">{user?.name?.[0]?.toUpperCase()}</div>
@@ -310,8 +315,7 @@ function CenterProfile() {
       </div>
 
       <form onSubmit={handleSubmit} className="form-card">
-        <div className="field">
-          <label>Nombre del centro</label>
+        <FormField label="Nombre del centro">
           <input
             type="text"
             value={form.center_name}
@@ -320,10 +324,9 @@ function CenterProfile() {
             maxLength={200}
             placeholder="IES Ejemplo"
           />
-        </div>
+        </FormField>
 
-        <div className="field">
-          <label>Ciudad</label>
+        <FormField label="Ciudad">
           <input
             type="text"
             value={form.city}
@@ -331,16 +334,16 @@ function CenterProfile() {
             maxLength={120}
             placeholder="Madrid, Sevilla..."
           />
-        </div>
+        </FormField>
 
-        {msg && <div className="alert-success">{msg}</div>}
-        {err && <div className="form-error">{err}</div>}
+        {msg && <Alert>{msg}</Alert>}
+        {err && <Alert variant="error">{err}</Alert>}
 
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={saving}>
+        <FormActions>
+          <Button type="submit" disabled={saving}>
             {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
+          </Button>
+        </FormActions>
       </form>
     </div>
   );

@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import {
+    Alert,
+    Button,
+    EmptyState,
+    FormField,
+    LoadingState,
+    Modal,
+    PageHeader,
+    StatusBadge,
+} from '../../../shared/components/ui';
 
 function NewInterviewModal({ onClose, onCreated }) {
     const [apps, setApps] = useState([]);
@@ -43,59 +53,60 @@ function NewInterviewModal({ onClose, onCreated }) {
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>Programar entrevista</h2>
-                    <button className="modal-close" onClick={onClose}>&#10005;</button>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="field">
-                        <label>Candidato (candidatura aceptada)</label>
-                        <select
-                            value={form.application_id}
-                            onChange={(e) => setForm((f) => ({ ...f, application_id: e.target.value }))}
-                            required
-                        >
-                            <option value="">Seleccionar...</option>
-                            {apps.map((a) => (
-                                <option key={a.id} value={a.id}>
-                                    {a.student_name} — {a.internship_title}
-                                </option>
-                            ))}
-                        </select>
-                        {apps.length === 0 && (
-                            <span className="field-hint">No hay candidaturas aceptadas disponibles.</span>
-                        )}
-                    </div>
-                    <div className="field">
-                        <label>Fecha y hora</label>
-                        <input
-                            type="datetime-local"
-                            value={form.interview_at}
-                            onChange={(e) => setForm((f) => ({ ...f, interview_at: e.target.value }))}
-                            required
-                        />
-                    </div>
-                    <div className="field">
-                        <label>Notas (opcional)</label>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                            rows={3}
-                            placeholder="Instrucciones, enlace videollamada..."
-                        />
-                    </div>
-                    {err && <div className="form-error">{err}</div>}
-                    <div className="modal-actions">
-                        <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? 'Programando...' : 'Programar'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <Modal
+            title="Programar entrevista"
+            onClose={onClose}
+            actions={
+                <>
+                    <Button type="button" variant="ghost" onClick={onClose}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit" form="new-interview-form" disabled={loading}>
+                        {loading ? 'Programando...' : 'Programar'}
+                    </Button>
+                </>
+            }
+        >
+            <form id="new-interview-form" onSubmit={handleSubmit}>
+                <FormField
+                    label="Candidato (candidatura aceptada)"
+                    hint={apps.length === 0 ? 'No hay candidaturas aceptadas disponibles.' : undefined}
+                >
+                    <select
+                        value={form.application_id}
+                        onChange={(e) => setForm((f) => ({ ...f, application_id: e.target.value }))}
+                        required
+                    >
+                        <option value="">Seleccionar...</option>
+                        {apps.map((a) => (
+                            <option key={a.id} value={a.id}>
+                                {a.student_name} — {a.internship_title}
+                            </option>
+                        ))}
+                    </select>
+                </FormField>
+
+                <FormField label="Fecha y hora">
+                    <input
+                        type="datetime-local"
+                        value={form.interview_at}
+                        onChange={(e) => setForm((f) => ({ ...f, interview_at: e.target.value }))}
+                        required
+                    />
+                </FormField>
+
+                <FormField label="Notas (opcional)">
+                    <textarea
+                        value={form.notes}
+                        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                        rows={3}
+                        placeholder="Instrucciones, enlace videollamada..."
+                    />
+                </FormField>
+
+                {err && <Alert variant="error">{err}</Alert>}
+            </form>
+        </Modal>
     );
 }
 
@@ -121,25 +132,23 @@ export default function Interviews() {
 
     return (
         <div className="page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Entrevistas</h1>
-                    <p className="page-sub">{interviews.length} entrevista{interviews.length !== 1 ? 's' : ''} programada{interviews.length !== 1 ? 's' : ''}</p>
-                </div>
-                {canCreate && (
-                    <button className="btn-primary" onClick={() => setShowModal(true)}>
-                        + Programar entrevista
-                    </button>
-                )}
-            </div>
+            <PageHeader
+                title="Entrevistas"
+                subtitle={`${interviews.length} entrevista${interviews.length !== 1 ? 's' : ''} programada${interviews.length !== 1 ? 's' : ''}`}
+                actions={
+                    canCreate ? (
+                        <Button onClick={() => setShowModal(true)}>+ Programar entrevista</Button>
+                    ) : null
+                }
+            />
 
             {loading ? (
-                <div className="loading">Cargando...</div>
+                <LoadingState />
             ) : interviews.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">&#128197;</div>
-                    <p>No hay entrevistas programadas.</p>
-                </div>
+                <EmptyState
+                    icon="📅"
+                    message="No hay entrevistas programadas."
+                />
             ) : (
                 <div className="cards-grid">
                     {interviews.map((i) => {
@@ -161,9 +170,10 @@ export default function Interviews() {
                                     <span className="tag tag-blue">
                                         {date.toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit' })}h
                                     </span>
-                                    <span className={`tag ${isPast ? 'tag-gray' : 'tag-green'}`}>
-                                        {isPast ? 'Realizada' : 'Próxima'}
-                                    </span>
+                                    <StatusBadge
+                                        status={isPast ? 'realizada' : 'proxima'}
+                                        label={isPast ? 'Realizada' : 'Próxima'}
+                                    />
                                 </div>
                                 {i.notes && <p className="offer-desc">{i.notes}</p>}
                             </div>

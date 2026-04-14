@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import {
+    Alert,
+    Button,
+    EmptyState,
+    FormField,
+    LoadingState,
+    PageHeader,
+} from '../../../shared/components/ui';
 
 export default function Students() {
     const { user } = useAuth();
@@ -109,15 +117,17 @@ export default function Students() {
 
     return (
         <div className="page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Alumnos</h1>
-                    <p className="page-sub">{pending.length} pendiente{pending.length !== 1 ? 's' : ''} de validar | {validated.length} validado{validated.length !== 1 ? 's' : ''}</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Alumnos"
+                subtitle={`${pending.length} pendiente${pending.length !== 1 ? 's' : ''} de validar | ${validated.length} validado${validated.length !== 1 ? 's' : ''}`}
+            />
 
-            {msg && <div className="alert-success" onClick={() => setMsg('')}>{msg}</div>}
-            {error && <div className="form-error" onClick={() => setError('')} style={{ marginBottom: 12 }}>{error}</div>}
+            {msg && <Alert onClick={() => setMsg('')}>{msg}</Alert>}
+            {error && (
+                <Alert variant="error" onClick={() => setError('')} className="mb-sm">
+                    {error}
+                </Alert>
+            )}
 
             {createdCredentials && (
                 <div className="form-card" style={{ marginBottom: 12, border: '1px solid #bfdbfe' }}>
@@ -192,7 +202,7 @@ export default function Students() {
                     )}
 
                     {loading ? (
-                        <div className="loading">Cargando...</div>
+                        <LoadingState />
                     ) : listed.length === 0 ? (
                         <p className="empty-msg">
                             {tab === 'pendientes'

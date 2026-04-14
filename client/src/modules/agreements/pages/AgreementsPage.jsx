@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import {
+    Alert,
+    Button,
+    EmptyState,
+    FormField,
+    LoadingState,
+    Modal,
+    PageHeader,
+    StatusBadge,
+} from '../../../shared/components/ui';
 
 function NewAgreementModal({ onClose, onCreated }) {
     const [internships, setInternships] = useState([]);
@@ -35,58 +45,63 @@ function NewAgreementModal({ onClose, onCreated }) {
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>Nuevo convenio</h2>
-                    <button className="modal-close" onClick={onClose}>&#10005;</button>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="field">
-                        <label>Oferta de prácticas</label>
-                        <select
-                            value={form.internship_id}
-                            onChange={(e) => setForm((f) => ({ ...f, internship_id: e.target.value }))}
-                            required
-                        >
-                            <option value="">Seleccionar...</option>
-                            {internships.map((i) => (
-                                <option key={i.id} value={i.id}>{i.title} — {i.company_name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="field">
-                        <label>Alumno</label>
-                        <select
-                            value={form.student_id}
-                            onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))}
-                            required
-                        >
-                            <option value="">Seleccionar...</option>
-                            {students.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="field">
-                        <label>Observaciones (opcional)</label>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                            rows={3}
-                            placeholder="Condiciones especiales, observaciones del centro..."
-                        />
-                    </div>
-                    {err && <div className="form-error">{err}</div>}
-                    <div className="modal-actions">
-                        <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? 'Firmando...' : 'Firmar convenio'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <Modal
+            title="Nuevo convenio"
+            onClose={onClose}
+            actions={
+                <>
+                    <Button type="button" variant="ghost" onClick={onClose}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit" form="new-agreement-form" disabled={loading}>
+                        {loading ? 'Firmando...' : 'Firmar convenio'}
+                    </Button>
+                </>
+            }
+        >
+            <form id="new-agreement-form" onSubmit={handleSubmit}>
+                <FormField label="Oferta de prácticas">
+                    <select
+                        value={form.internship_id}
+                        onChange={(e) => setForm((f) => ({ ...f, internship_id: e.target.value }))}
+                        required
+                    >
+                        <option value="">Seleccionar...</option>
+                        {internships.map((i) => (
+                            <option key={i.id} value={i.id}>
+                                {i.title} — {i.company_name}
+                            </option>
+                        ))}
+                    </select>
+                </FormField>
+
+                <FormField label="Alumno">
+                    <select
+                        value={form.student_id}
+                        onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))}
+                        required
+                    >
+                        <option value="">Seleccionar...</option>
+                        {students.map((s) => (
+                            <option key={s.id} value={s.id}>
+                                {s.name} ({s.email})
+                            </option>
+                        ))}
+                    </select>
+                </FormField>
+
+                <FormField label="Observaciones (opcional)">
+                    <textarea
+                        value={form.notes}
+                        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                        rows={3}
+                        placeholder="Condiciones especiales, observaciones del centro..."
+                    />
+                </FormField>
+
+                {err && <Alert variant="error">{err}</Alert>}
+            </form>
+        </Modal>
     );
 }
 
@@ -112,30 +127,29 @@ export default function Agreements() {
 
     return (
         <div className="page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Convenios</h1>
-                    <p className="page-sub">{agreements.length} convenio{agreements.length !== 1 ? 's' : ''} firmado{agreements.length !== 1 ? 's' : ''}</p>
-                </div>
-                {canCreate && (
-                    <button className="btn-primary" onClick={() => setShowModal(true)}>
-                        + Nuevo convenio
-                    </button>
-                )}
-            </div>
+            <PageHeader
+                title="Convenios"
+                subtitle={`${agreements.length} convenio${agreements.length !== 1 ? 's' : ''} firmado${agreements.length !== 1 ? 's' : ''}`}
+                actions={
+                    canCreate ? (
+                        <Button onClick={() => setShowModal(true)}>+ Nuevo convenio</Button>
+                    ) : null
+                }
+            />
 
             {loading ? (
-                <div className="loading">Cargando...</div>
+                <LoadingState />
             ) : agreements.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">&#128203;</div>
-                    <p>No hay convenios firmados todavía.</p>
+                <EmptyState
+                    icon="📋"
+                    message="No hay convenios firmados todavía."
+                >
                     {canCreate && (
-                        <button className="btn-primary" onClick={() => setShowModal(true)}>
+                        <Button onClick={() => setShowModal(true)}>
                             Firmar primer convenio
-                        </button>
+                        </Button>
                     )}
-                </div>
+                </EmptyState>
             ) : (
                 <div className="table-container">
                     <table className="data-table">
@@ -155,7 +169,7 @@ export default function Agreements() {
                                     <td>{ag.student_name}</td>
                                     <td>{ag.center_name}</td>
                                     <td>{new Date(ag.signed_at).toLocaleDateString('es-ES')}</td>
-                                    <td><span className="badge badge-green">Firmado &#9989;</span></td>
+                                    <td><StatusBadge status="firmado" label="Firmado" /></td>
                                 </tr>
                             ))}
                         </tbody>

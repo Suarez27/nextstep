@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+    Alert,
+    Button,
+    FormField,
+} from '../../../shared/components/ui';
 
 export default function Login() {
     const { login, register } = useAuth();
@@ -103,8 +108,7 @@ export default function Login() {
 
                     <form onSubmit={handleSubmit} className="auth-form">
                         {mode === 'register' && (
-                            <div className="field">
-                                <label htmlFor="name">Nombre completo</label>
+                            <FormField label="Nombre completo" htmlFor="name">
                                 <input
                                     id="name"
                                     name="name"
@@ -115,11 +119,10 @@ export default function Login() {
                                     required
                                     autoComplete="name"
                                 />
-                            </div>
+                            </FormField>
                         )}
 
-                        <div className="field">
-                            <label htmlFor="email">Correo electrónico</label>
+                        <FormField label="Correo electrónico" htmlFor="email">
                             <input
                                 id="email"
                                 name="email"
@@ -130,10 +133,9 @@ export default function Login() {
                                 required
                                 autoComplete="email"
                             />
-                        </div>
+                        </FormField>
 
-                        <div className="field">
-                            <label htmlFor="password">Contraseña</label>
+                        <FormField label="Contraseña" htmlFor="password">
                             <input
                                 id="password"
                                 name="password"
@@ -144,24 +146,26 @@ export default function Login() {
                                 required
                                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                             />
-                        </div>
+                        </FormField>
 
                         {mode === 'register' && (
-                            <div className="field">
-                                <label htmlFor="role">Tipo de cuenta</label>
+                            <FormField
+                                label="Tipo de cuenta"
+                                htmlFor="role"
+                                hint="Los alumnos son creados por su centro educativo."
+                            >
                                 <select id="role" name="role" value={form.role} onChange={handleChange}>
                                     <option value="empresa">Empresa</option>
                                     <option value="centro">Centro Educativo</option>
                                 </select>
-                                <span className="field-hint">Los alumnos son creados por su centro educativo.</span>
-                            </div>
+                            </FormField>
                         )}
 
-                        {error && <div className="form-error">{error}</div>}
+                        {error && <Alert variant="error">{error}</Alert>}
 
-                        <button className="btn-primary btn-full" type="submit" disabled={loading}>
+                        <Button type="submit" fullWidth disabled={loading}>
                             {mode === 'login' ? 'Entrar' : 'Crear cuenta'}
-                        </button>
+                        </Button>
                     </form>
 
                     <div className="demo-hint">

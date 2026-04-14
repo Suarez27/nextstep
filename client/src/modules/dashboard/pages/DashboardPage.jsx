@@ -2,18 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
-
-function StatCard({ icon, label, value, color }) {
-    return (
-        <div className={`stat-card stat-${color}`}>
-            <div className="stat-icon" dangerouslySetInnerHTML={{ __html: icon }} />
-            <div className="stat-info">
-                <div className="stat-value">{value ?? '—'}</div>
-                <div className="stat-label">{label}</div>
-            </div>
-        </div>
-    );
-}
+import {
+    EmptyState,
+    PageHeader,
+    SectionCard,
+    SectionHeader,
+    StatCard,
+    StatusBadge,
+} from '../../../shared/components/ui';
 
 function InternshipCard({ item, onApply }) {
     return (
@@ -66,7 +62,7 @@ function AlumnoDashboard() {
 
     return (
         <div className="dashboard">
-            <h1 className="page-title">Mi Panel</h1>
+            <PageHeader title="Mi Panel" />
 
             <div className="stats-row">
                 <StatCard icon="&#128140;" label="Candidaturas enviadas" value={applications.length} color="blue" />
@@ -88,11 +84,11 @@ function AlumnoDashboard() {
             {msg && <div className="alert-success">{msg}</div>}
 
             <div className="dashboard-grid">
-                <div className="dash-section">
-                    <div className="section-header">
-                        <h2>Últimas ofertas</h2>
-                        <Link to="/internships" className="link-more">Ver todas</Link>
-                    </div>
+                <SectionCard>
+                    <SectionHeader
+                        title="Últimas ofertas"
+                        action={<Link to="/internships" className="link-more">Ver todas</Link>}
+                    />
                     {internships.length === 0 ? (
                         <p className="empty-msg">No hay ofertas disponibles.</p>
                     ) : (
@@ -100,15 +96,15 @@ function AlumnoDashboard() {
                             <InternshipCard key={item.id} item={item} onApply={applyTo} />
                         ))
                     )}
-                </div>
+                </SectionCard>
 
-                <div className="dash-section">
-                    <div className="section-header">
-                        <h2>Mis candidaturas</h2>
-                        <Link to="/applications" className="link-more">Ver todas</Link>
-                    </div>
+                <SectionCard>
+                    <SectionHeader
+                        title="Mis candidaturas"
+                        action={<Link to="/applications" className="link-more">Ver todas</Link>}
+                    />
                     {applications.length === 0 ? (
-                        <p className="empty-msg">Aún no has enviado ninguna candidatura.</p>
+                        <EmptyState message="Aún no has enviado ninguna candidatura." />
                     ) : (
                         applications.slice(0, 5).map((a) => (
                             <div key={a.id} className="list-card compact">
@@ -122,7 +118,7 @@ function AlumnoDashboard() {
                             </div>
                         ))
                     )}
-                </div>
+                </SectionCard>
             </div>
         </div>
     );
@@ -138,7 +134,7 @@ function EmpresaDashboard() {
 
     return (
         <div className="dashboard">
-            <h1 className="page-title">Panel de Empresa</h1>
+            <PageHeader title="Panel de Empresa" />
 
             <div className="stats-row">
                 <StatCard icon="&#128188;" label="Ofertas publicadas" value={internships.length} color="blue" />
@@ -150,17 +146,17 @@ function EmpresaDashboard() {
                 />
             </div>
 
-            <div className="dash-section">
-                <div className="section-header">
-                    <h2>Mis ofertas de prácticas</h2>
-                    <Link to="/internships" className="link-more">Gestionar</Link>
-                </div>
+            <SectionCard>
+                <SectionHeader
+                    title="Mis ofertas de prácticas"
+                    action={<Link to="/internships" className="link-more">Gestionar</Link>}
+                />
                 {internships.length === 0 ? (
                     <p className="empty-msg">Aún no has publicado ninguna oferta.</p>
                 ) : (
                     internships.map((item) => <InternshipCard key={item.id} item={item} />)
                 )}
-            </div>
+            </SectionCard>
         </div>
     );
 }
@@ -183,7 +179,7 @@ function CentroAdminDashboard() {
 
     return (
         <div className="dashboard">
-            <h1 className="page-title">Panel de Gestión</h1>
+            <PageHeader title="Panel de Gestión" />
 
             <div className="stats-row">
                 <StatCard icon="&#128188;" label="Prácticas" value={internships.length} color="blue" />
@@ -192,21 +188,21 @@ function CentroAdminDashboard() {
             </div>
 
             <div className="dashboard-grid">
-                <div className="dash-section">
-                    <div className="section-header">
-                        <h2>Prácticas recientes</h2>
-                        <Link to="/internships" className="link-more">Ver todas</Link>
-                    </div>
+                <SectionCard>
+                    <SectionHeader
+                        title="Prácticas recientes"
+                        action={<Link to="/internships" className="link-more">Ver todas</Link>}
+                    />
                     {internships.slice(0, 4).map((item) => (
                         <InternshipCard key={item.id} item={item} />
                     ))}
-                </div>
+                </SectionCard>
 
-                <div className="dash-section">
-                    <div className="section-header">
-                        <h2>Convenios recientes</h2>
-                        <Link to="/agreements" className="link-more">Ver todos</Link>
-                    </div>
+                <SectionCard>
+                    <SectionHeader
+                        title="Convenios recientes"
+                        action={<Link to="/agreements" className="link-more">Ver todos</Link>}
+                    />
                     {agreements.length === 0 ? (
                         <p className="empty-msg">No hay convenios registrados.</p>
                     ) : (
@@ -222,19 +218,10 @@ function CentroAdminDashboard() {
                             </div>
                         ))
                     )}
-                </div>
+                </SectionCard>
             </div>
         </div>
     );
-}
-
-function StatusBadge({ status }) {
-    const map = {
-        pendiente: 'badge-amber',
-        aceptada: 'badge-green',
-        rechazada: 'badge-red',
-    };
-    return <span className={`badge ${map[status] || 'badge-gray'}`}>{status}</span>;
 }
 
 export default function Dashboard() {

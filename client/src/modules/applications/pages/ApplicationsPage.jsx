@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
-
-function StatusBadge({ status }) {
-    const map = { pendiente: 'badge-amber', aceptada: 'badge-green', rechazada: 'badge-red' };
-    const labels = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada' };
-    return <span className={`badge ${map[status] || 'badge-gray'}`}>{labels[status] || status}</span>;
-}
+import {
+    EmptyState,
+    LoadingState,
+    PageHeader,
+    StatusBadge,
+} from '../../../shared/components/ui';
 
 // Vista del alumno
 function AlumnoApplications() {
@@ -20,22 +20,20 @@ function AlumnoApplications() {
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return <div className="loading">Cargando...</div>;
+    if (loading) return <LoadingState />;
 
     return (
         <div className="page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Mis Candidaturas</h1>
-                    <p className="page-sub">{apps.length} candidatura{apps.length !== 1 ? 's' : ''} enviada{apps.length !== 1 ? 's' : ''}</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Mis Candidaturas"
+                subtitle={`${apps.length} candidatura${apps.length !== 1 ? 's' : ''} enviada${apps.length !== 1 ? 's' : ''}`}
+            />
 
             {apps.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">&#128140;</div>
-                    <p>No has enviado ninguna candidatura todavía.</p>
-                </div>
+                <EmptyState
+                    icon="📬"
+                    message="No has enviado ninguna candidatura todavía."
+                />
             ) : (
                 <div className="table-container">
                     <table className="data-table">
@@ -101,12 +99,10 @@ function ManagerApplications() {
 
     return (
         <div className="page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Candidatos</h1>
-                    <p className="page-sub">Selecciona una oferta para ver sus candidatos</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Candidatos"
+                subtitle="Selecciona una oferta para ver sus candidatos"
+            />
 
             {msg && <div className="alert-success" onClick={() => setMsg('')}>{msg}</div>}
 
@@ -134,7 +130,7 @@ function ManagerApplications() {
                     {!selected ? (
                         <p className="empty-msg">Selecciona una oferta a la izquierda.</p>
                     ) : loadingApps ? (
-                        <div className="loading">Cargando...</div>
+                        <LoadingState />
                     ) : apps.length === 0 ? (
                         <p className="empty-msg">Esta oferta no tiene candidatos todavía.</p>
                     ) : (
