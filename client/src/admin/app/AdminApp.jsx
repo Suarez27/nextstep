@@ -17,7 +17,7 @@ import {
 
 export default function AdminApp() {
     return (
-        <Admin dataProvider={dataProvider}>
+        <Admin basename="/admin" dataProvider={dataProvider}>
             <Resource
                 name="companies"
                 list={CompaniesList}

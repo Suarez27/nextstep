@@ -58,7 +58,7 @@ export const PRIVATE_ROUTES = [
         permissionKey: 'agreements',
     },
     {
-        path: 'admin',
+        path: 'admin/*',
         element: <AdminPage />,
         permissionKey: 'adminPanel',
     },

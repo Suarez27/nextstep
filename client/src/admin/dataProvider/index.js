@@ -1,4 +1,5 @@
-const API_BASE = '/api/admin';
+const API_ROOT = import.meta.env.VITE_API_BASE || 'http://localhost:4000/api';
+const API_BASE = API_ROOT.endsWith('/api') ? `${API_ROOT}/admin` : `${API_ROOT}/api/admin`;
 
 async function httpClient(url, options = {}) {
     const token = localStorage.getItem('ns_token');
@@ -87,8 +88,14 @@ export const dataProvider = {
     },
 
     async getMany(resource, params) {
-        const result = await httpClient(`${API_BASE}/${resource}/batch?ids=${params.ids.join(',')}`);
-        return { data: result.data || [] };
+        const results = await Promise.all(
+            params.ids.map(async (id) => {
+                const result = await httpClient(`${API_BASE}/${resource}/${id}`);
+                return result.data;
+            })
+        );
+
+        return { data: results };
     },
 
     async getManyReference(resource, params) {

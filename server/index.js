@@ -1361,8 +1361,15 @@ async function start() {
         params
       );
 
-      const allowedSortFields = new Set(["id", "company_name", "sector", "city", "email"]);
-      const safeSortField = allowedSortFields.has(sortField) ? sortField : "id";
+      const sortMap = {
+        id: "c.id",
+        company_name: "c.company_name",
+        sector: "c.sector",
+        city: "c.city",
+        email: "u.email",
+      };
+
+      const safeSortField = sortMap[sortField] || "c.id";
 
       const rows = all(
         `
@@ -1848,8 +1855,19 @@ async function start() {
   );
 
   app.use(express.static(path.join(__dirname, "..", "public")));
-  app.get("/{*splat}", (_req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+
+  app.get("/{*splat}", (req, res) => {
+    if (req.path.startsWith("/api/")) {
+      return res.status(404).json({ error: "Endpoint no encontrado" });
+    }
+
+    const indexPath = path.join(__dirname, "..", "public", "index.html");
+
+    if (!fs.existsSync(indexPath)) {
+      return res.status(404).json({ error: "Frontend estatico no disponible en este entorno" });
+    }
+
+    return res.sendFile(indexPath);
   });
 
   app.listen(PORT, () => {
