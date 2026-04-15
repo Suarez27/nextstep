@@ -14,6 +14,14 @@ export const NAV_ITEMS = [
         icon: '&#9962;',
     },
     {
+        key: 'adminPanel',
+        to: '/admin',
+        label: {
+            [ROLES.ADMIN]: 'Backoffice',
+        },
+        icon: '&#9881;',
+    },
+    {
         key: 'internships',
         to: '/internships',
         label: {

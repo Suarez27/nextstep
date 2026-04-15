@@ -27,6 +27,7 @@ export const PERMISSIONS = {
     studentResetPassword: [ROLES.ADMIN, ROLES.CENTRO],
 
     followupCreate: [ROLES.ADMIN, ROLES.CENTRO, ROLES.EMPRESA],
+    adminPanel: [ROLES.ADMIN],
 };
 
 export function canAccess(permissionKey, role) {

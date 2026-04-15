@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
     EmptyState,
     PageHeader,
@@ -166,6 +167,7 @@ function CentroAdminDashboard() {
     const [internships, setInternships] = useState([]);
     const [students, setStudents] = useState([]);
     const [agreements, setAgreements] = useState([]);
+    const canOpenAdminPanel = useCanAccess('adminPanel');
 
     useEffect(() => {
         Promise.all([
@@ -179,7 +181,16 @@ function CentroAdminDashboard() {
 
     return (
         <div className="dashboard">
-            <PageHeader title="Panel de Gestión" />
+            <PageHeader
+                title="Panel de Gestión"
+                actions={
+                    canOpenAdminPanel ? (
+                        <Link to="/admin" className="btn-primary">
+                            Abrir backoffice
+                        </Link>
+                    ) : null
+                }
+            />
 
             <div className="stats-row">
                 <StatCard icon="&#128188;" label="Prácticas" value={internships.length} color="blue" />

@@ -684,3 +684,58 @@ A partir de este punto:
 - la navegación se resuelve desde configuración
 - las acciones visibles en pantalla deben apoyarse preferentemente en `useCanAccess(...)`
 - los endpoints sensibles deben apoyarse en `permissionRequired(...)`
+
+## H4 - Base CRUD reutilizable con React Admin
+
+### Objetivo
+Crear un backoffice administrativo separado del portal principal, basado en React Admin, para acelerar la construcción de CRUDs reutilizables.
+
+### Estructura base creada
+```text
+client/src/admin/
+  app/
+  dataProvider/
+  resources/
+    companies/
+  shared/
+    crud/
+
+    ### H4 paso 2
+
+#### Mejoras de la base CRUD reusable
+- `BaseForm`
+- `BaseDatagrid`
+
+#### Recursos administrativos funcionales
+- `companies`
+- `internships`
+
+#### Regla
+Todo nuevo recurso de React Admin debe seguir la estructura:
+
+```text
+admin/resources/<resource>/
+  <Resource>List.jsx
+  <Resource>Create.jsx
+  <Resource>Edit.jsx
+  <Resource>Show.jsx
+  index.js
+  ### Cierre H4
+
+#### Acceso al backoffice
+- La ruta `/admin` existe como espacio separado del portal principal.
+- Solo el rol `admin` puede acceder al backoffice.
+- El acceso al backoffice aparece en la navegación lateral y en el dashboard del administrador.
+
+#### Cómo crear un nuevo recurso de React Admin
+Ejemplo: `catalogs`
+
+Estructura recomendada:
+
+```text
+client/src/admin/resources/catalogs/
+  CatalogsList.jsx
+  CatalogsCreate.jsx
+  CatalogsEdit.jsx
+  CatalogsShow.jsx
+  index.js

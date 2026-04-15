@@ -1302,6 +1302,551 @@ async function start() {
     res.json(rows);
   });
 
+  const adminInternshipSchema = z.object({
+    company_id: z.number().int().min(1),
+    title: z.string().min(4).max(200),
+    description: z.string().min(10).max(4000),
+    hours_total: z.number().int().min(1).max(2000),
+    schedule: z.string().max(120).default(""),
+    slots: z.number().int().min(1).max(50),
+  });
+
+  // =========================
+  // ADMIN - COMPANIES CRUD
+  // =========================
+
+  app.get(
+    "/api/admin/companies",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const sortField = req.query.sortField || "id";
+      const sortOrder = (req.query.sortOrder || "ASC").toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+      let filter = {};
+      try {
+        filter = req.query.filter ? JSON.parse(req.query.filter) : {};
+      } catch (_e) {
+        filter = {};
+      }
+
+      const q = String(filter.q || "").trim().toLowerCase();
+
+      const where = [];
+      const params = {};
+
+      if (q) {
+        where.push(`(
+        LOWER(c.company_name) LIKE :q
+        OR LOWER(COALESCE(c.sector, '')) LIKE :q
+        OR LOWER(COALESCE(c.city, '')) LIKE :q
+        OR LOWER(COALESCE(u.email, '')) LIKE :q
+      )`);
+        params[":q"] = `%${q}%`;
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const offset = (page - 1) * perPage;
+
+      const totalRow = get(
+        `
+      SELECT COUNT(*) AS total
+      FROM companies c
+      JOIN users u ON u.id = c.user_id
+      ${whereSql}
+      `,
+        params
+      );
+
+      const allowedSortFields = new Set(["id", "company_name", "sector", "city", "email"]);
+      const safeSortField = allowedSortFields.has(sortField) ? sortField : "id";
+
+      const rows = all(
+        `
+      SELECT
+        c.id,
+        c.company_name,
+        c.sector,
+        c.city,
+        u.email
+      FROM companies c
+      JOIN users u ON u.id = c.user_id
+      ${whereSql}
+      ORDER BY ${safeSortField} ${sortOrder}
+      LIMIT ${perPage} OFFSET ${offset}
+      `,
+        params
+      );
+
+      return res.json({
+        data: rows,
+        total: totalRow?.total || 0,
+      });
+    }
+  );
+
+  app.get(
+    "/api/admin/companies/:id",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const id = Number(req.params.id);
+
+      const row = get(
+        `
+      SELECT
+        c.id,
+        c.company_name,
+        c.sector,
+        c.city,
+        u.email
+      FROM companies c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.id = :id
+      `,
+        { ":id": id }
+      );
+
+      if (!row) return res.status(404).json({ error: "Empresa no encontrada" });
+
+      return res.json({ data: row });
+    }
+  );
+
+  app.post(
+    "/api/admin/companies",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const { company_name, sector = "", city = "", email = "" } = req.body;
+
+      if (!company_name || !String(company_name).trim()) {
+        return res.status(400).json({ error: "El nombre de empresa es obligatorio" });
+      }
+
+      const createdAt = nowIso();
+      const safeEmail = String(email || "").trim().toLowerCase();
+
+      const userEmail = safeEmail || `empresa_${Date.now()}@nextstep.local`;
+      const passwordHash = bcrypt.hashSync("Demo1234!", 10);
+
+      run(
+        `
+      INSERT INTO users (name, email, password_hash, role, created_at)
+      VALUES (:name, :email, :password_hash, 'empresa', :created_at)
+      `,
+        {
+          ":name": String(company_name).trim(),
+          ":email": userEmail,
+          ":password_hash": passwordHash,
+          ":created_at": createdAt,
+        }
+      );
+
+      const userId = lastInsertId();
+
+      run(
+        `
+      INSERT INTO companies (user_id, company_name, sector, city, created_at)
+      VALUES (:user_id, :company_name, :sector, :city, :created_at)
+      `,
+        {
+          ":user_id": userId,
+          ":company_name": String(company_name).trim(),
+          ":sector": String(sector || "").trim(),
+          ":city": String(city || "").trim(),
+          ":created_at": createdAt,
+        }
+      );
+
+      const companyId = lastInsertId();
+
+      const row = get(
+        `
+      SELECT
+        c.id,
+        c.company_name,
+        c.sector,
+        c.city,
+        u.email
+      FROM companies c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.id = :id
+      `,
+        { ":id": companyId }
+      );
+
+      return res.status(201).json({ data: row });
+    }
+  );
+
+  app.put(
+    "/api/admin/companies/:id",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const id = Number(req.params.id);
+      const { company_name, sector = "", city = "", email = "" } = req.body;
+
+      const existing = get(
+        `
+      SELECT c.id, c.user_id
+      FROM companies c
+      WHERE c.id = :id
+      `,
+        { ":id": id }
+      );
+
+      if (!existing) return res.status(404).json({ error: "Empresa no encontrada" });
+
+      run(
+        `
+      UPDATE companies
+      SET company_name = :company_name,
+          sector = :sector,
+          city = :city
+      WHERE id = :id
+      `,
+        {
+          ":id": id,
+          ":company_name": String(company_name || "").trim(),
+          ":sector": String(sector || "").trim(),
+          ":city": String(city || "").trim(),
+        }
+      );
+
+      if (email && String(email).trim()) {
+        run(
+          `
+        UPDATE users
+        SET email = :email
+        WHERE id = :user_id
+        `,
+          {
+            ":email": String(email).trim().toLowerCase(),
+            ":user_id": existing.user_id,
+          }
+        );
+      }
+
+      const row = get(
+        `
+      SELECT
+        c.id,
+        c.company_name,
+        c.sector,
+        c.city,
+        u.email
+      FROM companies c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.id = :id
+      `,
+        { ":id": id }
+      );
+
+      return res.json({ data: row });
+    }
+  );
+
+  app.delete(
+    "/api/admin/companies/:id",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const id = Number(req.params.id);
+
+      const existing = get(
+        `
+      SELECT c.id, c.user_id
+      FROM companies c
+      WHERE c.id = :id
+      `,
+        { ":id": id }
+      );
+
+      if (!existing) return res.status(404).json({ error: "Empresa no encontrada" });
+
+      run(`DELETE FROM companies WHERE id = :id`, { ":id": id });
+      run(`DELETE FROM users WHERE id = :user_id`, { ":user_id": existing.user_id });
+
+      return res.json({ data: { id } });
+    }
+  );
+
+  // =========================
+  // ADMIN - INTERNSHIPS CRUD
+  // =========================
+
+  app.get(
+    "/api/admin/internships",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const page = Number(req.query.page || 1);
+      const perPage = Number(req.query.perPage || 10);
+      const sortField = req.query.sortField || "id";
+      const sortOrder = (req.query.sortOrder || "ASC").toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+      let filter = {};
+      try {
+        filter = req.query.filter ? JSON.parse(req.query.filter) : {};
+      } catch (_e) {
+        filter = {};
+      }
+
+      const q = String(filter.q || "").trim().toLowerCase();
+
+      const where = [];
+      const params = {};
+
+      if (q) {
+        where.push(`(
+        LOWER(i.title) LIKE :q
+        OR LOWER(COALESCE(i.description, '')) LIKE :q
+        OR LOWER(COALESCE(c.company_name, '')) LIKE :q
+      )`);
+        params[":q"] = `%${q}%`;
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const offset = (page - 1) * perPage;
+
+      const totalRow = get(
+        `
+      SELECT COUNT(*) AS total
+      FROM internships i
+      JOIN companies c ON c.id = i.company_id
+      ${whereSql}
+      `,
+        params
+      );
+
+      const sortMap = {
+        id: "i.id",
+        title: "i.title",
+        hours_total: "i.hours_total",
+        slots: "i.slots",
+        schedule: "i.schedule",
+        company_name: "c.company_name",
+        created_at: "i.created_at",
+      };
+
+      const safeSortField = sortMap[sortField] || "i.id";
+
+      const rows = all(
+        `
+      SELECT
+        i.id,
+        i.company_id,
+        i.title,
+        i.description,
+        i.hours_total,
+        i.schedule,
+        i.slots,
+        i.created_at,
+        c.company_name
+      FROM internships i
+      JOIN companies c ON c.id = i.company_id
+      ${whereSql}
+      ORDER BY ${safeSortField} ${sortOrder}
+      LIMIT ${perPage} OFFSET ${offset}
+      `,
+        params
+      );
+
+      return res.json({
+        data: rows,
+        total: totalRow?.total || 0,
+      });
+    }
+  );
+
+  app.get(
+    "/api/admin/internships/:id",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const id = Number(req.params.id);
+
+      const row = get(
+        `
+      SELECT
+        i.id,
+        i.company_id,
+        i.title,
+        i.description,
+        i.hours_total,
+        i.schedule,
+        i.slots,
+        i.created_at,
+        c.company_name
+      FROM internships i
+      JOIN companies c ON c.id = i.company_id
+      WHERE i.id = :id
+      `,
+        { ":id": id }
+      );
+
+      if (!row) return res.status(404).json({ error: "Práctica no encontrada" });
+
+      return res.json({ data: row });
+    }
+  );
+
+  app.post(
+    "/api/admin/internships",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    validate(adminInternshipSchema),
+    (req, res) => {
+      const companyId = Number(req.body.company_id);
+
+      const company = get("SELECT id FROM companies WHERE id = :id", { ":id": companyId });
+      if (!company) return res.status(400).json({ error: "Empresa no válida" });
+
+      run(
+        `
+      INSERT INTO internships (company_id, title, description, hours_total, schedule, slots, created_at)
+      VALUES (:company_id, :title, :description, :hours_total, :schedule, :slots, :created_at)
+      `,
+        {
+          ":company_id": companyId,
+          ":title": req.body.title,
+          ":description": req.body.description,
+          ":hours_total": Number(req.body.hours_total),
+          ":schedule": req.body.schedule || "",
+          ":slots": Number(req.body.slots),
+          ":created_at": nowIso(),
+        }
+      );
+
+      const created = get(
+        `
+      SELECT
+        i.id,
+        i.company_id,
+        i.title,
+        i.description,
+        i.hours_total,
+        i.schedule,
+        i.slots,
+        i.created_at,
+        c.company_name
+      FROM internships i
+      JOIN companies c ON c.id = i.company_id
+      WHERE i.id = :id
+      `,
+        { ":id": lastInsertId() }
+      );
+
+      return res.status(201).json({ data: created });
+    }
+  );
+
+  app.put(
+    "/api/admin/internships/:id",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    validate(adminInternshipSchema),
+    (req, res) => {
+      const id = Number(req.params.id);
+      const companyId = Number(req.body.company_id);
+
+      const existing = get("SELECT id FROM internships WHERE id = :id", { ":id": id });
+      if (!existing) return res.status(404).json({ error: "Práctica no encontrada" });
+
+      const company = get("SELECT id FROM companies WHERE id = :id", { ":id": companyId });
+      if (!company) return res.status(400).json({ error: "Empresa no válida" });
+
+      run(
+        `
+      UPDATE internships
+      SET company_id = :company_id,
+          title = :title,
+          description = :description,
+          hours_total = :hours_total,
+          schedule = :schedule,
+          slots = :slots
+      WHERE id = :id
+      `,
+        {
+          ":id": id,
+          ":company_id": companyId,
+          ":title": req.body.title,
+          ":description": req.body.description,
+          ":hours_total": Number(req.body.hours_total),
+          ":schedule": req.body.schedule || "",
+          ":slots": Number(req.body.slots),
+        }
+      );
+
+      const updated = get(
+        `
+      SELECT
+        i.id,
+        i.company_id,
+        i.title,
+        i.description,
+        i.hours_total,
+        i.schedule,
+        i.slots,
+        i.created_at,
+        c.company_name
+      FROM internships i
+      JOIN companies c ON c.id = i.company_id
+      WHERE i.id = :id
+      `,
+        { ":id": id }
+      );
+
+      return res.json({ data: updated });
+    }
+  );
+
+  app.delete(
+    "/api/admin/internships/:id",
+    authRequired,
+    permissionRequired("adminPanel"),
+    roleRequired("admin"),
+    (req, res) => {
+      const id = Number(req.params.id);
+
+      const existing = get("SELECT id FROM internships WHERE id = :id", { ":id": id });
+      if (!existing) return res.status(404).json({ error: "Práctica no encontrada" });
+
+      const applicationsCount = get(
+        "SELECT COUNT(*) AS total FROM applications WHERE internship_id = :id",
+        { ":id": id }
+      );
+
+      const agreementsCount = get(
+        "SELECT COUNT(*) AS total FROM agreements WHERE internship_id = :id",
+        { ":id": id }
+      );
+
+      if ((applicationsCount?.total || 0) > 0 || (agreementsCount?.total || 0) > 0) {
+        return res.status(400).json({
+          error: "No se puede eliminar una práctica con candidaturas o convenios relacionados",
+        });
+      }
+
+      run("DELETE FROM internships WHERE id = :id", { ":id": id });
+
+      return res.json({ data: { id } });
+    }
+  );
+
   app.use(express.static(path.join(__dirname, "..", "public")));
   app.get("/{*splat}", (_req, res) => {
     res.sendFile(path.join(__dirname, "..", "public", "index.html"));
