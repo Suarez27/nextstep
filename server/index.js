@@ -13,6 +13,7 @@ const bcrypt = require("bcryptjs");
 const initSqlJs = require("sql.js");
 const { spawnSync } = require("child_process");
 const { z } = require("zod");
+const { authRequired, roleRequired, permissionRequired } = require("./middlewares/auth");
 
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "nextstep-dev-secret";
@@ -634,30 +635,6 @@ function initSchema() {
   )`);
 }
 
-function authRequired(req, res, next) {
-  const auth = req.headers.authorization || "";
-  const [type, token] = auth.split(" ");
-  if (type !== "Bearer" || !token) {
-    return res.status(401).json({ error: "Token requerido" });
-  }
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    return next();
-  } catch (_e) {
-    return res.status(401).json({ error: "Token invalido" });
-  }
-}
-
-function roleRequired(...roles) {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Sin permisos" });
-    }
-    return next();
-  };
-}
-
 function validate(schema) {
   return (req, res, next) => {
     const parsed = schema.safeParse(req.body);
@@ -889,7 +866,7 @@ async function start() {
     });
   });
 
-  app.get("/api/students/validated", authRequired, roleRequired("empresa", "centro", "admin"), (_req, res) => {
+  app.get("/api/students/validated", authRequired, permissionRequired("studentsValidatedView"), roleRequired("empresa", "centro", "admin"), (_req, res) => {
     const req = _req;
     if (req.user.role === "centro") {
       const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
@@ -916,7 +893,7 @@ async function start() {
     res.json(rows);
   });
 
-  app.get("/api/students/all", authRequired, roleRequired("centro", "admin"), (req, res) => {
+  app.get("/api/students/all", authRequired, permissionRequired("students"), roleRequired("centro", "admin"), (req, res) => {
     if (req.user.role === "centro") {
       const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
       const rows = all(
@@ -951,7 +928,7 @@ async function start() {
     password: z.string().min(8).max(120),
   });
 
-  app.post("/api/students", authRequired, roleRequired("centro", "admin"), validate(createStudentSchema), (req, res) => {
+  app.post("/api/students", authRequired, permissionRequired("studentCreate"), roleRequired("centro", "admin"), validate(createStudentSchema), (req, res) => {
     const { name, email, password } = req.body;
 
     const exists = get("SELECT id FROM users WHERE email = :email", { ":email": email.toLowerCase() });
@@ -1007,7 +984,7 @@ async function start() {
     return res.status(201).json(created);
   });
 
-  app.post("/api/students/:id/validate", authRequired, roleRequired("centro", "admin"), (req, res) => {
+  app.post("/api/students/:id/validate", authRequired, permissionRequired("studentValidate"), roleRequired("centro", "admin"), (req, res) => {
     const studentId = Number(req.params.id);
 
     if (req.user.role === "centro") {
@@ -1024,7 +1001,7 @@ async function start() {
     res.json(row);
   });
 
-  app.post("/api/students/:id/reset-password", authRequired, roleRequired("centro", "admin"), validate(resetStudentPasswordSchema), (req, res) => {
+  app.post("/api/students/:id/reset-password", authRequired, permissionRequired("studentResetPassword"), roleRequired("centro", "admin"), validate(resetStudentPasswordSchema), (req, res) => {
     const studentId = Number(req.params.id);
 
     const student = get("SELECT id, user_id, center_id FROM students WHERE id = :id", { ":id": studentId });
@@ -1078,12 +1055,12 @@ async function start() {
     res.json(updated);
   });
 
-  app.get("/api/companies/me", authRequired, roleRequired("empresa"), (req, res) => {
+  app.get("/api/companies/me", authRequired, permissionRequired("profile"), roleRequired("empresa"), (req, res) => {
     const company = get("SELECT * FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
     res.json(company);
   });
 
-  app.put("/api/companies/me", authRequired, roleRequired("empresa"), validate(companySchema), (req, res) => {
+  app.put("/api/companies/me", authRequired, permissionRequired("profile"), roleRequired("empresa"), validate(companySchema), (req, res) => {
     const exists = get("SELECT id FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
     if (!exists) {
       run(
@@ -1120,7 +1097,7 @@ async function start() {
     slots: z.number().int().min(1).max(50),
   });
 
-  app.post("/api/internships", authRequired, roleRequired("empresa"), validate(internshipSchema), (req, res) => {
+  app.post("/api/internships", authRequired, permissionRequired("internshipCreate"), roleRequired("empresa"), validate(internshipSchema), (req, res) => {
     const company = get("SELECT id FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
     if (!company) return res.status(400).json({ error: "Perfil de empresa incompleto" });
 
@@ -1152,7 +1129,7 @@ async function start() {
     res.json(rows);
   });
 
-  app.post("/api/applications/:internshipId", authRequired, (req, res) => {
+  app.post("/api/applications/:internshipId", authRequired, permissionRequired("internshipApply"), (req, res) => {
     const student = get("SELECT id FROM students WHERE user_id = :uid", { ":uid": req.user.id });
     if (!student) return res.status(403).json({ error: "Solo cuentas de alumno pueden postular" });
 
@@ -1179,7 +1156,7 @@ async function start() {
     res.status(201).json({ id: lastInsertId(), status: "pendiente" });
   });
 
-  app.get("/api/applications/my", authRequired, (req, res) => {
+  app.get("/api/applications/my", authRequired, permissionRequired("applicationsOwn"), (req, res) => {
     const student = get("SELECT id FROM students WHERE user_id = :uid", { ":uid": req.user.id });
     if (!student) return res.status(403).json({ error: "Solo cuentas de alumno tienen candidaturas" });
     const rows = all(
@@ -1194,7 +1171,7 @@ async function start() {
     res.json(rows);
   });
 
-  app.get("/api/applications/internship/:id", authRequired, roleRequired("empresa", "centro", "admin"), (req, res) => {
+  app.get("/api/applications/internship/:id", authRequired, permissionRequired("applicationsReview"), roleRequired("empresa", "centro", "admin"), (req, res) => {
     const rows = all(
       `SELECT a.id, a.status, a.created_at, s.id AS student_id, u.name AS student_name, u.email AS student_email
        FROM applications a
@@ -1211,7 +1188,7 @@ async function start() {
     status: z.enum(["pendiente", "aceptada", "rechazada"]),
   });
 
-  app.post("/api/applications/:id/status", authRequired, roleRequired("empresa", "centro", "admin"), validate(appStatusSchema), (req, res) => {
+  app.post("/api/applications/:id/status", authRequired, permissionRequired("applicationsStatusUpdate"), roleRequired("empresa", "centro", "admin"), validate(appStatusSchema), (req, res) => {
     run("UPDATE applications SET status=:status WHERE id=:id", {
       ":status": req.body.status,
       ":id": Number(req.params.id),
@@ -1226,7 +1203,7 @@ async function start() {
     notes: z.string().max(2000).default(""),
   });
 
-  app.post("/api/interviews", authRequired, roleRequired("empresa", "centro", "admin"), validate(interviewSchema), (req, res) => {
+  app.post("/api/interviews", authRequired, permissionRequired("interviewCreate"), roleRequired("empresa", "centro", "admin"), validate(interviewSchema), (req, res) => {
     run(
       `INSERT INTO interviews (application_id, interview_at, notes, created_at)
        VALUES (:application_id, :interview_at, :notes, :created_at)`,
@@ -1259,7 +1236,7 @@ async function start() {
     notes: z.string().max(2000).default(""),
   });
 
-  app.post("/api/agreements", authRequired, roleRequired("centro", "admin"), validate(agreementSchema), (req, res) => {
+  app.post("/api/agreements", authRequired, permissionRequired("agreementCreate"), roleRequired("centro", "admin"), validate(agreementSchema), (req, res) => {
     let center = get("SELECT id FROM centers WHERE user_id = :uid", { ":uid": req.user.id });
     if (!center) {
       center = { id: 1 };
@@ -1298,7 +1275,7 @@ async function start() {
     progress: z.number().int().min(0).max(100),
   });
 
-  app.post("/api/followups", authRequired, roleRequired("centro", "empresa", "admin"), validate(followupSchema), (req, res) => {
+  app.post("/api/followups", authRequired, permissionRequired("followupCreate"), roleRequired("centro", "empresa", "admin"), validate(followupSchema), (req, res) => {
     run(
       `INSERT INTO followups (student_id, author_user_id, content, progress, created_at)
        VALUES (:student_id, :author_user_id, :content, :progress, :created_at)`,

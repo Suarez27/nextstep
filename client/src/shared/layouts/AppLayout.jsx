@@ -1,11 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/context/AuthContext';
-import { NAV, ROLE_LABELS } from '../config/navigation';
+import { getNavigationForRole, ROLE_LABELS } from '../config/navigation';
 
 export default function AppLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const items = NAV[user?.role] || [];
+    const items = getNavigationForRole(user?.role);
 
     function handleLogout() {
         logout();

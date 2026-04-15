@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
     EmptyState,
     LoadingState,
@@ -161,7 +162,7 @@ function ManagerApplications() {
     );
 }
 
-export default function Applications() {
-    const { user } = useAuth();
-    return user.role === 'alumno' ? <AlumnoApplications /> : <ManagerApplications />;
+export default function ApplicationsPage() {
+    const canReviewApplications = useCanAccess('applicationsReview');
+    return canReviewApplications ? <ManagerApplications /> : <AlumnoApplications />;
 }

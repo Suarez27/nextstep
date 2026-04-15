@@ -476,7 +476,7 @@ Internships.jsx (y otras páginas)
 **Última actualización:** Marzo 2026
 
 
---------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Arquitectura base H1
 
@@ -617,3 +617,70 @@ El sistema de diseño base queda preparado para:
 - tarjetas y bloques de panel
 
 A partir de este punto, nuevas pantallas o CRUDs deben construirse apoyándose primero en la base de `shared/components/ui`.
+
+## H3 - Autenticacion, permisos y navegacion por rol
+
+### Objetivo
+Centralizar la lógica de acceso del sistema para que:
+- las rutas privadas,
+- la navegación,
+- los permisos por módulo,
+- y la validación backend
+
+respondan a una misma matriz de permisos.
+
+### Frontend
+Archivos principales:
+- `shared/config/roles.js`
+- `shared/config/permissions.js`
+- `shared/config/navigation.js`
+- `app/router/routeConfig.jsx`
+- `shared/router/ProtectedRoute.jsx`
+
+### Backend
+Archivos principales:
+- `server/utils/permissions.js`
+- `server/middlewares/auth.js`
+
+### Regla
+- Las rutas privadas del frontend deben declararse en `routeConfig.jsx`.
+- Cada ruta privada debe tener un `permissionKey`.
+- El menú debe derivarse de `navigation.js`, no construirse manualmente por pantalla.
+- En backend, los endpoints sensibles deben usar `authRequired` y, cuando aplique, `permissionRequired` y/o `roleRequired`.
+
+### Roles actuales
+- `admin`
+- `centro`
+- `empresa`
+- `alumno`
+
+### Cierre H3
+
+#### Permisos granulares añadidos
+Además de los permisos por módulo, el sistema ahora contempla permisos por acción, por ejemplo:
+- `internshipCreate`
+- `internshipApply`
+- `applicationsOwn`
+- `applicationsReview`
+- `applicationsStatusUpdate`
+- `agreementCreate`
+- `interviewCreate`
+- `studentCreate`
+- `studentValidate`
+- `studentResetPassword`
+- `followupCreate`
+
+#### Hook reusable
+Se añade:
+- `shared/hooks/useCanAccess.js`
+
+Objetivo:
+- evitar checks repetidos como `user.role === 'empresa'`
+- reutilizar la misma matriz de permisos dentro de componentes
+
+#### Regla
+A partir de este punto:
+- los accesos de ruta se resuelven con `permissionKey`
+- la navegación se resuelve desde configuración
+- las acciones visibles en pantalla deben apoyarse preferentemente en `useCanAccess(...)`
+- los endpoints sensibles deben apoyarse en `permissionRequired(...)`

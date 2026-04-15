@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
     Alert,
     Button,
@@ -111,7 +111,7 @@ function NewInterviewModal({ onClose, onCreated }) {
 }
 
 export default function Interviews() {
-    const { user } = useAuth();
+    const canCreate = useCanAccess('interviewCreate');
     const [interviews, setInterviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -127,8 +127,6 @@ export default function Interviews() {
     }
 
     useEffect(() => { load(); }, []);
-
-    const canCreate = ['empresa', 'centro', 'admin'].includes(user?.role);
 
     return (
         <div className="page">

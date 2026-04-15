@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
   Button,
   EmptyState,
@@ -116,6 +117,8 @@ function NewInternshipModal({ onClose, onCreated }) {
 
 export default function Internships() {
   const { user } = useAuth();
+  const canCreateInternship = useCanAccess('internshipCreate');
+  const canApplyToInternship = useCanAccess('internshipApply');
   const [internships, setInternships] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [msg, setMsg] = useState('');
@@ -154,10 +157,10 @@ export default function Internships() {
   return (
     <div className="page">
       <PageHeader
-        title={user.role === 'empresa' ? 'Mis Prácticas' : 'Ofertas de Prácticas'}
+        title={canCreateInternship ? 'Mis Prácticas' : 'Ofertas de Prácticas'}
         subtitle={`${internships.length} oferta${internships.length !== 1 ? 's' : ''} disponible${internships.length !== 1 ? 's' : ''}`}
         actions={
-          user.role === 'empresa' ? (
+          canCreateInternship ? (
             <Button onClick={() => setShowModal(true)}>+ Nueva oferta</Button>
           ) : null
         }
@@ -181,7 +184,7 @@ export default function Internships() {
           icon="💼"
           message="No hay ofertas que coincidan con tu búsqueda."
         >
-          {user.role === 'empresa' && (
+          {canCreateInternship && (
             <Button onClick={() => setShowModal(true)}>
               Publicar primera oferta
             </Button>
@@ -204,7 +207,7 @@ export default function Internships() {
                 <span className="tag tag-gray">{item.slots} plaza{item.slots !== 1 ? 's' : ''}</span>
                 {item.schedule && <span className="tag tag-gray">{item.schedule}</span>}
               </div>
-              {user.role === 'alumno' && (
+              {canApplyToInternship && (
                 <Button fullWidth className="mt" onClick={() => applyTo(item.id)}>
                   Postularme
                 </Button>
