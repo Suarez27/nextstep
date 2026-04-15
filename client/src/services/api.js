@@ -51,53 +51,182 @@ async function req(endpoint, opts = {}) {
  */
 export const api = {
   // --- AUTENTICACIÓN ---
-  login: (body) => req('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
-  register: (body) => req('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }),
-  me: () => req('/api/me'),
+  login: async (body) => {
+    const res = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
 
-  // --- OFERTAS DE PRÁCTICAS ---
-  getInternships: () => req('/api/internships'),
-  createInternship: (body) => req('/api/internships', { method: 'POST', body: JSON.stringify(body) }),
+  register: async (body) => {
+    const res = await req('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
 
-  // --- CANDIDATURAS / POSTULACIONES ---
-  applyToInternship: (id) => req(`/api/applications/${id}`, { method: 'POST' }),
-  myApplications: () => req('/api/applications/my'),
-  internshipApplications: (id) => req(`/api/applications/internship/${id}`),
-  setApplicationStatus: (id, status) =>
-    req(`/api/applications/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
+  me: async () => {
+    const res = await req('/api/me');
+    return res.data;
+  },
+
+  getInternships: async () => {
+    const res = await req('/api/internships');
+    return res.data;
+  },
+
+  createInternship: async (body) => {
+    const res = await req('/api/internships', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  applyToInternship: async (id) => {
+    const res = await req(`/api/applications/${id}`, { method: 'POST' });
+    return res.data;
+  },
+
+  myApplications: async () => {
+    const res = await req('/api/applications/my');
+    return res.data;
+  },
+
+  internshipApplications: async (id) => {
+    const res = await req(`/api/applications/internship/${id}`);
+    return res.data;
+  },
+
+  setApplicationStatus: async (id, status) => {
+    const res = await req(`/api/applications/${id}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    });
+    return res.data;
+  },
 
   // --- ALUMNOS ---
-  myStudentProfile: () => req('/api/students/me'),
-  updateStudentProfile: (body) => req('/api/students/me', { method: 'PUT', body: JSON.stringify(body) }),
-  uploadStudentCvPdf: (file) => {
+  myStudentProfile: async () => {
+    const res = await req('/api/students/me');
+    return res.data;
+  },
+
+  updateStudentProfile: async (body) => {
+    const res = await req('/api/students/me', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  uploadStudentCvPdf: async (file) => {
     const body = new FormData();
     body.append('cv_pdf', file);
-    return req('/api/students/me/cv-pdf', { method: 'POST', body });
+    const res = await req('/api/students/me/cv-pdf', {
+      method: 'POST',
+      body,
+    });
+    return res.data;
   },
-  validatedStudents: () => req('/api/students/validated'),
-  allStudents: () => req('/api/students/all'),
-  createStudent: (body) => req('/api/students', { method: 'POST', body: JSON.stringify(body) }),
-  validateStudent: (id) => req(`/api/students/${id}/validate`, { method: 'POST' }),
-  resetStudentPassword: (id, password) =>
-    req(`/api/students/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ password }) }),
 
-  // --- EMPRESAS ---
-  myCompanyProfile: () => req('/api/companies/me'),
-  updateCompanyProfile: (body) => req('/api/companies/me', { method: 'PUT', body: JSON.stringify(body) }),
+  validatedStudents: async () => {
+    const res = await req('/api/students/validated');
+    return res.data;
+  },
 
-  // --- CENTROS EDUCATIVOS ---
-  myCenterProfile: () => req('/api/centers/me'),
-  updateCenterProfile: (body) => req('/api/centers/me', { method: 'PUT', body: JSON.stringify(body) }),
+  allStudents: async () => {
+    const res = await req('/api/students/all');
+    return res.data;
+  },
 
-  // --- ENTREVISTAS ---
-  myInterviews: () => req('/api/interviews/my'),
-  createInterview: (body) => req('/api/interviews', { method: 'POST', body: JSON.stringify(body) }),
+  createStudent: async (body) => {
+    const res = await req('/api/students', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
 
-  // --- CONVENIOS ---
-  getAgreements: () => req('/api/agreements'),
-  createAgreement: (body) => req('/api/agreements', { method: 'POST', body: JSON.stringify(body) }),
+  validateStudent: async (id) => {
+    const res = await req(`/api/students/${id}/validate`, {
+      method: 'POST',
+    });
+    return res.data;
+  },
 
-  // --- SEGUIMIENTOS ---
-  getFollowups: (studentId) => req(`/api/followups/${studentId}`),
-  createFollowup: (body) => req('/api/followups', { method: 'POST', body: JSON.stringify(body) }),
+  resetStudentPassword: async (id, password) => {
+    const res = await req(`/api/students/${id}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+    return res.data;
+  },
+
+  myCompanyProfile: async () => {
+    const res = await req('/api/companies/me');
+    return res.data;
+  },
+
+  updateCompanyProfile: async (body) => {
+    const res = await req('/api/companies/me', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  myCenterProfile: async () => {
+    const res = await req('/api/centers/me');
+    return res.data;
+  },
+
+  updateCenterProfile: async (body) => {
+    const res = await req('/api/centers/me', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  myInterviews: async () => {
+    const res = await req('/api/interviews/my');
+    return res.data;
+  },
+
+  createInterview: async (body) => {
+    const res = await req('/api/interviews', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  getAgreements: async () => {
+    const res = await req('/api/agreements');
+    return res.data;
+  },
+
+  createAgreement: async (body) => {
+    const res = await req('/api/agreements', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  getFollowups: async (studentId) => {
+    const res = await req(`/api/followups/${studentId}`);
+    return res.data;
+  },
+
+  createFollowup: async (body) => {
+    const res = await req('/api/followups', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
 };

@@ -739,3 +739,80 @@ client/src/admin/resources/catalogs/
   CatalogsEdit.jsx
   CatalogsShow.jsx
   index.js
+## H5 - Normalizacion API y modularizacion backend
+
+### Estado inicial
+El backend original concentra mucha logica en `server/index.js`:
+- arranque del servidor
+- conexion y helpers de base de datos
+- migraciones y seed
+- validacion
+- endpoints HTTP
+- logica de dominio
+
+### Objetivo de H5
+Separar el backend por dominios y establecer un contrato API consistente.
+
+### Contrato API objetivo
+#### Exito
+```json
+{ "data": ... }
+
+### H5 paso 2
+
+#### Dominios modularizados
+- `auth`
+- `companies`
+- `centers`
+
+#### Estructura aplicada
+```text
+server/controllers/companies/
+server/controllers/centers/
+server/services/companies/
+server/services/centers/
+server/repositories/companies/
+server/repositories/centers/
+server/validators/companies/
+server/validators/centers/
+server/routes/companies.routes.js
+server/routes/centers.routes.js
+
+### H5 paso 3
+
+#### Dominio modularizado
+- `students`
+
+#### Estructura aplicada
+```text
+server/controllers/students/
+server/services/students/
+server/repositories/students/
+server/validators/students/
+server/routes/students.routes.js
+
+### H5 paso 4
+Dominios modularizados:
+- internships
+- applications
+
+### H5 paso 5
+Dominios modularizados:
+- interviews
+- agreements
+- followups
+
+### Estado H5
+Dominios backend modularizados:
+- auth
+- companies
+- centers
+- students
+- internships
+- applications
+- interviews
+- agreements
+- followups
+
+### Contrato frontend
+Las funciones de `client/src/services/api.js` para los dominios modularizados deben devolver `res.data`.

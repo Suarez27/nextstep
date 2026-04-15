@@ -14,6 +14,50 @@ const initSqlJs = require("sql.js");
 const { spawnSync } = require("child_process");
 const { z } = require("zod");
 const { authRequired, roleRequired, permissionRequired } = require("./middlewares/auth");
+const { createAuthRepository } = require("./repositories/auth/auth.repository");
+const { createAuthService } = require("./services/auth/auth.service");
+const { createAuthController } = require("./controllers/auth/auth.controller");
+const { createAuthRoutes } = require("./routes/auth.routes");
+const { errorHandler } = require("./middlewares/errorHandler");
+const { createCompaniesRepository } = require("./repositories/companies/companies.repository");
+const { createCompaniesService } = require("./services/companies/companies.service");
+const { createCompaniesController } = require("./controllers/companies/companies.controller");
+const { createCompaniesRoutes } = require("./routes/companies.routes");
+
+const { createCentersRepository } = require("./repositories/centers/centers.repository");
+const { createCentersService } = require("./services/centers/centers.service");
+const { createCentersController } = require("./controllers/centers/centers.controller");
+const { createCentersRoutes } = require("./routes/centers.routes");
+
+const { createStudentsRepository } = require("./repositories/students/students.repository");
+const { createStudentsService } = require("./services/students/students.service");
+const { createStudentsController } = require("./controllers/students/students.controller");
+const { createStudentsRoutes } = require("./routes/students.routes");
+
+const { createInternshipsRepository } = require("./repositories/internships/internships.repository");
+const { createInternshipsService } = require("./services/internships/internships.service");
+const { createInternshipsController } = require("./controllers/internships/internships.controller");
+const { createInternshipsRoutes } = require("./routes/internships.routes");
+
+const { createApplicationsRepository } = require("./repositories/applications/applications.repository");
+const { createApplicationsService } = require("./services/applications/applications.service");
+const { createApplicationsController } = require("./controllers/applications/applications.controller");
+const { createApplicationsRoutes } = require("./routes/applications.routes");
+
+const { createInterviewsRepository } = require("./repositories/interviews/interviews.repository");
+const { createInterviewsService } = require("./services/interviews/interviews.service");
+const { createInterviewsController } = require("./controllers/interviews/interviews.controller");
+const { createInterviewsRoutes } = require("./routes/interviews.routes");
+
+const { createAgreementsRepository } = require("./repositories/agreements/agreements.repository");
+const { createAgreementsService } = require("./services/agreements/agreements.service");
+const { createAgreementsController } = require("./controllers/agreements/agreements.controller");
+const { createAgreementsRoutes } = require("./routes/agreements.routes");
+
+const { createFollowupsRepository } = require("./repositories/followups/followups.repository");
+const { createFollowupsService } = require("./services/followups/followups.service");
+const { createFollowupsController } = require("./controllers/followups/followups.controller");
+const { createFollowupsRoutes } = require("./routes/followups.routes");
 
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "nextstep-dev-secret";
@@ -681,6 +725,35 @@ async function start() {
 
   const app = express();
 
+  const authRepository = createAuthRepository({ get, run, lastInsertId });
+  const authService = createAuthService({
+    authRepository,
+    buildToken,
+    nowIso,
+  });
+  const authController = createAuthController({
+    authService,
+    get,
+  });
+
+  const companiesRepository = createCompaniesRepository({ get, run });
+  const companiesService = createCompaniesService({
+    companiesRepository,
+    nowIso,
+  });
+  const companiesController = createCompaniesController({
+    companiesService,
+  });
+
+  const centersRepository = createCentersRepository({ get, run });
+  const centersService = createCentersService({
+    centersRepository,
+    nowIso,
+  });
+  const centersController = createCentersController({
+    centersService,
+  });
+
   const uploadCvPdf = multer({
     storage: multer.diskStorage({
       destination: (_req, _file, cb) => {
@@ -701,6 +774,103 @@ async function start() {
       return cb(new Error("Solo se permite subir archivos PDF"));
     },
   }).single("cv_pdf");
+
+  const studentsRepository = createStudentsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const studentsService = createStudentsService({
+    studentsRepository,
+    ensureCenterForUser,
+    nowIso,
+    removeStoredCvPdf,
+  });
+
+  const studentsController = createStudentsController({
+    studentsService,
+    uploadCvPdf,
+  });
+
+  const internshipsRepository = createInternshipsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const internshipsService = createInternshipsService({
+    internshipsRepository,
+    nowIso,
+  });
+
+  const internshipsController = createInternshipsController({
+    internshipsService,
+  });
+
+  const applicationsRepository = createApplicationsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const applicationsService = createApplicationsService({
+    applicationsRepository,
+    nowIso,
+  });
+
+  const applicationsController = createApplicationsController({
+    applicationsService,
+  });
+
+  const interviewsRepository = createInterviewsRepository({
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const interviewsService = createInterviewsService({
+    interviewsRepository,
+    nowIso,
+  });
+
+  const interviewsController = createInterviewsController({
+    interviewsService,
+  });
+
+  const agreementsRepository = createAgreementsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const agreementsService = createAgreementsService({
+    agreementsRepository,
+    nowIso,
+  });
+
+  const agreementsController = createAgreementsController({
+    agreementsService,
+  });
+
+  const followupsRepository = createFollowupsRepository({
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const followupsService = createFollowupsService({
+    followupsRepository,
+    nowIso,
+  });
+
+  const followupsController = createFollowupsController({
+    followupsService,
+  });
 
   app.use(helmet());
   app.use(cors());
@@ -726,581 +896,25 @@ async function start() {
     role: z.enum(["centro", "empresa"]),
   });
 
-  app.post("/api/auth/register", validate(registerSchema), (req, res) => {
-    const { name, email, password, role } = req.body;
-    const exists = get("SELECT id FROM users WHERE email = :email", { ":email": email.toLowerCase() });
-    if (exists) return res.status(409).json({ error: "Email ya registrado" });
-
-    const hash = bcrypt.hashSync(password, 10);
-    const createdAt = nowIso();
-
-    run(
-      `INSERT INTO users (name, email, password_hash, role, created_at)
-       VALUES (:name, :email, :password_hash, :role, :created_at)`,
-      {
-        ":name": name,
-        ":email": email.toLowerCase(),
-        ":password_hash": hash,
-        ":role": role,
-        ":created_at": createdAt,
-      }
-    );
-
-    const userId = lastInsertId();
-    if (role === "empresa") {
-      run(
-        `INSERT INTO companies (user_id, company_name, sector, city, created_at)
-         VALUES (:user_id, :company_name, '', '', :created_at)`,
-        {
-          ":user_id": userId,
-          ":company_name": `Empresa de ${name}`,
-          ":created_at": createdAt,
-        }
-      );
-    }
-
-    if (role === "centro") {
-      run(
-        `INSERT INTO centers (user_id, center_name, city, created_at)
-         VALUES (:user_id, :center_name, '', :created_at)`,
-        {
-          ":user_id": userId,
-          ":center_name": `Centro de ${name}`,
-          ":created_at": createdAt,
-        }
-      );
-    }
-
-    const user = get(
-      "SELECT id, name, email, role FROM users WHERE id = :id",
-      { ":id": userId }
-    );
-
-    return res.status(201).json({ token: buildToken(user), user });
-  });
-
   const loginSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
   });
 
-  app.post("/api/auth/login", validate(loginSchema), (req, res) => {
-    const { email, password } = req.body;
-    const user = get("SELECT * FROM users WHERE email = :email", { ":email": email.toLowerCase() });
-    if (!user) return res.status(401).json({ error: "Credenciales invalidas" });
-    const ok = bcrypt.compareSync(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: "Credenciales invalidas" });
+  app.use("/api/auth", createAuthRoutes({ authController }));
+  app.get("/api/me", authRequired, authController.me);
 
-    const safeUser = { id: user.id, name: user.name, email: user.email, role: user.role };
-    return res.json({ token: buildToken(safeUser), user: safeUser });
-  });
+  app.use("/api/companies", createCompaniesRoutes({ companiesController }));
+  app.use("/api/centers", createCentersRoutes({ centersController }));
 
-  app.get("/api/me", authRequired, (req, res) => {
-    const user = get("SELECT id, name, email, role, created_at FROM users WHERE id = :id", { ":id": req.user.id });
-    res.json(user);
-  });
+  app.use("/api/students", createStudentsRoutes({ studentsController }));
 
-  const studentProfileSchema = z.object({
-    cv_text: z.string().max(6000).default(""),
-    skills: z.string().max(1500).default(""),
-  });
+  app.use("/api/internships", createInternshipsRoutes({ internshipsController }));
+  app.use("/api/applications", createApplicationsRoutes({ applicationsController }));
 
-  app.get("/api/students/me", authRequired, (req, res) => {
-    const profile = get(
-      `SELECT s.id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, u.name, u.email
-       FROM students s
-       JOIN users u ON u.id = s.user_id
-       WHERE s.user_id = :uid`,
-      { ":uid": req.user.id }
-    );
-    if (!profile) return res.status(404).json({ error: "Perfil de alumno no encontrado" });
-    res.json(profile);
-  });
-
-  app.put("/api/students/me", authRequired, validate(studentProfileSchema), (req, res) => {
-    const student = get("SELECT id FROM students WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!student) return res.status(403).json({ error: "Solo cuentas de alumno pueden editar este perfil" });
-
-    run(
-      `UPDATE students SET cv_text = :cv_text, skills = :skills, validated = 0 WHERE user_id = :uid`,
-      {
-        ":cv_text": req.body.cv_text,
-        ":skills": req.body.skills,
-        ":uid": req.user.id,
-      }
-    );
-    const profile = get("SELECT id, cv_text, cv_pdf_url, skills, validated FROM students WHERE user_id = :uid", { ":uid": req.user.id });
-    res.json(profile);
-  });
-
-  app.post("/api/students/me/cv-pdf", authRequired, (req, res) => {
-    const student = get("SELECT id, cv_pdf_url FROM students WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!student) return res.status(403).json({ error: "Solo cuentas de alumno pueden subir CV" });
-
-    uploadCvPdf(req, res, (err) => {
-      if (err) {
-        if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
-          return res.status(400).json({ error: "El PDF supera el limite de 5MB" });
-        }
-        return res.status(400).json({ error: err.message || "No se pudo subir el archivo" });
-      }
-
-      if (!req.file) return res.status(400).json({ error: "Debes adjuntar un archivo PDF" });
-
-      const nextCvPdfUrl = `/uploads/cv/${req.file.filename}`;
-
-      run(
-        `UPDATE students SET cv_pdf_url = :cv_pdf_url, validated = 0 WHERE user_id = :uid`,
-        {
-          ":cv_pdf_url": nextCvPdfUrl,
-          ":uid": req.user.id,
-        }
-      );
-
-      if (student.cv_pdf_url && student.cv_pdf_url !== nextCvPdfUrl) {
-        removeStoredCvPdf(student.cv_pdf_url);
-      }
-
-      const profile = get("SELECT id, cv_text, cv_pdf_url, skills, validated FROM students WHERE user_id = :uid", { ":uid": req.user.id });
-      return res.json(profile);
-    });
-  });
-
-  app.get("/api/students/validated", authRequired, permissionRequired("studentsValidatedView"), roleRequired("empresa", "centro", "admin"), (_req, res) => {
-    const req = _req;
-    if (req.user.role === "centro") {
-      const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-      const rows = all(
-        `SELECT s.id, s.center_id, s.cv_text, s.skills, u.name, u.email
-         , s.cv_pdf_url
-         FROM students s
-         JOIN users u ON u.id = s.user_id
-         WHERE s.validated = 1 AND s.center_id = :cid
-         ORDER BY u.name ASC`,
-        { ":cid": center.id }
-      );
-      return res.json(rows);
-    }
-
-    const rows = all(
-      `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, u.name, u.email, c.center_name
-       FROM students s
-       JOIN users u ON u.id = s.user_id
-       LEFT JOIN centers c ON c.id = s.center_id
-       WHERE s.validated = 1
-       ORDER BY u.name ASC`
-    );
-    res.json(rows);
-  });
-
-  app.get("/api/students/all", authRequired, permissionRequired("students"), roleRequired("centro", "admin"), (req, res) => {
-    if (req.user.role === "centro") {
-      const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-      const rows = all(
-        `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, u.name, u.email
-         FROM students s
-         JOIN users u ON u.id = s.user_id
-         WHERE s.center_id = :cid
-         ORDER BY s.validated ASC, u.name ASC`,
-        { ":cid": center.id }
-      );
-      return res.json(rows);
-    }
-
-    const rows = all(
-      `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, u.name, u.email, c.center_name
-       FROM students s
-       JOIN users u ON u.id = s.user_id
-       LEFT JOIN centers c ON c.id = s.center_id
-       ORDER BY s.validated ASC, u.name ASC`
-    );
-    return res.json(rows);
-  });
-
-  const createStudentSchema = z.object({
-    name: z.string().min(2).max(120),
-    email: z.string().email().max(200),
-    password: z.string().min(8).max(120),
-    center_id: z.number().int().min(1).optional(),
-  });
-
-  const resetStudentPasswordSchema = z.object({
-    password: z.string().min(8).max(120),
-  });
-
-  app.post("/api/students", authRequired, permissionRequired("studentCreate"), roleRequired("centro", "admin"), validate(createStudentSchema), (req, res) => {
-    const { name, email, password } = req.body;
-
-    const exists = get("SELECT id FROM users WHERE email = :email", { ":email": email.toLowerCase() });
-    if (exists) return res.status(409).json({ error: "Email ya registrado" });
-
-    let centerId;
-    if (req.user.role === "centro") {
-      const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-      centerId = center.id;
-    } else {
-      centerId = req.body.center_id;
-      if (!centerId) return res.status(400).json({ error: "center_id es obligatorio para admin" });
-    }
-
-    const centerExists = get("SELECT id FROM centers WHERE id = :id", { ":id": centerId });
-    if (!centerExists) return res.status(404).json({ error: "Centro no encontrado" });
-
-    const createdAt = nowIso();
-    const hash = bcrypt.hashSync(password, 10);
-
-    run(
-      `INSERT INTO users (name, email, password_hash, role, created_at)
-       VALUES (:name, :email, :password_hash, 'alumno', :created_at)`,
-      {
-        ":name": name,
-        ":email": email.toLowerCase(),
-        ":password_hash": hash,
-        ":created_at": createdAt,
-      }
-    );
-
-    const createdUser = get("SELECT id FROM users WHERE email = :email", { ":email": email.toLowerCase() });
-    const userId = createdUser ? createdUser.id : null;
-    if (!userId) return res.status(500).json({ error: "No se pudo crear el usuario del alumno" });
-    run(
-      `INSERT INTO students (user_id, center_id, cv_text, skills, validated, created_at)
-       VALUES (:user_id, :center_id, '', '', 0, :created_at)`,
-      {
-        ":user_id": userId,
-        ":center_id": centerId,
-        ":created_at": createdAt,
-      }
-    );
-
-    const created = get(
-      `SELECT s.id, s.center_id, s.validated, u.name, u.email
-       FROM students s
-       JOIN users u ON u.id = s.user_id
-       WHERE s.user_id = :uid`,
-      { ":uid": userId }
-    );
-
-    return res.status(201).json(created);
-  });
-
-  app.post("/api/students/:id/validate", authRequired, permissionRequired("studentValidate"), roleRequired("centro", "admin"), (req, res) => {
-    const studentId = Number(req.params.id);
-
-    if (req.user.role === "centro") {
-      const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-      const row = get("SELECT id FROM students WHERE id = :id AND center_id = :cid", {
-        ":id": studentId,
-        ":cid": center.id,
-      });
-      if (!row) return res.status(403).json({ error: "No puedes validar alumnos de otro centro" });
-    }
-
-    run("UPDATE students SET validated = 1 WHERE id = :id", { ":id": studentId });
-    const row = get("SELECT id, validated FROM students WHERE id = :id", { ":id": Number(req.params.id) });
-    res.json(row);
-  });
-
-  app.post("/api/students/:id/reset-password", authRequired, permissionRequired("studentResetPassword"), roleRequired("centro", "admin"), validate(resetStudentPasswordSchema), (req, res) => {
-    const studentId = Number(req.params.id);
-
-    const student = get("SELECT id, user_id, center_id FROM students WHERE id = :id", { ":id": studentId });
-    if (!student) return res.status(404).json({ error: "Alumno no encontrado" });
-
-    if (req.user.role === "centro") {
-      const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-      if (student.center_id !== center.id) {
-        return res.status(403).json({ error: "No puedes cambiar la clave de alumnos de otro centro" });
-      }
-    }
-
-    const hash = bcrypt.hashSync(req.body.password, 10);
-    run("UPDATE users SET password_hash = :hash WHERE id = :uid", {
-      ":hash": hash,
-      ":uid": student.user_id,
-    });
-
-    return res.json({ ok: true });
-  });
-
-  const companySchema = z.object({
-    company_name: z.string().min(2).max(200),
-    sector: z.string().max(120).default(""),
-    city: z.string().max(120).default(""),
-  });
-
-  const centerSchema = z.object({
-    center_name: z.string().min(2).max(200),
-    city: z.string().max(120).default(""),
-  });
-
-  app.get("/api/centers/me", authRequired, roleRequired("centro"), (req, res) => {
-    const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-    res.json(center);
-  });
-
-  app.put("/api/centers/me", authRequired, roleRequired("centro"), validate(centerSchema), (req, res) => {
-    const center = ensureCenterForUser(req.user.id, `Centro de ${req.user.name}`, "");
-
-    run(
-      `UPDATE centers SET center_name=:center_name, city=:city WHERE id=:id`,
-      {
-        ":center_name": req.body.center_name,
-        ":city": req.body.city,
-        ":id": center.id,
-      }
-    );
-
-    const updated = get("SELECT * FROM centers WHERE id = :id", { ":id": center.id });
-    res.json(updated);
-  });
-
-  app.get("/api/companies/me", authRequired, permissionRequired("profile"), roleRequired("empresa"), (req, res) => {
-    const company = get("SELECT * FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
-    res.json(company);
-  });
-
-  app.put("/api/companies/me", authRequired, permissionRequired("profile"), roleRequired("empresa"), validate(companySchema), (req, res) => {
-    const exists = get("SELECT id FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!exists) {
-      run(
-        `INSERT INTO companies (user_id, company_name, sector, city, created_at)
-         VALUES (:user_id, :company_name, :sector, :city, :created_at)`,
-        {
-          ":user_id": req.user.id,
-          ":company_name": req.body.company_name,
-          ":sector": req.body.sector,
-          ":city": req.body.city,
-          ":created_at": nowIso(),
-        }
-      );
-    } else {
-      run(
-        `UPDATE companies SET company_name=:company_name, sector=:sector, city=:city WHERE user_id=:uid`,
-        {
-          ":company_name": req.body.company_name,
-          ":sector": req.body.sector,
-          ":city": req.body.city,
-          ":uid": req.user.id,
-        }
-      );
-    }
-    const company = get("SELECT * FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
-    res.json(company);
-  });
-
-  const internshipSchema = z.object({
-    title: z.string().min(4).max(200),
-    description: z.string().min(10).max(4000),
-    hours_total: z.number().int().min(1).max(2000),
-    schedule: z.string().max(120).default(""),
-    slots: z.number().int().min(1).max(50),
-  });
-
-  app.post("/api/internships", authRequired, permissionRequired("internshipCreate"), roleRequired("empresa"), validate(internshipSchema), (req, res) => {
-    const company = get("SELECT id FROM companies WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!company) return res.status(400).json({ error: "Perfil de empresa incompleto" });
-
-    run(
-      `INSERT INTO internships (company_id, title, description, hours_total, schedule, slots, created_at)
-       VALUES (:company_id, :title, :description, :hours_total, :schedule, :slots, :created_at)`,
-      {
-        ":company_id": company.id,
-        ":title": req.body.title,
-        ":description": req.body.description,
-        ":hours_total": req.body.hours_total,
-        ":schedule": req.body.schedule,
-        ":slots": req.body.slots,
-        ":created_at": nowIso(),
-      }
-    );
-
-    const created = get("SELECT * FROM internships WHERE id = :id", { ":id": lastInsertId() });
-    res.status(201).json(created);
-  });
-
-  app.get("/api/internships", authRequired, (req, res) => {
-    const rows = all(
-      `SELECT i.*, c.company_name
-       FROM internships i
-       JOIN companies c ON c.id = i.company_id
-       ORDER BY i.created_at DESC`
-    );
-    res.json(rows);
-  });
-
-  app.post("/api/applications/:internshipId", authRequired, permissionRequired("internshipApply"), (req, res) => {
-    const student = get("SELECT id FROM students WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!student) return res.status(403).json({ error: "Solo cuentas de alumno pueden postular" });
-
-    const internshipId = Number(req.params.internshipId);
-    const internship = get("SELECT id FROM internships WHERE id = :id", { ":id": internshipId });
-    if (!internship) return res.status(404).json({ error: "Oferta no encontrada" });
-
-    const exists = get(
-      "SELECT id FROM applications WHERE internship_id=:iid AND student_id=:sid",
-      { ":iid": internshipId, ":sid": student.id }
-    );
-    if (exists) return res.status(409).json({ error: "Ya postulaste a esta oferta" });
-
-    run(
-      `INSERT INTO applications (internship_id, student_id, status, created_at)
-       VALUES (:internship_id, :student_id, 'pendiente', :created_at)`,
-      {
-        ":internship_id": internshipId,
-        ":student_id": student.id,
-        ":created_at": nowIso(),
-      }
-    );
-
-    res.status(201).json({ id: lastInsertId(), status: "pendiente" });
-  });
-
-  app.get("/api/applications/my", authRequired, permissionRequired("applicationsOwn"), (req, res) => {
-    const student = get("SELECT id FROM students WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!student) return res.status(403).json({ error: "Solo cuentas de alumno tienen candidaturas" });
-    const rows = all(
-      `SELECT a.id, a.status, a.created_at, i.title, c.company_name
-       FROM applications a
-       JOIN internships i ON i.id = a.internship_id
-       JOIN companies c ON c.id = i.company_id
-       WHERE a.student_id = :sid
-       ORDER BY a.created_at DESC`,
-      { ":sid": student.id }
-    );
-    res.json(rows);
-  });
-
-  app.get("/api/applications/internship/:id", authRequired, permissionRequired("applicationsReview"), roleRequired("empresa", "centro", "admin"), (req, res) => {
-    const rows = all(
-      `SELECT a.id, a.status, a.created_at, s.id AS student_id, u.name AS student_name, u.email AS student_email
-       FROM applications a
-       JOIN students s ON s.id = a.student_id
-       JOIN users u ON u.id = s.user_id
-       WHERE a.internship_id = :iid
-       ORDER BY a.created_at DESC`,
-      { ":iid": Number(req.params.id) }
-    );
-    res.json(rows);
-  });
-
-  const appStatusSchema = z.object({
-    status: z.enum(["pendiente", "aceptada", "rechazada"]),
-  });
-
-  app.post("/api/applications/:id/status", authRequired, permissionRequired("applicationsStatusUpdate"), roleRequired("empresa", "centro", "admin"), validate(appStatusSchema), (req, res) => {
-    run("UPDATE applications SET status=:status WHERE id=:id", {
-      ":status": req.body.status,
-      ":id": Number(req.params.id),
-    });
-    const row = get("SELECT id, status FROM applications WHERE id=:id", { ":id": Number(req.params.id) });
-    res.json(row);
-  });
-
-  const interviewSchema = z.object({
-    application_id: z.number().int().min(1),
-    interview_at: z.string().min(10).max(40),
-    notes: z.string().max(2000).default(""),
-  });
-
-  app.post("/api/interviews", authRequired, permissionRequired("interviewCreate"), roleRequired("empresa", "centro", "admin"), validate(interviewSchema), (req, res) => {
-    run(
-      `INSERT INTO interviews (application_id, interview_at, notes, created_at)
-       VALUES (:application_id, :interview_at, :notes, :created_at)`,
-      {
-        ":application_id": req.body.application_id,
-        ":interview_at": req.body.interview_at,
-        ":notes": req.body.notes,
-        ":created_at": nowIso(),
-      }
-    );
-    res.status(201).json({ id: lastInsertId() });
-  });
-
-  app.get("/api/interviews/my", authRequired, (req, res) => {
-    const rows = all(
-      `SELECT i.id, i.interview_at, i.notes, a.status, u.name AS student_name, inr.title
-       FROM interviews i
-       JOIN applications a ON a.id = i.application_id
-       JOIN students s ON s.id = a.student_id
-       JOIN users u ON u.id = s.user_id
-       JOIN internships inr ON inr.id = a.internship_id
-       ORDER BY i.interview_at ASC`
-    );
-    res.json(rows);
-  });
-
-  const agreementSchema = z.object({
-    internship_id: z.number().int().min(1),
-    student_id: z.number().int().min(1),
-    notes: z.string().max(2000).default(""),
-  });
-
-  app.post("/api/agreements", authRequired, permissionRequired("agreementCreate"), roleRequired("centro", "admin"), validate(agreementSchema), (req, res) => {
-    let center = get("SELECT id FROM centers WHERE user_id = :uid", { ":uid": req.user.id });
-    if (!center) {
-      center = { id: 1 };
-    }
-    run(
-      `INSERT INTO agreements (internship_id, student_id, center_id, signed_at, notes, created_at)
-       VALUES (:internship_id, :student_id, :center_id, :signed_at, :notes, :created_at)`,
-      {
-        ":internship_id": req.body.internship_id,
-        ":student_id": req.body.student_id,
-        ":center_id": center.id,
-        ":signed_at": nowIso(),
-        ":notes": req.body.notes,
-        ":created_at": nowIso(),
-      }
-    );
-    res.status(201).json({ id: lastInsertId() });
-  });
-
-  app.get("/api/agreements", authRequired, roleRequired("centro", "empresa", "admin"), (_req, res) => {
-    const rows = all(
-      `SELECT ag.id, ag.signed_at, ag.notes, inr.title, u.name AS student_name, c.center_name
-       FROM agreements ag
-       JOIN internships inr ON inr.id = ag.internship_id
-       JOIN students s ON s.id = ag.student_id
-       JOIN users u ON u.id = s.user_id
-       JOIN centers c ON c.id = ag.center_id
-       ORDER BY ag.created_at DESC`
-    );
-    res.json(rows);
-  });
-
-  const followupSchema = z.object({
-    student_id: z.number().int().min(1),
-    content: z.string().min(4).max(3000),
-    progress: z.number().int().min(0).max(100),
-  });
-
-  app.post("/api/followups", authRequired, permissionRequired("followupCreate"), roleRequired("centro", "empresa", "admin"), validate(followupSchema), (req, res) => {
-    run(
-      `INSERT INTO followups (student_id, author_user_id, content, progress, created_at)
-       VALUES (:student_id, :author_user_id, :content, :progress, :created_at)`,
-      {
-        ":student_id": req.body.student_id,
-        ":author_user_id": req.user.id,
-        ":content": req.body.content,
-        ":progress": req.body.progress,
-        ":created_at": nowIso(),
-      }
-    );
-    res.status(201).json({ id: lastInsertId() });
-  });
-
-  app.get("/api/followups/:studentId", authRequired, (req, res) => {
-    const rows = all(
-      `SELECT f.id, f.content, f.progress, f.created_at, u.name AS author_name
-       FROM followups f
-       JOIN users u ON u.id = f.author_user_id
-       WHERE f.student_id = :sid
-       ORDER BY f.created_at DESC`,
-      { ":sid": Number(req.params.studentId) }
-    );
-    res.json(rows);
-  });
+  app.use("/api/interviews", createInterviewsRoutes({ interviewsController }));
+  app.use("/api/agreements", createAgreementsRoutes({ agreementsController }));
+  app.use("/api/followups", createFollowupsRoutes({ followupsController }));
 
   const adminInternshipSchema = z.object({
     company_id: z.number().int().min(1),
@@ -1854,6 +1468,7 @@ async function start() {
     }
   );
 
+  app.use(errorHandler);
   app.use(express.static(path.join(__dirname, "..", "public")));
 
   app.get("/{*splat}", (req, res) => {
