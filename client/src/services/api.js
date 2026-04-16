@@ -72,6 +72,21 @@ export const api = {
     return res.data;
   },
 
+  getActiveCatalogs: async () => {
+    const res = await req('/api/catalogs');
+    return res.data;
+  },
+
+  getCatalogItemsByKey: async (key) => {
+    const res = await req(`/api/catalogs/${key}/items`);
+    return res.data;
+  },
+
+  getCatalogByKey: async (key) => {
+    const res = await req(`/api/catalogs/${key}`);
+    return res.data;
+  },
+
   getInternships: async () => {
     const res = await req('/api/internships');
     return res.data;

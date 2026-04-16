@@ -1,7 +1,21 @@
 import BusinessIcon from '@mui/icons-material/Business';
+import CategoryIcon from '@mui/icons-material/Category';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import WorkIcon from '@mui/icons-material/Work';
 import { Admin, Resource } from 'react-admin';
 import { dataProvider } from '../dataProvider';
+import {
+    CatalogItemsCreate,
+    CatalogItemsEdit,
+    CatalogItemsList,
+    CatalogItemsShow,
+} from '../resources/catalog-items';
+import {
+    CatalogsCreate,
+    CatalogsEdit,
+    CatalogsList,
+    CatalogsShow,
+} from '../resources/catalogs';
 import {
     CompaniesCreate,
     CompaniesEdit,
@@ -36,6 +50,25 @@ export default function AdminApp() {
                 show={InternshipsShow}
                 icon={WorkIcon}
                 options={{ label: 'Prácticas' }}
+            />
+            <Resource
+                name="catalogs"
+                list={CatalogsList}
+                create={CatalogsCreate}
+                edit={CatalogsEdit}
+                show={CatalogsShow}
+                icon={CategoryIcon}
+                options={{ label: 'Catalogos' }}
+            />
+
+            <Resource
+                name="catalog-items"
+                list={CatalogItemsList}
+                create={CatalogItemsCreate}
+                edit={CatalogItemsEdit}
+                show={CatalogItemsShow}
+                icon={ListAltIcon}
+                options={{ label: 'Catalog Items' }}
             />
         </Admin>
     );

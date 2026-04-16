@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
 import { useCanAccess } from '../../../shared/hooks/useCanAccess';
+import { useCatalogOptions } from '../../../shared/hooks/useCatalogs';
 import {
+  Alert,
   Button,
   EmptyState,
   FormField,
@@ -13,7 +15,9 @@ import {
 } from '../../../shared/components/ui';
 
 function NewInternshipModal({ onClose, onCreated }) {
+  const { options: areaOptions, loading: loadingAreas } = useCatalogOptions('areas');
   const [form, setForm] = useState({ title: '', description: '', hours_total: 300, schedule: '', slots: 1 });
+  const [selectedArea, setSelectedArea] = useState('');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -74,6 +78,24 @@ function NewInternshipModal({ onClose, onCreated }) {
           />
         </FormField>
 
+        <FormField
+          label="Area orientativa"
+          hint={loadingAreas ? 'Cargando areas...' : 'Se usa como ayuda visual por ahora; todavia no se persiste en BD.'}
+        >
+          <select
+            value={selectedArea}
+            onChange={(e) => setSelectedArea(e.target.value)}
+            disabled={loadingAreas}
+          >
+            <option value="">Seleccionar...</option>
+            {areaOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
         <FormRow>
           <FormField label="Horas totales">
             <input
@@ -119,11 +141,13 @@ export default function Internships() {
   const { user } = useAuth();
   const canCreateInternship = useCanAccess('internshipCreate');
   const canApplyToInternship = useCanAccess('internshipApply');
+  const { options: areaOptions, loading: loadingAreas } = useCatalogOptions('areas');
   const [internships, setInternships] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
 
   async function load() {
     setLoading(true);
@@ -148,11 +172,21 @@ export default function Internships() {
     }
   }
 
-  const filtered = internships.filter(
-    (i) =>
-      i.title.toLowerCase().includes(search.toLowerCase()) ||
-      i.company_name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = internships.filter((i) => {
+    const haystack = `${i.title} ${i.company_name} ${i.description || ''}`.toLowerCase();
+    const searchTerm = search.toLowerCase();
+    const matchesSearch = haystack.includes(searchTerm);
+
+    if (!selectedArea) return matchesSearch;
+
+    const area = areaOptions.find((option) => option.value === selectedArea);
+    const areaTerms = [selectedArea, area?.label || '']
+      .filter(Boolean)
+      .map((term) => term.toLowerCase());
+
+    const matchesArea = areaTerms.some((term) => haystack.includes(term));
+    return matchesSearch && matchesArea;
+  });
 
   return (
     <div className="page">
@@ -173,6 +207,18 @@ export default function Internships() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <select
+          value={selectedArea}
+          onChange={(e) => setSelectedArea(e.target.value)}
+          disabled={loadingAreas}
+        >
+          <option value="">Todas las areas</option>
+          {areaOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {msg && <div className="alert-success" onClick={() => setMsg('')}>{msg} (clic para cerrar)</div>}

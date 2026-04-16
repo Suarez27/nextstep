@@ -58,6 +58,15 @@ const { createFollowupsRepository } = require("./repositories/followups/followup
 const { createFollowupsService } = require("./services/followups/followups.service");
 const { createFollowupsController } = require("./controllers/followups/followups.controller");
 const { createFollowupsRoutes } = require("./routes/followups.routes");
+const { createCatalogsRepository } = require("./repositories/catalogs/catalogs.repository");
+const { createCatalogsService } = require("./services/catalogs/catalogs.service");
+const { createCatalogsController } = require("./controllers/catalogs/catalogs.controller");
+const { createCatalogsRoutes } = require("./routes/catalogs.routes");
+const { createCatalogsPublicRoutes } = require("./routes/catalogs-public.routes");
+const { createCatalogItemsRepository } = require("./repositories/catalogItems/catalogItems.repository");
+const { createCatalogItemsService } = require("./services/catalogItems/catalogItems.service");
+const { createCatalogItemsController } = require("./controllers/catalogItems/catalogItems.controller");
+const { createCatalogItemsRoutes } = require("./routes/catalog-items.routes");
 
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "nextstep-dev-secret";
@@ -872,6 +881,38 @@ async function start() {
     followupsService,
   });
 
+  const catalogsRepository = createCatalogsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const catalogsService = createCatalogsService({
+    catalogsRepository,
+    nowIso,
+  });
+
+  const catalogsController = createCatalogsController({
+    catalogsService,
+  });
+
+  const catalogItemsRepository = createCatalogItemsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const catalogItemsService = createCatalogItemsService({
+    catalogItemsRepository,
+    nowIso,
+  });
+
+  const catalogItemsController = createCatalogItemsController({
+    catalogItemsService,
+  });
+
   app.use(helmet());
   app.use(cors());
   app.use(express.json({ limit: "1mb" }));
@@ -906,6 +947,7 @@ async function start() {
 
   app.use("/api/companies", createCompaniesRoutes({ companiesController }));
   app.use("/api/centers", createCentersRoutes({ centersController }));
+  app.use("/api/catalogs", createCatalogsPublicRoutes({ catalogsController }));
 
   app.use("/api/students", createStudentsRoutes({ studentsController }));
 
@@ -915,6 +957,8 @@ async function start() {
   app.use("/api/interviews", createInterviewsRoutes({ interviewsController }));
   app.use("/api/agreements", createAgreementsRoutes({ agreementsController }));
   app.use("/api/followups", createFollowupsRoutes({ followupsController }));
+  app.use("/api/admin/catalogs", createCatalogsRoutes({ catalogsController }));
+  app.use("/api/admin/catalog-items", createCatalogItemsRoutes({ catalogItemsController }));
 
   const adminInternshipSchema = z.object({
     company_id: z.number().int().min(1),

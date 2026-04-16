@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import { useCatalogDocumentType, useCatalogOptions } from '../../../shared/hooks/useCatalogs';
 import {
   Alert,
   Button,
@@ -21,6 +22,7 @@ function StudentProfile() {
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const { item: cvPdfDocumentType, meta: cvPdfMeta } = useCatalogDocumentType('document_types', 'cv_pdf');
 
   useEffect(() => {
     api.myStudentProfile()
@@ -120,12 +122,18 @@ function StudentProfile() {
         </FormField>
 
         <FormField
-          label="CV en PDF"
-          hint={uploadingPdf ? 'Subiendo PDF...' : 'Maximo 5MB. Formato permitido: PDF.'}
+          label={cvPdfDocumentType?.label || 'CV en PDF'}
+          hint={
+            uploadingPdf
+              ? 'Subiendo PDF...'
+              : cvPdfDocumentType
+                ? `${cvPdfDocumentType.label}. Maximo 5MB. Formato permitido: ${cvPdfMeta.accept || 'PDF'}.`
+                : 'Maximo 5MB. Formato permitido: PDF.'
+          }
         >
           <input
             type="file"
-            accept="application/pdf,.pdf"
+            accept={cvPdfMeta.accept ? `application/pdf,${cvPdfMeta.accept}` : 'application/pdf,.pdf'}
             onChange={handleCvPdfChange}
             disabled={uploadingPdf}
           />
@@ -177,6 +185,7 @@ function CompanyProfile() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
+  const { options: sectorOptions, loading: loadingSectors } = useCatalogOptions('sectors');
 
   useEffect(() => {
     api.myCompanyProfile()
@@ -231,14 +240,23 @@ function CompanyProfile() {
           />
         </FormField>
         <FormRow>
-          <FormField label="Sector">
-            <input
-              type="text"
+          <FormField label="Sector" hint={loadingSectors ? 'Cargando catalogo de sectores...' : 'Selecciona un sector activo'}>
+            <select
               value={form.sector}
               onChange={(e) => setForm((f) => ({ ...f, sector: e.target.value }))}
-              maxLength={120}
               placeholder="Tecnología, Salud, Comercio..."
-            />
+              disabled={loadingSectors}
+            >
+              <option value="">Seleccionar...</option>
+              {form.sector && !sectorOptions.some((option) => option.value === form.sector) && (
+                <option value={form.sector}>{form.sector}</option>
+              )}
+              {sectorOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField label="Ciudad">

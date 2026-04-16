@@ -52,7 +52,7 @@ export const dataProvider = {
 
         return {
             data: result.data || [],
-            total: result.total || 0,
+            total: result.meta?.total ?? result.total ?? 0,
         };
     },
 
@@ -116,7 +116,7 @@ export const dataProvider = {
 
         return {
             data: result.data || [],
-            total: result.total || 0,
+            total: result.meta?.total ?? result.total ?? 0,
         };
     },
 };

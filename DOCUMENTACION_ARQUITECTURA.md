@@ -816,3 +816,30 @@ Dominios backend modularizados:
 
 ### Contrato frontend
 Las funciones de `client/src/services/api.js` para los dominios modularizados deben devolver `res.data`.
+
+## H6 - Catalogos base admin
+
+### H6 paso 1
+- Se incorpora el dominio backend `catalogs` con arquitectura H5: `routes`, `controllers`, `services`, `repositories` y `validators`.
+- Se incorpora el dominio backend `catalog-items` con la misma separacion modular y contrato `{ data, meta? } / { error, code?, issues? }`.
+- Se anaden dos recursos de React Admin en `/admin`: `catalogs` y `catalog-items`.
+- Esta fase solo cubre base administrativa y CRUD protegido; no modifica aun formularios funcionales del portal principal.
+
+### H6 paso 2
+- Se exponen endpoints de lectura en `/api/catalogs` para consultar catalogos activos, items activos por clave y catalogo completo con items.
+- El frontend incorpora una capa reutilizable para catalogos en `services/catalogs` y hooks en `shared/hooks/useCatalogs.js`.
+- Se integra el consumo de catalogos en puntos funcionales iniciales:
+  sector de empresa con `sectors`,
+  area de practicas con `areas`,
+  y tipos de documento en el flujo de CV PDF con `document_types`.
+
+### Cierre H6
+- La gestion de catalogos queda separada en dos capas:
+  administracion CRUD en `/api/admin/catalogs` y `/api/admin/catalog-items`,
+  y consumo funcional en `/api/catalogs`.
+- El contrato H5 se mantiene en todas las rutas de H6:
+  exito `{ data, meta? }`,
+  error `{ error, code?, issues? }`.
+- El backoffice incorpora filtros basicos, soporte visual para activacion/desactivacion y orden por `sort_order`.
+- El frontend reutiliza catalogos sin hardcodear sectores, areas y el tipo documental del CV PDF.
+- Las listas de estado de negocio como candidaturas o convenios no se movieron a catalogos en H6 porque eso implicaria una decision de modelo mayor fuera del alcance de esta historia.
