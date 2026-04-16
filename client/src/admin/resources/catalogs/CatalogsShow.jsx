@@ -1,23 +1,21 @@
 import {
-    BooleanField,
     DateField,
-    SimpleShowLayout,
     TextField,
 } from 'react-admin';
-import { BaseShow } from '../../shared/crud';
+import { AdminBooleanField, BaseShow, BaseShowLayout } from '../../shared/crud';
 
 export default function CatalogsShow() {
     return (
         <BaseShow>
-            <SimpleShowLayout>
+            <BaseShowLayout>
                 <TextField source="id" />
                 <TextField source="key" label="Clave" />
                 <TextField source="name" label="Nombre" />
                 <TextField source="description" label="Descripcion" />
-                <BooleanField source="is_active" label="Activo" />
+                <AdminBooleanField source="is_active" />
                 <DateField source="created_at" label="Creado" showTime />
                 <DateField source="updated_at" label="Actualizado" showTime />
-            </SimpleShowLayout>
+            </BaseShowLayout>
         </BaseShow>
     );
 }

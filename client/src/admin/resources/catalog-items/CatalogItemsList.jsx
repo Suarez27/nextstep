@@ -1,5 +1,4 @@
 import {
-    BooleanField,
     BooleanInput,
     NumberField,
     NumberInput,
@@ -7,11 +6,11 @@ import {
     TextField,
     TextInput,
 } from 'react-admin';
-import { BaseDatagrid, BaseList } from '../../shared/crud';
+import { AdminBooleanField, BaseDatagrid, BaseList } from '../../shared/crud';
 
 const catalogItemFilters = [
     <TextInput key="q" source="q" label="Buscar" alwaysOn />,
-    <NumberInput key="catalog_id" source="catalog_id" label="Catalogo ID" />,
+    <NumberInput key="catalog_id" source="catalog_id" label="ID de catalogo" />,
     <BooleanInput key="is_active" source="is_active" label="Solo activos" />,
 ];
 
@@ -26,7 +25,7 @@ export default function CatalogItemsList() {
                 <TextField source="value" label="Valor" />
                 <TextField source="label" label="Etiqueta" />
                 <NumberField source="sort_order" label="Orden" />
-                <BooleanField source="is_active" label="Activo" />
+                <AdminBooleanField source="is_active" />
             </BaseDatagrid>
         </BaseList>
     );

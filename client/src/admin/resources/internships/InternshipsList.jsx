@@ -14,7 +14,7 @@ export default function InternshipsList() {
         <BaseList filters={internshipFilters}>
             <BaseDatagrid>
                 <TextField source="id" />
-                <TextField source="title" label="Título" />
+                <TextField source="title" label="Titulo" />
                 <TextField source="company_name" label="Empresa" />
                 <NumberField source="hours_total" label="Horas" />
                 <NumberField source="slots" label="Plazas" />

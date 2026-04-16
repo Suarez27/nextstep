@@ -843,3 +843,32 @@ Las funciones de `client/src/services/api.js` para los dominios modularizados de
 - El backoffice incorpora filtros basicos, soporte visual para activacion/desactivacion y orden por `sort_order`.
 - El frontend reutiliza catalogos sin hardcodear sectores, areas y el tipo documental del CV PDF.
 - Las listas de estado de negocio como candidaturas o convenios no se movieron a catalogos en H6 porque eso implicaria una decision de modelo mayor fuera del alcance de esta historia.
+
+## H31 - Base visual del admin
+
+### Objetivo
+- Dar al backoffice administrativo una identidad visual propia, mas clara y legible que la configuracion por defecto.
+
+### Base aplicada
+- `client/src/admin/theme/adminTheme.js`
+- `client/src/admin/layout/AdminLayout.jsx`
+- `client/src/admin/layout/AdminMenu.jsx`
+
+### Criterios
+- tema claro como estilo dominante
+- app bar y sidebar con mas contraste y jerarquia visual
+- tablas, formularios y botones con mejor lectura
+- iconografia consistente por recurso
+- sin cambios funcionales ni de backend
+
+### H31 paso 2
+- Se refuerza el sistema visual reutilizable del admin desde `shared/crud`, no desde estilos aislados por recurso.
+- Las listas ganan toolbar, empty state, datagrid mas legible y mejor jerarquia de acciones.
+- Create, edit y show comparten tarjetas, spacing, toolbar visual y estados mas claros.
+- Los estados booleanos como activo/inactivo pasan a una representacion visual consistente reutilizable.
+
+### Cierre H31
+- El admin queda apoyado en un tema claro centralizado, con mejor contraste general en navegacion, tablas, formularios y acciones.
+- `AdminLayout` y `AdminMenu` consolidan una experiencia mas legible en escritorio y portatil, con mejor jerarquia visual y labels consistentes.
+- Los componentes base de `shared/crud` concentran spacing, estados vacios, jerarquia de acciones y lectura de datos para todos los recursos actuales.
+- Se normalizan labels e iconografia de `companies`, `internships`, `catalogs` y `catalog-items` sin alterar backend, contratos API ni logica funcional.

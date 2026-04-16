@@ -1,9 +1,10 @@
-import BusinessIcon from '@mui/icons-material/Business';
-import CategoryIcon from '@mui/icons-material/Category';
-import ListAltIcon from '@mui/icons-material/ListAlt';
+import ApartmentIcon from '@mui/icons-material/Apartment';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import WorkIcon from '@mui/icons-material/Work';
 import { Admin, Resource } from 'react-admin';
 import { dataProvider } from '../dataProvider';
+import AdminLayout from '../layout/AdminLayout';
 import {
     CatalogItemsCreate,
     CatalogItemsEdit,
@@ -28,17 +29,18 @@ import {
     InternshipsList,
     InternshipsShow,
 } from '../resources/internships';
+import adminTheme from '../theme/adminTheme';
 
 export default function AdminApp() {
     return (
-        <Admin basename="/admin" dataProvider={dataProvider}>
+        <Admin basename="/admin" dataProvider={dataProvider} theme={adminTheme} layout={AdminLayout}>
             <Resource
                 name="companies"
                 list={CompaniesList}
                 create={CompaniesCreate}
                 edit={CompaniesEdit}
                 show={CompaniesShow}
-                icon={BusinessIcon}
+                icon={ApartmentIcon}
                 options={{ label: 'Empresas' }}
             />
 
@@ -49,15 +51,16 @@ export default function AdminApp() {
                 edit={InternshipsEdit}
                 show={InternshipsShow}
                 icon={WorkIcon}
-                options={{ label: 'Prácticas' }}
+                options={{ label: 'Practicas' }}
             />
+
             <Resource
                 name="catalogs"
                 list={CatalogsList}
                 create={CatalogsCreate}
                 edit={CatalogsEdit}
                 show={CatalogsShow}
-                icon={CategoryIcon}
+                icon={AutoStoriesIcon}
                 options={{ label: 'Catalogos' }}
             />
 
@@ -67,8 +70,8 @@ export default function AdminApp() {
                 create={CatalogItemsCreate}
                 edit={CatalogItemsEdit}
                 show={CatalogItemsShow}
-                icon={ListAltIcon}
-                options={{ label: 'Catalog Items' }}
+                icon={ChecklistRtlIcon}
+                options={{ label: 'Items de catalogo' }}
             />
         </Admin>
     );

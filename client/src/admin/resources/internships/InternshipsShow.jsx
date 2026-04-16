@@ -1,22 +1,21 @@
 import {
     NumberField,
-    SimpleShowLayout,
     TextField,
 } from 'react-admin';
-import { BaseShow } from '../../shared/crud';
+import { BaseShow, BaseShowLayout } from '../../shared/crud';
 
 export default function InternshipsShow() {
     return (
         <BaseShow>
-            <SimpleShowLayout>
+            <BaseShowLayout>
                 <TextField source="id" />
-                <TextField source="title" label="Título" />
+                <TextField source="title" label="Titulo" />
                 <TextField source="company_name" label="Empresa" />
-                <TextField source="description" label="Descripción" />
+                <TextField source="description" label="Descripcion" />
                 <NumberField source="hours_total" label="Horas totales" />
                 <TextField source="schedule" label="Horario" />
                 <NumberField source="slots" label="Plazas" />
-            </SimpleShowLayout>
+            </BaseShowLayout>
         </BaseShow>
     );
 }

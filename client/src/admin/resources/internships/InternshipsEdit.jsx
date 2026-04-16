@@ -17,8 +17,8 @@ export default function InternshipsEdit() {
                     <SelectInput optionText="company_name" optionValue="id" validate={required()} />
                 </ReferenceInput>
 
-                <TextInput source="title" label="Título" validate={required()} fullWidth />
-                <TextInput source="description" label="Descripción" multiline minRows={4} validate={required()} fullWidth />
+                <TextInput source="title" label="Titulo" validate={required()} fullWidth />
+                <TextInput source="description" label="Descripcion" multiline minRows={4} validate={required()} fullWidth />
                 <NumberInput source="hours_total" label="Horas totales" validate={required()} />
                 <TextInput source="schedule" label="Horario" fullWidth />
                 <NumberInput source="slots" label="Plazas" validate={required()} />
