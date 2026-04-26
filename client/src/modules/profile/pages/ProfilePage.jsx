@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
 import { useCatalogDocumentType, useCatalogOptions } from '../../../shared/hooks/useCatalogs';
+import CompanyDetailPanel from '../../companies/components/CompanyDetailPanel';
 import {
   Alert,
   Button,
@@ -174,34 +175,83 @@ function StudentProfile() {
           </Button>
         </FormActions>
       </form>
+
     </div>
   );
 }
 
 function CompanyProfile() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ company_name: '', sector: '', city: '' });
+  const [form, setForm] = useState({
+    company_name: '',
+    sector: '',
+    city: '',
+    description: '',
+    contact_email: '',
+    contact_phone: '',
+    contact_person: '',
+  });
+  const [company, setCompany] = useState(null);
+  const [internships, setInternships] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
   const { options: sectorOptions, loading: loadingSectors } = useCatalogOptions('sectors');
 
-  useEffect(() => {
-    api.myCompanyProfile()
-      .then((p) => {
-        if (p) setForm({ company_name: p.company_name || '', sector: p.sector || '', city: p.city || '' });
-      })
-      .catch(() => { })
-      .finally(() => setLoading(false));
+  const applyCompanyData = useCallback((data) => {
+    if (!data) return;
+
+    setCompany(data);
+    setForm({
+      company_name: data.company_name || '',
+      sector: data.sector || '',
+      city: data.city || '',
+      description: data.description || '',
+      contact_email: data.contact_email || '',
+      contact_phone: data.contact_phone || '',
+      contact_person: data.contact_person || '',
+    });
+    setInternships(data.internships || []);
   }, []);
+
+  const loadCompanyProfile = useCallback(async () => {
+    setLoading(true);
+    try {
+      const profile = await api.myCompanyProfile();
+      if (!profile) return;
+
+      applyCompanyData(profile);
+      const detail = await api.getCompanyDetail(profile.id);
+      applyCompanyData(detail);
+    } catch {
+      /* keep the profile page usable even if detail fails */
+    } finally {
+      setLoading(false);
+    }
+  }, [applyCompanyData]);
+
+  useEffect(() => { loadCompanyProfile(); }, [loadCompanyProfile]);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setMsg(''); setErr('');
     setSaving(true);
     try {
-      await api.updateCompanyProfile(form);
+      const updated = await api.updateCompanyProfile(form);
+      applyCompanyData({
+        ...company,
+        ...updated,
+        internships,
+      });
+      try {
+        if (updated?.id) {
+          const detail = await api.getCompanyDetail(updated.id);
+          applyCompanyData(detail);
+        }
+      } catch {
+        /* profile was saved; keep the current preview if detail reload fails */
+      }
       setMsg('Perfil de empresa actualizado correctamente.');
     } catch (e) {
       setErr(e.message);
@@ -212,11 +262,23 @@ function CompanyProfile() {
 
   if (loading) return <LoadingState />;
 
+  const previewCompany = {
+    ...company,
+    ...form,
+    is_active: company?.is_active,
+  };
+  const isActive = Boolean(company?.is_active);
+
   return (
     <div className="page">
       <PageHeader
         title="Perfil de Empresa"
         subtitle="Información visible para alumnos y centros educativos"
+        actions={
+          <span className={`badge badge-lg ${isActive ? 'badge-green' : 'badge-red'}`}>
+            {isActive ? 'Activa' : 'Inactiva'}
+          </span>
+        }
       />
 
       <div className="profile-card">
@@ -270,6 +332,51 @@ function CompanyProfile() {
           </FormField>
         </FormRow>
 
+        <FormField
+          label="Descripcion"
+          hint={`${form.description.length}/4000 caracteres`}
+        >
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            rows={5}
+            maxLength={4000}
+            placeholder="Presenta la actividad, entorno de practicas y tipo de colaboracion de la empresa."
+          />
+        </FormField>
+
+        <FormRow>
+          <FormField label="Persona de contacto">
+            <input
+              type="text"
+              value={form.contact_person}
+              onChange={(e) => setForm((f) => ({ ...f, contact_person: e.target.value }))}
+              maxLength={150}
+              placeholder="Nombre de la persona de referencia"
+            />
+          </FormField>
+
+          <FormField label="Telefono de contacto">
+            <input
+              type="text"
+              value={form.contact_phone}
+              onChange={(e) => setForm((f) => ({ ...f, contact_phone: e.target.value }))}
+              maxLength={50}
+              placeholder="Telefono"
+            />
+          </FormField>
+        </FormRow>
+
+        <FormField label="Email de contacto">
+          <input
+            type="email"
+            value={form.contact_email}
+            onChange={(e) => setForm((f) => ({ ...f, contact_email: e.target.value }))}
+            maxLength={200}
+            placeholder="contacto@empresa.com"
+          />
+        </FormField>
+
         {msg && <Alert>{msg}</Alert>}
         {err && <Alert variant="error">{err}</Alert>}
 
@@ -279,6 +386,10 @@ function CompanyProfile() {
           </Button>
         </FormActions>
       </form>
+
+      <div className="form-card company-preview-card">
+        <CompanyDetailPanel company={previewCompany} internships={internships} />
+      </div>
     </div>
   );
 }

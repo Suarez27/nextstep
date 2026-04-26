@@ -22,7 +22,7 @@ const { errorHandler } = require("./middlewares/errorHandler");
 const { createCompaniesRepository } = require("./repositories/companies/companies.repository");
 const { createCompaniesService } = require("./services/companies/companies.service");
 const { createCompaniesController } = require("./controllers/companies/companies.controller");
-const { createCompaniesRoutes } = require("./routes/companies.routes");
+const { createCompaniesRoutes, createAdminCompaniesRoutes } = require("./routes/companies.routes");
 
 const { createCentersRepository } = require("./repositories/centers/centers.repository");
 const { createCentersService } = require("./services/centers/centers.service");
@@ -443,7 +443,13 @@ function initSchema() {
       nombre_empresa VARCHAR(200) NOT NULL,
       sector VARCHAR(120) DEFAULT '',
       ciudad VARCHAR(120) DEFAULT '',
+      descripcion TEXT NULL,
+      correo_contacto VARCHAR(200) DEFAULT NULL,
+      telefono_contacto VARCHAR(50) DEFAULT NULL,
+      persona_contacto VARCHAR(150) DEFAULT NULL,
+      activo TINYINT(1) NOT NULL DEFAULT 1,
       creado_en VARCHAR(40) NOT NULL,
+      actualizado_en VARCHAR(40) DEFAULT NULL,
       CONSTRAINT fk_empresas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
@@ -548,6 +554,12 @@ function initSchema() {
     }
 
     ensureColumn("alumnos", "url_cv_pdf", "url_cv_pdf VARCHAR(500) NULL");
+    ensureColumn("empresas", "descripcion", "descripcion TEXT NULL");
+    ensureColumn("empresas", "correo_contacto", "correo_contacto VARCHAR(200) DEFAULT NULL");
+    ensureColumn("empresas", "telefono_contacto", "telefono_contacto VARCHAR(50) DEFAULT NULL");
+    ensureColumn("empresas", "persona_contacto", "persona_contacto VARCHAR(150) DEFAULT NULL");
+    ensureColumn("empresas", "activo", "activo TINYINT(1) NOT NULL DEFAULT 1");
+    ensureColumn("empresas", "actualizado_en", "actualizado_en VARCHAR(40) DEFAULT NULL");
 
     run("DROP VIEW IF EXISTS followups, agreements, interviews, applications, internships, students, companies, centers, users");
 
@@ -560,7 +572,19 @@ function initSchema() {
          FROM centros_educativos`);
 
     run(`CREATE VIEW companies AS
-         SELECT id, usuario_id AS user_id, nombre_empresa AS company_name, sector, ciudad AS city, creado_en AS created_at
+         SELECT
+           id,
+           usuario_id AS user_id,
+           nombre_empresa AS company_name,
+           sector,
+           ciudad AS city,
+           descripcion AS description,
+           correo_contacto AS contact_email,
+           telefono_contacto AS contact_phone,
+           persona_contacto AS contact_person,
+           activo AS is_active,
+           creado_en AS created_at,
+           actualizado_en AS updated_at
          FROM empresas`);
 
     run(`CREATE VIEW students AS
@@ -745,7 +769,7 @@ async function start() {
     get,
   });
 
-  const companiesRepository = createCompaniesRepository({ get, run });
+  const companiesRepository = createCompaniesRepository({ get, all, run, lastInsertId });
   const companiesService = createCompaniesService({
     companiesRepository,
     nowIso,
@@ -946,6 +970,7 @@ async function start() {
   app.get("/api/me", authRequired, authController.me);
 
   app.use("/api/companies", createCompaniesRoutes({ companiesController }));
+  app.use("/api/admin/companies", createAdminCompaniesRoutes({ companiesController }));
   app.use("/api/centers", createCentersRoutes({ centersController }));
   app.use("/api/catalogs", createCatalogsPublicRoutes({ catalogsController }));
 
@@ -968,282 +993,6 @@ async function start() {
     schedule: z.string().max(120).default(""),
     slots: z.number().int().min(1).max(50),
   });
-
-  // =========================
-  // ADMIN - COMPANIES CRUD
-  // =========================
-
-  app.get(
-    "/api/admin/companies",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const page = Number(req.query.page || 1);
-      const perPage = Number(req.query.perPage || 10);
-      const sortField = req.query.sortField || "id";
-      const sortOrder = (req.query.sortOrder || "ASC").toUpperCase() === "DESC" ? "DESC" : "ASC";
-
-      let filter = {};
-      try {
-        filter = req.query.filter ? JSON.parse(req.query.filter) : {};
-      } catch (_e) {
-        filter = {};
-      }
-
-      const q = String(filter.q || "").trim().toLowerCase();
-
-      const where = [];
-      const params = {};
-
-      if (q) {
-        where.push(`(
-        LOWER(c.company_name) LIKE :q
-        OR LOWER(COALESCE(c.sector, '')) LIKE :q
-        OR LOWER(COALESCE(c.city, '')) LIKE :q
-        OR LOWER(COALESCE(u.email, '')) LIKE :q
-      )`);
-        params[":q"] = `%${q}%`;
-      }
-
-      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-      const offset = (page - 1) * perPage;
-
-      const totalRow = get(
-        `
-      SELECT COUNT(*) AS total
-      FROM companies c
-      JOIN users u ON u.id = c.user_id
-      ${whereSql}
-      `,
-        params
-      );
-
-      const sortMap = {
-        id: "c.id",
-        company_name: "c.company_name",
-        sector: "c.sector",
-        city: "c.city",
-        email: "u.email",
-      };
-
-      const safeSortField = sortMap[sortField] || "c.id";
-
-      const rows = all(
-        `
-      SELECT
-        c.id,
-        c.company_name,
-        c.sector,
-        c.city,
-        u.email
-      FROM companies c
-      JOIN users u ON u.id = c.user_id
-      ${whereSql}
-      ORDER BY ${safeSortField} ${sortOrder}
-      LIMIT ${perPage} OFFSET ${offset}
-      `,
-        params
-      );
-
-      return res.json({
-        data: rows,
-        total: totalRow?.total || 0,
-      });
-    }
-  );
-
-  app.get(
-    "/api/admin/companies/:id",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const id = Number(req.params.id);
-
-      const row = get(
-        `
-      SELECT
-        c.id,
-        c.company_name,
-        c.sector,
-        c.city,
-        u.email
-      FROM companies c
-      JOIN users u ON u.id = c.user_id
-      WHERE c.id = :id
-      `,
-        { ":id": id }
-      );
-
-      if (!row) return res.status(404).json({ error: "Empresa no encontrada" });
-
-      return res.json({ data: row });
-    }
-  );
-
-  app.post(
-    "/api/admin/companies",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const { company_name, sector = "", city = "", email = "" } = req.body;
-
-      if (!company_name || !String(company_name).trim()) {
-        return res.status(400).json({ error: "El nombre de empresa es obligatorio" });
-      }
-
-      const createdAt = nowIso();
-      const safeEmail = String(email || "").trim().toLowerCase();
-
-      const userEmail = safeEmail || `empresa_${Date.now()}@nextstep.local`;
-      const passwordHash = bcrypt.hashSync("Demo1234!", 10);
-
-      run(
-        `
-      INSERT INTO users (name, email, password_hash, role, created_at)
-      VALUES (:name, :email, :password_hash, 'empresa', :created_at)
-      `,
-        {
-          ":name": String(company_name).trim(),
-          ":email": userEmail,
-          ":password_hash": passwordHash,
-          ":created_at": createdAt,
-        }
-      );
-
-      const userId = lastInsertId();
-
-      run(
-        `
-      INSERT INTO companies (user_id, company_name, sector, city, created_at)
-      VALUES (:user_id, :company_name, :sector, :city, :created_at)
-      `,
-        {
-          ":user_id": userId,
-          ":company_name": String(company_name).trim(),
-          ":sector": String(sector || "").trim(),
-          ":city": String(city || "").trim(),
-          ":created_at": createdAt,
-        }
-      );
-
-      const companyId = lastInsertId();
-
-      const row = get(
-        `
-      SELECT
-        c.id,
-        c.company_name,
-        c.sector,
-        c.city,
-        u.email
-      FROM companies c
-      JOIN users u ON u.id = c.user_id
-      WHERE c.id = :id
-      `,
-        { ":id": companyId }
-      );
-
-      return res.status(201).json({ data: row });
-    }
-  );
-
-  app.put(
-    "/api/admin/companies/:id",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const id = Number(req.params.id);
-      const { company_name, sector = "", city = "", email = "" } = req.body;
-
-      const existing = get(
-        `
-      SELECT c.id, c.user_id
-      FROM companies c
-      WHERE c.id = :id
-      `,
-        { ":id": id }
-      );
-
-      if (!existing) return res.status(404).json({ error: "Empresa no encontrada" });
-
-      run(
-        `
-      UPDATE companies
-      SET company_name = :company_name,
-          sector = :sector,
-          city = :city
-      WHERE id = :id
-      `,
-        {
-          ":id": id,
-          ":company_name": String(company_name || "").trim(),
-          ":sector": String(sector || "").trim(),
-          ":city": String(city || "").trim(),
-        }
-      );
-
-      if (email && String(email).trim()) {
-        run(
-          `
-        UPDATE users
-        SET email = :email
-        WHERE id = :user_id
-        `,
-          {
-            ":email": String(email).trim().toLowerCase(),
-            ":user_id": existing.user_id,
-          }
-        );
-      }
-
-      const row = get(
-        `
-      SELECT
-        c.id,
-        c.company_name,
-        c.sector,
-        c.city,
-        u.email
-      FROM companies c
-      JOIN users u ON u.id = c.user_id
-      WHERE c.id = :id
-      `,
-        { ":id": id }
-      );
-
-      return res.json({ data: row });
-    }
-  );
-
-  app.delete(
-    "/api/admin/companies/:id",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const id = Number(req.params.id);
-
-      const existing = get(
-        `
-      SELECT c.id, c.user_id
-      FROM companies c
-      WHERE c.id = :id
-      `,
-        { ":id": id }
-      );
-
-      if (!existing) return res.status(404).json({ error: "Empresa no encontrada" });
-
-      run(`DELETE FROM companies WHERE id = :id`, { ":id": id });
-      run(`DELETE FROM users WHERE id = :user_id`, { ":user_id": existing.user_id });
-
-      return res.json({ data: { id } });
-    }
-  );
 
   // =========================
   // ADMIN - INTERNSHIPS CRUD

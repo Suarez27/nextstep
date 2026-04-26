@@ -193,6 +193,11 @@ export const api = {
     return res.data;
   },
 
+  getCompanyDetail: async (id) => {
+    const res = await req(`/api/companies/${id}`);
+    return res.data;
+  },
+
   myCenterProfile: async () => {
     const res = await req('/api/centers/me');
     return res.data;

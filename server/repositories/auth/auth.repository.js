@@ -13,25 +13,55 @@ function createAuthRepository({ get, run, lastInsertId }) {
         },
 
         createUser({ name, email, passwordHash, role, createdAt }) {
+            const safeEmail = email.toLowerCase();
+
             run(
                 `INSERT INTO users (name, email, password_hash, role, created_at)
          VALUES (:name, :email, :password_hash, :role, :created_at)`,
                 {
                     ":name": name,
-                    ":email": email.toLowerCase(),
+                    ":email": safeEmail,
                     ":password_hash": passwordHash,
                     ":role": role,
                     ":created_at": createdAt,
                 }
             );
 
-            return lastInsertId();
+            const createdUser = get("SELECT id FROM users WHERE email = :email", {
+                ":email": safeEmail,
+            });
+
+            return createdUser?.id || lastInsertId();
         },
 
         createCompanyProfile({ userId, companyName, createdAt }) {
             run(
-                `INSERT INTO companies (user_id, company_name, sector, city, created_at)
-         VALUES (:user_id, :company_name, '', '', :created_at)`,
+                `INSERT INTO empresas (
+                    usuario_id,
+                    nombre_empresa,
+                    sector,
+                    ciudad,
+                    descripcion,
+                    correo_contacto,
+                    telefono_contacto,
+                    persona_contacto,
+                    activo,
+                    creado_en,
+                    actualizado_en
+                )
+                 VALUES (
+                    :user_id,
+                    :company_name,
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    1,
+                    :created_at,
+                    :created_at
+                )`,
                 {
                     ":user_id": userId,
                     ":company_name": companyName,

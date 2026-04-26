@@ -872,3 +872,28 @@ Las funciones de `client/src/services/api.js` para los dominios modularizados de
 - `AdminLayout` y `AdminMenu` consolidan una experiencia mas legible en escritorio y portatil, con mejor jerarquia visual y labels consistentes.
 - Los componentes base de `shared/crud` concentran spacing, estados vacios, jerarquia de acciones y lectura de datos para todos los recursos actuales.
 - Se normalizan labels e iconografia de `companies`, `internships`, `catalogs` y `catalog-items` sin alterar backend, contratos API ni logica funcional.
+
+## H7 - Empresas colaboradoras ampliadas
+
+### H7 paso 1
+- El dominio `companies` se amplia en backend para soportar ficha rica de empresa sobre la base H7: descripcion, datos de contacto, activacion y `updated_at`.
+- El CRUD admin de `companies` deja de vivir inline en `server/index.js` y pasa a reutilizar controller, service, repository y validator del dominio modular.
+- React Admin reutiliza el recurso existente `companies`, ahora con list, create, edit y show adaptados a la ficha ampliada y al estado `is_active`.
+- El arranque backend conserva la forma H7 de la vista `companies` para no perder los campos ampliados al reiniciar la API.
+- No se crea `company_contacts`; la ficha ampliada se mantiene dentro del recurso `companies`.
+- Esta fase no modifica todavia el portal funcional de empresa, centro ni la ficha publica/operativa.
+
+### H7 paso 2
+- El portal funcional incorpora una ficha reutilizable de empresa con datos ampliados, estado activo/inactivo y ofertas asociadas.
+- Se expone `GET /api/companies/:id` para lectura autenticada de detalle de empresa con sus practicas, manteniendo el contrato `{ data }`.
+- El centro educativo y el administrador funcional pueden abrir la ficha desde el listado de practicas, sin crear nuevas tablas ni relaciones.
+- El perfil `Mi Empresa` permite completar descripcion y datos de contacto, y muestra una vista previa operativa de la ficha.
+- Esta fase deja la ficha preparada para futuras relaciones, sin tocar documentos ni incidencias.
+
+### Cierre H7
+- `companies` queda como recurso unico para empresa colaboradora: no se anade `company_contacts` ni se crean tablas nuevas.
+- Campos H7 consolidados en backend, admin y portal: `description`, `contact_email`, `contact_phone`, `contact_person`, `is_active` y `updated_at`.
+- Las validaciones aceptan campos de contacto vacios cuando son opcionales y alinean longitudes con la base H7.
+- El admin permite listar, crear, editar, consultar y activar/desactivar empresas con labels consistentes.
+- El portal permite que empresa complete su ficha y que centro/admin consulten la ficha desde las practicas, incluyendo ofertas asociadas.
+- Queda fuera de H7 la relacion con documentos, incidencias u otros modulos futuros.

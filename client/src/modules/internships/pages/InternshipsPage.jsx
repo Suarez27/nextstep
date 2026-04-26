@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
 import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import { useCatalogOptions } from '../../../shared/hooks/useCatalogs';
+import CompanyDetailPanel from '../../companies/components/CompanyDetailPanel';
 import {
   Alert,
   Button,
@@ -138,12 +138,14 @@ function NewInternshipModal({ onClose, onCreated }) {
 }
 
 export default function Internships() {
-  const { user } = useAuth();
   const canCreateInternship = useCanAccess('internshipCreate');
   const canApplyToInternship = useCanAccess('internshipApply');
   const { options: areaOptions, loading: loadingAreas } = useCatalogOptions('areas');
   const [internships, setInternships] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(false);
+  const [companyError, setCompanyError] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -170,6 +172,28 @@ export default function Internships() {
     } catch (e) {
       setMsg(e.message);
     }
+  }
+
+  async function openCompany(companyId) {
+    if (!companyId) return;
+
+    setCompanyLoading(true);
+    setCompanyError('');
+    setSelectedCompany(null);
+    try {
+      const data = await api.getCompanyDetail(companyId);
+      setSelectedCompany(data);
+    } catch (e) {
+      setCompanyError(e.message);
+    } finally {
+      setCompanyLoading(false);
+    }
+  }
+
+  function closeCompany() {
+    setSelectedCompany(null);
+    setCompanyError('');
+    setCompanyLoading(false);
   }
 
   const filtered = internships.filter((i) => {
@@ -253,6 +277,14 @@ export default function Internships() {
                 <span className="tag tag-gray">{item.slots} plaza{item.slots !== 1 ? 's' : ''}</span>
                 {item.schedule && <span className="tag tag-gray">{item.schedule}</span>}
               </div>
+              <Button
+                variant="ghost"
+                fullWidth
+                className="mt"
+                onClick={() => openCompany(item.company_id)}
+              >
+                Ver empresa
+              </Button>
               {canApplyToInternship && (
                 <Button fullWidth className="mt" onClick={() => applyTo(item.id)}>
                   Postularme
@@ -265,6 +297,29 @@ export default function Internships() {
 
       {showModal && (
         <NewInternshipModal onClose={() => setShowModal(false)} onCreated={load} />
+      )}
+
+      {(companyLoading || selectedCompany || companyError) && (
+        <Modal
+          title="Ficha de empresa"
+          onClose={closeCompany}
+          actions={
+            <Button type="button" variant="ghost" onClick={closeCompany}>
+              Cerrar
+            </Button>
+          }
+        >
+          {companyLoading ? (
+            <LoadingState />
+          ) : companyError ? (
+            <Alert variant="error">{companyError}</Alert>
+          ) : (
+            <CompanyDetailPanel
+              company={selectedCompany}
+              internships={selectedCompany?.internships || []}
+            />
+          )}
+        </Modal>
       )}
     </div>
   );
