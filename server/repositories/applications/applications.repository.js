@@ -7,8 +7,14 @@ function createApplicationsRepository({ get, all, run, lastInsertId }) {
         },
 
         findInternshipById(id) {
-            return get("SELECT id FROM internships WHERE id = :id", {
+            return get("SELECT id, company_id, status, is_active, available_slots FROM internships WHERE id = :id", {
                 ":id": id,
+            });
+        },
+
+        findCompanyByUserId(userId) {
+            return get("SELECT id FROM companies WHERE user_id = :uid", {
+                ":uid": userId,
             });
         },
 
@@ -54,6 +60,21 @@ function createApplicationsRepository({ get, all, run, lastInsertId }) {
          WHERE a.internship_id = :iid
          ORDER BY a.created_at DESC`,
                 { ":iid": internshipId }
+            );
+        },
+
+        findApplicationById(applicationId) {
+            return get(
+                `SELECT
+                    a.id,
+                    a.status,
+                    a.internship_id,
+                    i.company_id,
+                    i.available_slots
+                 FROM applications a
+                 JOIN internships i ON i.id = a.internship_id
+                 WHERE a.id = :id`,
+                { ":id": applicationId }
             );
         },
 

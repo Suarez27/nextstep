@@ -87,8 +87,15 @@ export const api = {
     return res.data;
   },
 
-  getInternships: async () => {
-    const res = await req('/api/internships');
+  getInternships: async (filters = {}) => {
+    const query = new URLSearchParams(filters);
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const res = await req(`/api/internships${suffix}`);
+    return res.data;
+  },
+
+  getInternship: async (id) => {
+    const res = await req(`/api/internships/${id}`);
     return res.data;
   },
 
@@ -189,6 +196,21 @@ export const api = {
     const res = await req('/api/companies/me', {
       method: 'PUT',
       body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  updateInternship: async (id, body) => {
+    const res = await req(`/api/internships/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  deactivateInternship: async (id) => {
+    const res = await req(`/api/internships/${id}`, {
+      method: 'DELETE',
     });
     return res.data;
   },

@@ -31,6 +31,12 @@ function createCatalogItemsRepository({ get, all, run, lastInsertId }) {
                 params[":catalog_id"] = Number(catalogId);
             }
 
+            const catalogKey = target === "catalog_key" ? targetId : filter.catalog_key;
+            if (catalogKey) {
+                where.push("c.`key` = :catalog_key");
+                params[":catalog_key"] = catalogKey;
+            }
+
             if (typeof filter.is_active !== "undefined" && filter.is_active !== "") {
                 const isActive = filter.is_active === true || filter.is_active === "true" || filter.is_active === 1 || filter.is_active === "1";
                 where.push("ci.is_active = :is_active");

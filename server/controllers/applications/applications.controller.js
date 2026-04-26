@@ -13,12 +13,12 @@ function createApplicationsController({ applicationsService }) {
         },
 
         byInternship(req, res) {
-            const result = applicationsService.internshipApplications(Number(req.params.id));
+            const result = applicationsService.internshipApplications(req.user, Number(req.params.id));
             return ok(res, result);
         },
 
         updateStatus(req, res) {
-            const result = applicationsService.updateStatus(Number(req.params.id), req.body.status);
+            const result = applicationsService.updateStatus(req.user, Number(req.params.id), req.body.status);
             return ok(res, result);
         },
     };

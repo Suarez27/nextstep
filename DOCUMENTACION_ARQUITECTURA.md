@@ -897,3 +897,37 @@ Las funciones de `client/src/services/api.js` para los dominios modularizados de
 - El admin permite listar, crear, editar, consultar y activar/desactivar empresas con labels consistentes.
 - El portal permite que empresa complete su ficha y que centro/admin consulten la ficha desde las practicas, incluyendo ofertas asociadas.
 - Queda fuera de H7 la relacion con documentos, incidencias u otros modulos futuros.
+
+## H8 - Practicas/ofertas ampliadas con cupos, areas y estado
+
+### Cierre H8
+- El dominio `internships` queda modularizado para lectura desde la vista `internships` y escritura sobre la tabla base `practicas`.
+- El contrato API conserva `{ data: ... }` y el backoffice usa `/api/admin/internships`.
+- Campos H8 consolidados en backend, admin y portal:
+  `company_id`, `area_item_id`, `title`, `description`, `hours_total`, `schedule`, `slots`,
+  `requirements`, `status`, `start_date`, `end_date`, `application_deadline`, `is_active`,
+  `created_at`, `updated_at`, `accepted_applications_count` y `available_slots`.
+- `available_slots` es calculado por la vista: se muestra y se usa en validaciones, pero no se edita manualmente.
+- Estados validos de oferta: `borrador`, `publicada`, `pausada`, `cerrada`, `cancelada`.
+- El portal por rol queda asi:
+  - empresa: lista, crea, edita, consulta y desactiva sus propias ofertas;
+  - centro: consulta ofertas publicadas y activas, con filtro de plazas disponibles;
+  - alumno: solo ve ofertas activas, publicadas y con plazas.
+- El flujo existente de candidaturas queda reforzado:
+  - no permite postular a ofertas inactivas, no publicadas o sin plazas;
+  - evita duplicados por alumno/oferta;
+  - antes de aceptar una candidatura comprueba que quedan plazas;
+  - no permite reducir `slots` por debajo de candidaturas aceptadas.
+- No se modifican entrevistas ni convenios; la ficha de oferta deja visibles datos necesarios para integraciones posteriores.
+
+### Checklist manual H8
+- Admin puede listar ofertas.
+- Admin puede crear una oferta con todos los campos H8.
+- Admin puede editar una oferta.
+- Admin puede desactivar una oferta.
+- Empresa puede listar y gestionar sus propias ofertas.
+- Centro puede consultar ofertas disponibles.
+- Alumno solo ve ofertas publicadas, activas y con plazas.
+- No se pueden aceptar mas candidaturas que plazas.
+- La ficha de oferta muestra empresa, area, requisitos, fechas y plazas disponibles.
+- Backend y frontend levantan correctamente en el entorno local.

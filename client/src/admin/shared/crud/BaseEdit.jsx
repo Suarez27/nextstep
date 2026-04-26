@@ -1,19 +1,19 @@
 import { DeleteButton, Edit, ListButton, TopToolbar } from 'react-admin';
 
-function BaseEditActions() {
+function BaseEditActions({ deleteLabel = 'Eliminar' }) {
     return (
         <TopToolbar sx={{ gap: 1, flexWrap: 'wrap' }}>
             <ListButton label="Volver al listado" />
-            <DeleteButton label="Eliminar" color="error" variant="outlined" />
+            <DeleteButton label={deleteLabel} color="error" variant="outlined" />
         </TopToolbar>
     );
 }
 
-export default function BaseEdit(props) {
+export default function BaseEdit({ deleteLabel = 'Eliminar', ...props }) {
     return (
         <Edit
             title="Editar registro"
-            actions={<BaseEditActions />}
+            actions={<BaseEditActions deleteLabel={deleteLabel} />}
             sx={{
                 '& .RaEdit-card': {
                     border: '1px solid',

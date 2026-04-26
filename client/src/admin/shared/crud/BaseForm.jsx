@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { DeleteButton, SaveButton, SimpleForm, Toolbar, useRecordContext } from 'react-admin';
 
-function BaseFormToolbar() {
+function BaseFormToolbar({ deleteLabel = 'Eliminar' }) {
     const record = useRecordContext();
 
     return (
@@ -19,16 +19,16 @@ function BaseFormToolbar() {
         >
             <Box />
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {record?.id ? <DeleteButton label="Eliminar" color="error" variant="outlined" /> : null}
+                {record?.id ? <DeleteButton label={deleteLabel} color="error" variant="outlined" /> : null}
                 <SaveButton label="Guardar" variant="contained" />
             </Box>
         </Toolbar>
     );
 }
 
-export default function BaseForm({ children, ...props }) {
+export default function BaseForm({ children, deleteLabel = 'Eliminar', ...props }) {
     return (
-        <SimpleForm toolbar={<BaseFormToolbar />} sx={{ maxWidth: 980 }} {...props}>
+        <SimpleForm toolbar={<BaseFormToolbar deleteLabel={deleteLabel} />} sx={{ maxWidth: 980 }} {...props}>
             <Box
                 sx={{
                     px: { xs: 0, md: 1 },

@@ -1534,6 +1534,7 @@ html, body, #root {
 .skills-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .skill-tag { background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; }
 .mt-sm { margin-top: 6px; }
+.mt { margin-top: 14px; }
 
 /* ===== FOLLOWUP ===== */
 .detail-section { margin-bottom: 20px; }
@@ -1568,6 +1569,7 @@ input[type="email"],
 input[type="password"],
 input[type="number"],
 input[type="datetime-local"],
+input[type="date"],
 select,
 textarea {
   border: 1px solid var(--border);
@@ -1617,6 +1619,7 @@ input:focus, select:focus, textarea:focus {
   transition: background .15s;
 }
 .btn-ghost:hover { background: var(--gray-light); }
+.btn-ghost:disabled { opacity: .6; cursor: not-allowed; }
 .btn-ghost.btn-full { width: 100%; }
 .btn-ghost.mt { margin-top: 14px; }
 
@@ -1733,11 +1736,30 @@ input:focus, select:focus, textarea:focus {
 
 /* ===== SEARCH ===== */
 .search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 20px;
 }
-.search-bar input {
+.search-bar input,
+.search-bar select {
   max-width: 400px;
   background: var(--white);
+}
+
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.checkbox-inline input {
+  width: auto;
 }
 
 /* ===== FEEDBACK ===== */

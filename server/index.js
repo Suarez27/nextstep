@@ -13,7 +13,7 @@ const bcrypt = require("bcryptjs");
 const initSqlJs = require("sql.js");
 const { spawnSync } = require("child_process");
 const { z } = require("zod");
-const { authRequired, roleRequired, permissionRequired } = require("./middlewares/auth");
+const { authRequired } = require("./middlewares/auth");
 const { createAuthRepository } = require("./repositories/auth/auth.repository");
 const { createAuthService } = require("./services/auth/auth.service");
 const { createAuthController } = require("./controllers/auth/auth.controller");
@@ -37,7 +37,7 @@ const { createStudentsRoutes } = require("./routes/students.routes");
 const { createInternshipsRepository } = require("./repositories/internships/internships.repository");
 const { createInternshipsService } = require("./services/internships/internships.service");
 const { createInternshipsController } = require("./controllers/internships/internships.controller");
-const { createInternshipsRoutes } = require("./routes/internships.routes");
+const { createInternshipsRoutes, createAdminInternshipsRoutes } = require("./routes/internships.routes");
 
 const { createApplicationsRepository } = require("./repositories/applications/applications.repository");
 const { createApplicationsService } = require("./services/applications/applications.service");
@@ -393,19 +393,58 @@ function seedIfEmpty() {
 
   const company = get("SELECT id FROM companies WHERE user_id = :uid", { ":uid": empresaUser.id });
 
-  run(
-    `INSERT INTO internships (company_id, title, description, hours_total, schedule, slots, created_at)
-     VALUES (:company_id, :title, :description, :hours_total, :schedule, :slots, :created_at)`,
-    {
-      ":company_id": company.id,
-      ":title": "Practicas Frontend Junior",
-      ":description": "Apoyo en interfaces web con React y APIs REST.",
-      ":hours_total": 300,
-      ":schedule": "L-V 09:00-14:00",
-      ":slots": 2,
-      ":created_at": ts,
-    }
-  );
+  if (USE_MYSQL) {
+    run(
+      `INSERT INTO practicas (
+        empresa_id,
+        titulo,
+        descripcion,
+        horas_totales,
+        horario,
+        plazas,
+        estado,
+        activo,
+        creado_en,
+        actualizado_en
+      )
+       VALUES (
+        :company_id,
+        :title,
+        :description,
+        :hours_total,
+        :schedule,
+        :slots,
+        'publicada',
+        1,
+        :created_at,
+        :updated_at
+      )`,
+      {
+        ":company_id": company.id,
+        ":title": "Practicas Frontend Junior",
+        ":description": "Apoyo en interfaces web con React y APIs REST.",
+        ":hours_total": 300,
+        ":schedule": "L-V 09:00-14:00",
+        ":slots": 2,
+        ":created_at": ts,
+        ":updated_at": ts,
+      }
+    );
+  } else {
+    run(
+      `INSERT INTO internships (company_id, title, description, hours_total, schedule, slots, created_at)
+       VALUES (:company_id, :title, :description, :hours_total, :schedule, :slots, :created_at)`,
+      {
+        ":company_id": company.id,
+        ":title": "Practicas Frontend Junior",
+        ":description": "Apoyo en interfaces web con React y APIs REST.",
+        ":hours_total": 300,
+        ":schedule": "L-V 09:00-14:00",
+        ":slots": 2,
+        ":created_at": ts,
+      }
+    );
+  }
 }
 
 function initSchema() {
@@ -561,7 +600,7 @@ function initSchema() {
     ensureColumn("empresas", "activo", "activo TINYINT(1) NOT NULL DEFAULT 1");
     ensureColumn("empresas", "actualizado_en", "actualizado_en VARCHAR(40) DEFAULT NULL");
 
-    run("DROP VIEW IF EXISTS followups, agreements, interviews, applications, internships, students, companies, centers, users");
+    run("DROP VIEW IF EXISTS followups, agreements, interviews, applications, students, companies, centers, users");
 
     run(`CREATE VIEW users AS
          SELECT id, nombre AS name, correo AS email, hash_contrasena AS password_hash, rol AS role, creado_en AS created_at
@@ -590,10 +629,6 @@ function initSchema() {
     run(`CREATE VIEW students AS
           SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, creado_en AS created_at
          FROM alumnos`);
-
-    run(`CREATE VIEW internships AS
-         SELECT id, empresa_id AS company_id, titulo AS title, descripcion AS description, horas_totales AS hours_total, horario AS schedule, plazas AS slots, creado_en AS created_at
-         FROM practicas`);
 
     run(`CREATE VIEW applications AS
          SELECT id, practica_id AS internship_id, alumno_id AS student_id, estado AS status, creado_en AS created_at
@@ -977,6 +1012,7 @@ async function start() {
   app.use("/api/students", createStudentsRoutes({ studentsController }));
 
   app.use("/api/internships", createInternshipsRoutes({ internshipsController }));
+  app.use("/api/admin/internships", createAdminInternshipsRoutes({ internshipsController }));
   app.use("/api/applications", createApplicationsRoutes({ applicationsController }));
 
   app.use("/api/interviews", createInterviewsRoutes({ interviewsController }));
@@ -984,282 +1020,6 @@ async function start() {
   app.use("/api/followups", createFollowupsRoutes({ followupsController }));
   app.use("/api/admin/catalogs", createCatalogsRoutes({ catalogsController }));
   app.use("/api/admin/catalog-items", createCatalogItemsRoutes({ catalogItemsController }));
-
-  const adminInternshipSchema = z.object({
-    company_id: z.number().int().min(1),
-    title: z.string().min(4).max(200),
-    description: z.string().min(10).max(4000),
-    hours_total: z.number().int().min(1).max(2000),
-    schedule: z.string().max(120).default(""),
-    slots: z.number().int().min(1).max(50),
-  });
-
-  // =========================
-  // ADMIN - INTERNSHIPS CRUD
-  // =========================
-
-  app.get(
-    "/api/admin/internships",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const page = Number(req.query.page || 1);
-      const perPage = Number(req.query.perPage || 10);
-      const sortField = req.query.sortField || "id";
-      const sortOrder = (req.query.sortOrder || "ASC").toUpperCase() === "DESC" ? "DESC" : "ASC";
-
-      let filter = {};
-      try {
-        filter = req.query.filter ? JSON.parse(req.query.filter) : {};
-      } catch (_e) {
-        filter = {};
-      }
-
-      const q = String(filter.q || "").trim().toLowerCase();
-
-      const where = [];
-      const params = {};
-
-      if (q) {
-        where.push(`(
-        LOWER(i.title) LIKE :q
-        OR LOWER(COALESCE(i.description, '')) LIKE :q
-        OR LOWER(COALESCE(c.company_name, '')) LIKE :q
-      )`);
-        params[":q"] = `%${q}%`;
-      }
-
-      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-      const offset = (page - 1) * perPage;
-
-      const totalRow = get(
-        `
-      SELECT COUNT(*) AS total
-      FROM internships i
-      JOIN companies c ON c.id = i.company_id
-      ${whereSql}
-      `,
-        params
-      );
-
-      const sortMap = {
-        id: "i.id",
-        title: "i.title",
-        hours_total: "i.hours_total",
-        slots: "i.slots",
-        schedule: "i.schedule",
-        company_name: "c.company_name",
-        created_at: "i.created_at",
-      };
-
-      const safeSortField = sortMap[sortField] || "i.id";
-
-      const rows = all(
-        `
-      SELECT
-        i.id,
-        i.company_id,
-        i.title,
-        i.description,
-        i.hours_total,
-        i.schedule,
-        i.slots,
-        i.created_at,
-        c.company_name
-      FROM internships i
-      JOIN companies c ON c.id = i.company_id
-      ${whereSql}
-      ORDER BY ${safeSortField} ${sortOrder}
-      LIMIT ${perPage} OFFSET ${offset}
-      `,
-        params
-      );
-
-      return res.json({
-        data: rows,
-        total: totalRow?.total || 0,
-      });
-    }
-  );
-
-  app.get(
-    "/api/admin/internships/:id",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const id = Number(req.params.id);
-
-      const row = get(
-        `
-      SELECT
-        i.id,
-        i.company_id,
-        i.title,
-        i.description,
-        i.hours_total,
-        i.schedule,
-        i.slots,
-        i.created_at,
-        c.company_name
-      FROM internships i
-      JOIN companies c ON c.id = i.company_id
-      WHERE i.id = :id
-      `,
-        { ":id": id }
-      );
-
-      if (!row) return res.status(404).json({ error: "Práctica no encontrada" });
-
-      return res.json({ data: row });
-    }
-  );
-
-  app.post(
-    "/api/admin/internships",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    validate(adminInternshipSchema),
-    (req, res) => {
-      const companyId = Number(req.body.company_id);
-
-      const company = get("SELECT id FROM companies WHERE id = :id", { ":id": companyId });
-      if (!company) return res.status(400).json({ error: "Empresa no válida" });
-
-      run(
-        `
-      INSERT INTO internships (company_id, title, description, hours_total, schedule, slots, created_at)
-      VALUES (:company_id, :title, :description, :hours_total, :schedule, :slots, :created_at)
-      `,
-        {
-          ":company_id": companyId,
-          ":title": req.body.title,
-          ":description": req.body.description,
-          ":hours_total": Number(req.body.hours_total),
-          ":schedule": req.body.schedule || "",
-          ":slots": Number(req.body.slots),
-          ":created_at": nowIso(),
-        }
-      );
-
-      const created = get(
-        `
-      SELECT
-        i.id,
-        i.company_id,
-        i.title,
-        i.description,
-        i.hours_total,
-        i.schedule,
-        i.slots,
-        i.created_at,
-        c.company_name
-      FROM internships i
-      JOIN companies c ON c.id = i.company_id
-      WHERE i.id = :id
-      `,
-        { ":id": lastInsertId() }
-      );
-
-      return res.status(201).json({ data: created });
-    }
-  );
-
-  app.put(
-    "/api/admin/internships/:id",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    validate(adminInternshipSchema),
-    (req, res) => {
-      const id = Number(req.params.id);
-      const companyId = Number(req.body.company_id);
-
-      const existing = get("SELECT id FROM internships WHERE id = :id", { ":id": id });
-      if (!existing) return res.status(404).json({ error: "Práctica no encontrada" });
-
-      const company = get("SELECT id FROM companies WHERE id = :id", { ":id": companyId });
-      if (!company) return res.status(400).json({ error: "Empresa no válida" });
-
-      run(
-        `
-      UPDATE internships
-      SET company_id = :company_id,
-          title = :title,
-          description = :description,
-          hours_total = :hours_total,
-          schedule = :schedule,
-          slots = :slots
-      WHERE id = :id
-      `,
-        {
-          ":id": id,
-          ":company_id": companyId,
-          ":title": req.body.title,
-          ":description": req.body.description,
-          ":hours_total": Number(req.body.hours_total),
-          ":schedule": req.body.schedule || "",
-          ":slots": Number(req.body.slots),
-        }
-      );
-
-      const updated = get(
-        `
-      SELECT
-        i.id,
-        i.company_id,
-        i.title,
-        i.description,
-        i.hours_total,
-        i.schedule,
-        i.slots,
-        i.created_at,
-        c.company_name
-      FROM internships i
-      JOIN companies c ON c.id = i.company_id
-      WHERE i.id = :id
-      `,
-        { ":id": id }
-      );
-
-      return res.json({ data: updated });
-    }
-  );
-
-  app.delete(
-    "/api/admin/internships/:id",
-    authRequired,
-    permissionRequired("adminPanel"),
-    roleRequired("admin"),
-    (req, res) => {
-      const id = Number(req.params.id);
-
-      const existing = get("SELECT id FROM internships WHERE id = :id", { ":id": id });
-      if (!existing) return res.status(404).json({ error: "Práctica no encontrada" });
-
-      const applicationsCount = get(
-        "SELECT COUNT(*) AS total FROM applications WHERE internship_id = :id",
-        { ":id": id }
-      );
-
-      const agreementsCount = get(
-        "SELECT COUNT(*) AS total FROM agreements WHERE internship_id = :id",
-        { ":id": id }
-      );
-
-      if ((applicationsCount?.total || 0) > 0 || (agreementsCount?.total || 0) > 0) {
-        return res.status(400).json({
-          error: "No se puede eliminar una práctica con candidaturas o convenios relacionados",
-        });
-      }
-
-      run("DELETE FROM internships WHERE id = :id", { ":id": id });
-
-      return res.json({ data: { id } });
-    }
-  );
 
   app.use(errorHandler);
   app.use(express.static(path.join(__dirname, "..", "public")));

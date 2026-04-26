@@ -7,6 +7,13 @@ const STATUS_STYLES = {
     firmado: 'badge badge-green',
     proxima: 'badge badge-green',
     realizada: 'badge badge-gray',
+    borrador: 'badge badge-gray',
+    publicada: 'badge badge-green',
+    pausada: 'badge badge-amber',
+    cerrada: 'badge badge-gray',
+    cancelada: 'badge badge-red',
+    activo: 'badge badge-green',
+    inactivo: 'badge badge-red',
 };
 
 const STATUS_LABELS = {
@@ -16,8 +23,15 @@ const STATUS_LABELS = {
     validado: 'Validado',
     invalidado: 'Invalidado',
     firmado: 'Firmado',
-    proxima: 'Próxima',
+    proxima: 'Proxima',
     realizada: 'Realizada',
+    borrador: 'Borrador',
+    publicada: 'Publicada',
+    pausada: 'Pausada',
+    cerrada: 'Cerrada',
+    cancelada: 'Cancelada',
+    activo: 'Activo',
+    inactivo: 'Inactivo',
 };
 
 export default function StatusBadge({
