@@ -154,6 +154,24 @@ export const api = {
     return res.data;
   },
 
+  myStudentDocuments: async () => {
+    const res = await req('/api/students/me/documents');
+    return res.data;
+  },
+
+  uploadStudentDocument: async ({ documentTypeItemId, file, notes }) => {
+    const body = new FormData();
+    body.append('document_type_item_id', documentTypeItemId);
+    body.append('file', file);
+    if (notes) body.append('notes', notes);
+
+    const res = await req('/api/students/me/documents', {
+      method: 'POST',
+      body,
+    });
+    return res.data;
+  },
+
   validatedStudents: async () => {
     const res = await req('/api/students/validated');
     return res.data;
@@ -161,6 +179,32 @@ export const api = {
 
   allStudents: async () => {
     const res = await req('/api/students/all');
+    return res.data;
+  },
+
+  getStudentDetail: async (id) => {
+    const res = await req(`/api/students/${id}`);
+    return res.data;
+  },
+
+  getStudentDocuments: async (id) => {
+    const res = await req(`/api/students/${id}/documents`);
+    return res.data;
+  },
+
+  validateStudentDocument: async ({ studentId, documentId, notes }) => {
+    const res = await req(`/api/students/${studentId}/documents/${documentId}/validate`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+    return res.data;
+  },
+
+  rejectStudentDocument: async ({ studentId, documentId, notes }) => {
+    const res = await req(`/api/students/${studentId}/documents/${documentId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
     return res.data;
   },
 

@@ -1439,6 +1439,109 @@ html, body, #root {
 .form-card { background: var(--white); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow); }
 .form-actions { margin-top: 20px; display: flex; justify-content: flex-end; }
 .company-preview-card { margin-top: 20px; }
+.profile-card-tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.file-link { display: inline-flex; margin-top: 8px; color: var(--primary); font-size: 13px; font-weight: 600; text-decoration: none; }
+.file-link:hover { text-decoration: underline; }
+
+.student-documents-card { margin-top: 20px; }
+.student-documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.student-document-card {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gray);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.student-document-card.status-pendiente { border-left-color: var(--warning); }
+.student-document-card.status-entregado { border-left-color: var(--primary); }
+.student-document-card.status-validado { border-left-color: var(--success); }
+.student-document-card.status-rechazado { border-left-color: var(--danger); }
+.student-document-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.student-document-head h3 { font-size: 15px; font-weight: 700; line-height: 1.25; }
+.student-document-head p { margin-top: 4px; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.document-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.document-meta div {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: var(--gray-light);
+  min-width: 0;
+}
+.document-meta dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.document-meta dd { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.document-notes {
+  border-radius: var(--radius);
+  background: var(--warning-light);
+  border: 1px solid #FDE68A;
+  padding: 10px 12px;
+}
+.document-notes span { display: block; color: #92400E; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.document-notes p { color: #78350F; font-size: 13px; line-height: 1.45; }
+.document-actions { display: grid; gap: 10px; }
+.document-open-link {
+  display: inline-flex;
+  justify-content: center;
+  text-decoration: none;
+  width: fit-content;
+}
+.doc-alert {
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.doc-alert-amber { background: var(--warning-light); border: 1px solid #FDE68A; color: #92400E; }
+.doc-alert-red { background: var(--danger-light); border: 1px solid #FECACA; color: #991B1B; }
+.students-review-stats {
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.center-documents-list { display: grid; gap: 12px; }
+.center-document-row {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gray);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+.center-document-row.status-pendiente { border-left-color: var(--warning); }
+.center-document-row.status-entregado { border-left-color: var(--primary); }
+.center-document-row.status-validado { border-left-color: var(--success); }
+.center-document-row.status-rechazado { border-left-color: var(--danger); }
+.center-document-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.center-document-main h4 { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.center-document-main p { margin-top: 3px; font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.center-document-main span { display: inline-block; margin-top: 5px; font-size: 12px; color: var(--text-muted); }
+.center-document-actions { display: grid; gap: 10px; }
+.center-document-buttons { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
 .company-detail {
   display: grid;

@@ -82,6 +82,7 @@ const DB_PATH = process.env.NEXTSTEP_DB_PATH
   ? path.resolve(process.env.NEXTSTEP_DB_PATH)
   : path.join(__dirname, "..", "data", "nextstep.sqlite");
 const CV_UPLOAD_DIR = path.join(__dirname, "..", "public", "uploads", "cv");
+const STUDENT_DOCUMENT_UPLOAD_DIR = path.join(__dirname, "..", "public", "uploads", "student-documents");
 const CV_PDF_MAX_SIZE = 5 * 1024 * 1024;
 
 let SQL;
@@ -106,11 +107,22 @@ function ensureCvUploadDir() {
   }
 }
 
+function ensureStudentDocumentUploadDir() {
+  if (!fs.existsSync(STUDENT_DOCUMENT_UPLOAD_DIR)) {
+    fs.mkdirSync(STUDENT_DOCUMENT_UPLOAD_DIR, { recursive: true });
+  }
+}
+
 function removeStoredCvPdf(cvPdfUrl) {
   if (!cvPdfUrl || typeof cvPdfUrl !== "string") return;
-  if (!cvPdfUrl.startsWith("/uploads/cv/")) return;
+  const allowedUploadDirs = [
+    { prefix: "/uploads/cv/", dir: CV_UPLOAD_DIR },
+    { prefix: "/uploads/student-documents/", dir: STUDENT_DOCUMENT_UPLOAD_DIR },
+  ];
+  const uploadDir = allowedUploadDirs.find((item) => cvPdfUrl.startsWith(item.prefix));
+  if (!uploadDir) return;
   const fileName = path.basename(cvPdfUrl);
-  const filePath = path.join(CV_UPLOAD_DIR, fileName);
+  const filePath = path.join(uploadDir.dir, fileName);
   try {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   } catch (_e) {
@@ -843,6 +855,26 @@ async function start() {
     },
   }).single("cv_pdf");
 
+  const uploadStudentDocument = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => {
+        ensureStudentDocumentUploadDir();
+        cb(null, STUDENT_DOCUMENT_UPLOAD_DIR);
+      },
+      filename: (req, file, cb) => {
+        const fileName = `student-${req.user.id}-${Date.now()}-${Math.floor(Math.random() * 1000000)}.pdf`;
+        cb(null, fileName);
+      },
+    }),
+    limits: { fileSize: CV_PDF_MAX_SIZE },
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || "").toLowerCase();
+      const byMime = (file.mimetype || "").toLowerCase() === "application/pdf";
+      if (byMime || ext === ".pdf") return cb(null, true);
+      return cb(new Error("Solo se permite subir archivos PDF"));
+    },
+  }).single("file");
+
   const studentsRepository = createStudentsRepository({
     get,
     all,
@@ -860,6 +892,8 @@ async function start() {
   const studentsController = createStudentsController({
     studentsService,
     uploadCvPdf,
+    uploadStudentDocument,
+    removeStoredStudentDocument: removeStoredCvPdf,
   });
 
   const internshipsRepository = createInternshipsRepository({

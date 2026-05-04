@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
+import { useCatalogItems } from '../../../shared/hooks/useCatalogs';
 import {
     Alert,
     Button,
@@ -8,12 +9,64 @@ import {
     FormField,
     LoadingState,
     PageHeader,
+    SectionHeader,
+    StatCard,
+    StatusBadge,
 } from '../../../shared/components/ui';
+
+function formatDate(value) {
+    if (!value) return 'Sin fecha';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
+}
+
+function normalizeStatus(status, hasDocument) {
+    if (status) return String(status).toLowerCase();
+    return hasDocument ? 'entregado' : 'pendiente';
+}
+
+function buildDocumentRows(documentTypes, documents) {
+    const byType = new Map();
+    documents.forEach((document) => {
+        const typeId = String(document.document_type_item_id);
+        if (!byType.has(typeId)) byType.set(typeId, document);
+    });
+
+    const rows = documentTypes.map((type) => ({
+        id: type.id,
+        type,
+        document: byType.get(String(type.id)) || null,
+    }));
+
+    documents.forEach((document) => {
+        if (!documentTypes.some((type) => String(type.id) === String(document.document_type_item_id))) {
+            rows.push({
+                id: `document-${document.id}`,
+                type: {
+                    id: document.document_type_item_id,
+                    value: document.document_type_value,
+                    label: document.document_type_label || 'Documento',
+                },
+                document,
+            });
+        }
+    });
+
+    return rows;
+}
 
 export default function Students() {
     const { user } = useAuth();
     const [students, setStudents] = useState([]);
     const [selected, setSelected] = useState(null);
+    const [selectedDocuments, setSelectedDocuments] = useState([]);
+    const [loadingDetail, setLoadingDetail] = useState(false);
     const [followups, setFollowups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState('');
@@ -23,6 +76,9 @@ export default function Students() {
     const [creatingStudent, setCreatingStudent] = useState(false);
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '' });
     const [followupForm, setFollowupForm] = useState({ content: '', progress: 50 });
+    const [reviewNotes, setReviewNotes] = useState({});
+    const [reviewingDocumentId, setReviewingDocumentId] = useState(null);
+    const { items: documentTypes } = useCatalogItems('document_types');
 
     async function load() {
         setLoading(true);
@@ -38,11 +94,53 @@ export default function Students() {
 
     async function selectStudent(s) {
         setSelected(s);
+        setSelectedDocuments([]);
+        setLoadingDetail(true);
+        setError('');
         try {
-            const f = await api.getFollowups(s.id);
-            setFollowups(f);
+            const [detail, documents, f] = await Promise.all([
+                api.getStudentDetail(s.id),
+                api.getStudentDocuments(s.id),
+                api.getFollowups(s.id).catch(() => []),
+            ]);
+            setSelected(detail);
+            setSelectedDocuments(documents || []);
+            setFollowups(f || []);
         } catch {
+            setError('No se pudo cargar el detalle del alumno.');
             setFollowups([]);
+            setSelectedDocuments([]);
+        } finally {
+            setLoadingDetail(false);
+        }
+    }
+
+    async function reviewDocument(document, status) {
+        if (!selected || !document) return;
+
+        const notes = reviewNotes[document.id] || '';
+        if (status === 'rechazado' && !notes.trim()) {
+            setError('Anade una observacion para rechazar el documento.');
+            return;
+        }
+
+        setReviewingDocumentId(document.id);
+        setMsg('');
+        setError('');
+
+        try {
+            const updated = status === 'validado'
+                ? await api.validateStudentDocument({ studentId: selected.id, documentId: document.id, notes })
+                : await api.rejectStudentDocument({ studentId: selected.id, documentId: document.id, notes });
+
+            setSelectedDocuments((current) => current.map((item) => (
+                item.id === updated.id ? updated : item
+            )));
+            setMsg(status === 'validado' ? 'Documento validado correctamente.' : 'Documento rechazado con observacion.');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setReviewingDocumentId(null);
         }
     }
 
@@ -114,6 +212,13 @@ export default function Students() {
     const pending = students.filter((s) => !s.validated);
     const validated = students.filter((s) => s.validated);
     const listed = tab === 'pendientes' ? pending : validated;
+    const documentRows = useMemo(
+        () => buildDocumentRows(documentTypes, selectedDocuments),
+        [documentTypes, selectedDocuments]
+    );
+    const missingDocuments = documentRows.filter((row) => !row.document || normalizeStatus(row.document.status, true) === 'pendiente');
+    const rejectedDocuments = documentRows.filter((row) => normalizeStatus(row.document?.status, Boolean(row.document)) === 'rechazado');
+    const deliveredDocuments = documentRows.filter((row) => ['entregado', 'validado'].includes(normalizeStatus(row.document?.status, Boolean(row.document))));
 
     return (
         <div className="page">
@@ -239,9 +344,11 @@ export default function Students() {
                             <div className="col-title" style={{ justifyContent: 'space-between' }}>
                                 <span>
                                     {selected.name}
-                                    {selected.validated
-                                        ? <span className="badge badge-green ml">Validado</span>
-                                        : <span className="badge badge-amber ml">Pendiente</span>}
+                                    <StatusBadge
+                                        status={selected.validated ? 'validado' : 'pendiente'}
+                                        className="ml"
+                                        label={selected.validated ? 'Perfil validado' : 'Perfil pendiente'}
+                                    />
                                 </span>
                                 {!selected.validated && (
                                     <button
@@ -253,41 +360,139 @@ export default function Students() {
                                 )}
                             </div>
 
-                            {user?.role === 'centro' && (
-                                <div style={{ marginBottom: 12 }}>
-                                    <button className="btn-ghost" onClick={() => handleResetPassword(selected)}>
-                                        Restablecer contrasena
-                                    </button>
-                                </div>
-                            )}
-
-                            {selected.skills ? (
-                                <div className="detail-section">
-                                    <strong>Habilidades:</strong>
-                                    <div className="skills-preview mt-sm">
-                                        {selected.skills.split(',').map((s) => s.trim()).filter(Boolean).map((s) => (
-                                            <span key={s} className="skill-tag">{s}</span>
-                                        ))}
+                            {loadingDetail ? (
+                                <LoadingState />
+                            ) : (
+                                <>
+                                    <div className="stats-row students-review-stats">
+                                        <StatCard icon="&#128196;" label="Entregados" value={deliveredDocuments.length} color="blue" />
+                                        <StatCard icon="&#9203;" label="Pendientes" value={missingDocuments.length} color={missingDocuments.length ? 'amber' : 'green'} />
+                                        <StatCard icon="&#9888;" label="Rechazados" value={rejectedDocuments.length} color={rejectedDocuments.length ? 'red' : 'green'} />
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="detail-section">
-                                    <span className="empty-msg">Sin habilidades registradas.</span>
-                                </div>
-                            )}
 
-                            {selected.cv_text ? (
-                                <div className="detail-section">
-                                    <strong>CV:</strong>
-                                    <p className="cv-text">{selected.cv_text}</p>
-                                </div>
-                            ) : (
-                                <div className="detail-section">
-                                    <span className="empty-msg">Sin CV todavia.</span>
-                                </div>
-                            )}
+                                    {missingDocuments.length > 0 && (
+                                        <div className="doc-alert doc-alert-amber">
+                                            <strong>Faltan documentos:</strong>{' '}
+                                            {missingDocuments.map((row) => row.type.label).join(', ')}.
+                                        </div>
+                                    )}
 
-                            {selected.validated && (
+                                    {rejectedDocuments.length > 0 && (
+                                        <div className="doc-alert doc-alert-red">
+                                            <strong>Documentos rechazados:</strong>{' '}
+                                            {rejectedDocuments.map((row) => row.type.label).join(', ')}.
+                                        </div>
+                                    )}
+
+                                    {user?.role === 'centro' && (
+                                        <div style={{ marginBottom: 12 }}>
+                                            <button className="btn-ghost" onClick={() => handleResetPassword(selected)}>
+                                                Restablecer contrasena
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {selected.skills ? (
+                                        <div className="detail-section">
+                                            <strong>Habilidades:</strong>
+                                            <div className="skills-preview mt-sm">
+                                                {selected.skills.split(',').map((s) => s.trim()).filter(Boolean).map((s) => (
+                                                    <span key={s} className="skill-tag">{s}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="detail-section">
+                                            <span className="empty-msg">Sin habilidades registradas.</span>
+                                        </div>
+                                    )}
+
+                                    {selected.cv_text ? (
+                                        <div className="detail-section">
+                                            <strong>CV texto:</strong>
+                                            <p className="cv-text">{selected.cv_text}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="detail-section">
+                                            <span className="empty-msg">Sin CV todavia.</span>
+                                        </div>
+                                    )}
+
+                                    <div className="detail-section">
+                                        <SectionHeader title="Expediente documental" />
+                                        {documentRows.length === 0 ? (
+                                            <EmptyState icon="&#128196;" message="No hay tipos de documento activos para revisar." />
+                                        ) : (
+                                            <div className="center-documents-list">
+                                                {documentRows.map((row) => {
+                                                    const document = row.document;
+                                                    const status = normalizeStatus(document?.status, Boolean(document));
+                                                    const isReviewing = reviewingDocumentId === document?.id;
+
+                                                    return (
+                                                        <article key={row.id} className={`center-document-row status-${status}`}>
+                                                            <div className="center-document-main">
+                                                                <div>
+                                                                    <h4>{row.type.label || 'Documento'}</h4>
+                                                                    <p>{document?.original_name || 'Sin archivo entregado'}</p>
+                                                                    <span>Subido: {formatDate(document?.uploaded_at || document?.created_at)}</span>
+                                                                </div>
+                                                                <StatusBadge status={status} />
+                                                            </div>
+
+                                                            {document?.notes && (
+                                                                <div className="document-notes">
+                                                                    <span>Observaciones</span>
+                                                                    <p>{document.notes}</p>
+                                                                </div>
+                                                            )}
+
+                                                            {document?.file_url ? (
+                                                                <div className="center-document-actions">
+                                                                    <a className="btn-ghost document-open-link" href={document.file_url} target="_blank" rel="noreferrer">
+                                                                        Abrir documento
+                                                                    </a>
+                                                                    <FormField label="Observacion">
+                                                                        <input
+                                                                            type="text"
+                                                                            maxLength={1000}
+                                                                            value={reviewNotes[document.id] || ''}
+                                                                            onChange={(e) => setReviewNotes((current) => ({
+                                                                                ...current,
+                                                                                [document.id]: e.target.value,
+                                                                            }))}
+                                                                            placeholder="Opcional al validar, obligatoria al rechazar"
+                                                                        />
+                                                                    </FormField>
+                                                                    <div className="center-document-buttons">
+                                                                        <Button
+                                                                            type="button"
+                                                                            disabled={isReviewing}
+                                                                            onClick={() => reviewDocument(document, 'validado')}
+                                                                        >
+                                                                            Validar
+                                                                        </Button>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            disabled={isReviewing}
+                                                                            onClick={() => reviewDocument(document, 'rechazado')}
+                                                                        >
+                                                                            Rechazar
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="empty-msg">Pendiente de entrega por el alumno.</p>
+                                                            )}
+                                                        </article>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {selected.validated && (
                                 <div className="detail-section">
                                     <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: 10 }}>Seguimiento</h3>
                                     {followups.length === 0 ? (
@@ -332,6 +537,8 @@ export default function Students() {
                                     </form>
                                 </div>
                             )}
+                        </>
+                    )}
                         </>
                     )}
                 </div>
