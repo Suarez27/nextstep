@@ -63,6 +63,15 @@ function buildPayload(form) {
   };
 }
 
+function applicationErrorMessage(error) {
+  const message = error?.message || '';
+  if (message.includes('Ya postulaste')) return 'Ya existe una candidatura para esta oferta.';
+  if (message.includes('no esta disponible')) return 'La oferta ya no esta disponible para candidaturas.';
+  if (message.includes('no tiene plazas') || message.includes('No quedan plazas')) return 'La oferta no tiene plazas disponibles.';
+  if (message.includes('permisos') || message.includes('Solo cuentas de alumno')) return 'No tienes permisos para postularte a esta oferta.';
+  return message || 'No se pudo enviar la candidatura.';
+}
+
 function InternshipFormModal({ internship, areaOptions, loadingAreas, onClose, onSaved }) {
   const isEdit = Boolean(internship?.id);
   const [form, setForm] = useState(() => buildInitialForm(internship));
@@ -244,13 +253,14 @@ function InternshipDetailModal({
   internship,
   canManage,
   canApply,
+  alreadyApplied,
   onApply,
   onClose,
   onEdit,
   onDeactivate,
 }) {
   const activeLabel = internship.is_active ? 'activo' : 'inactivo';
-  const canSendApplication = canApply && internship.is_active && internship.status === 'publicada' && Number(internship.available_slots || 0) > 0;
+  const canSendApplication = canApply && !alreadyApplied && internship.is_active && internship.status === 'publicada' && Number(internship.available_slots || 0) > 0;
 
   return (
     <Modal
@@ -276,6 +286,11 @@ function InternshipDetailModal({
           {canSendApplication && (
             <Button type="button" onClick={() => onApply(internship.id)}>
               Postularme
+            </Button>
+          )}
+          {canApply && alreadyApplied && (
+            <Button type="button" variant="ghost" disabled>
+              Candidatura enviada
             </Button>
           )}
         </>
@@ -361,6 +376,8 @@ export default function InternshipsPage() {
   const [companyLoading, setCompanyLoading] = useState(false);
   const [companyError, setCompanyError] = useState('');
   const [msg, setMsg] = useState('');
+  const [msgType, setMsgType] = useState('success');
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedAreaId, setSelectedAreaId] = useState('');
@@ -385,7 +402,12 @@ export default function InternshipsPage() {
 
       const data = await api.getInternships(filters);
       setInternships(data);
+      if (isStudent) {
+        const studentApplications = await api.myApplications();
+        setApplications(studentApplications);
+      }
     } catch (error) {
+      setMsgType('error');
       setMsg(error.message);
       setInternships([]);
     } finally {
@@ -394,6 +416,11 @@ export default function InternshipsPage() {
   }, [isCenter, isStudent, onlyAvailable, search, selectedAreaId, selectedStatus]);
 
   useEffect(() => { load(); }, [load]);
+
+  const appliedInternshipIds = useMemo(
+    () => new Set(applications.map((application) => Number(application.internship_id))),
+    [applications]
+  );
 
   function openCreateForm() {
     setEditingInternship(null);
@@ -409,11 +436,13 @@ export default function InternshipsPage() {
   async function applyTo(id) {
     try {
       await api.applyToInternship(id);
+      setMsgType('success');
       setMsg('Candidatura enviada correctamente.');
       setSelectedInternship(null);
       await load();
     } catch (error) {
-      setMsg(error.message);
+      setMsgType('error');
+      setMsg(applicationErrorMessage(error));
     }
   }
 
@@ -423,12 +452,14 @@ export default function InternshipsPage() {
 
     try {
       const updated = await api.deactivateInternship(internship.id);
+      setMsgType('success');
       setMsg('Oferta desactivada.');
       if (selectedInternship?.id === internship.id) {
         setSelectedInternship(updated);
       }
       await load();
     } catch (error) {
+      setMsgType('error');
       setMsg(error.message);
     }
   }
@@ -456,6 +487,7 @@ export default function InternshipsPage() {
   }
 
   function handleSaved(saved) {
+    setMsgType('success');
     setMsg('Oferta guardada correctamente.');
     setSelectedInternship(saved);
     load();
@@ -514,7 +546,7 @@ export default function InternshipsPage() {
         )}
       </div>
 
-      {msg && <div className="alert-success" onClick={() => setMsg('')}>{msg} (clic para cerrar)</div>}
+      {msg && <Alert variant={msgType} onClick={() => setMsg('')}>{msg} (clic para cerrar)</Alert>}
 
       {loading ? (
         <LoadingState />
@@ -590,9 +622,9 @@ export default function InternshipsPage() {
                   fullWidth
                   className="mt"
                   onClick={() => applyTo(item.id)}
-                  disabled={Number(item.available_slots || 0) <= 0}
+                  disabled={appliedInternshipIds.has(Number(item.id)) || Number(item.available_slots || 0) <= 0}
                 >
-                  Postularme
+                  {appliedInternshipIds.has(Number(item.id)) ? 'Candidatura enviada' : 'Postularme'}
                 </Button>
               )}
             </div>
@@ -615,6 +647,7 @@ export default function InternshipsPage() {
           internship={selectedInternship}
           canManage={canManageInternships}
           canApply={canApplyToInternship}
+          alreadyApplied={appliedInternshipIds.has(Number(selectedInternship.id))}
           onApply={applyTo}
           onClose={() => setSelectedInternship(null)}
           onEdit={openEditForm}

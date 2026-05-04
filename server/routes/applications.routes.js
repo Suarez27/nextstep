@@ -21,6 +21,22 @@ function createApplicationsRoutes({ applicationsController }) {
     );
 
     router.get(
+        "/company",
+        authRequired,
+        permissionRequired("applicationsReview"),
+        roleRequired("empresa", "admin"),
+        applicationsController.company
+    );
+
+    router.get(
+        "/center",
+        authRequired,
+        permissionRequired("applicationsReview"),
+        roleRequired("centro", "admin"),
+        applicationsController.center
+    );
+
+    router.get(
         "/internship/:id",
         authRequired,
         permissionRequired("applicationsReview"),
@@ -28,11 +44,25 @@ function createApplicationsRoutes({ applicationsController }) {
         applicationsController.byInternship
     );
 
+    router.get(
+        "/:id/events",
+        authRequired,
+        permissionRequired("applications"),
+        applicationsController.events
+    );
+
+    router.get(
+        "/:id",
+        authRequired,
+        permissionRequired("applications"),
+        applicationsController.detail
+    );
+
     router.post(
         "/:id/status",
         authRequired,
         permissionRequired("applicationsStatusUpdate"),
-        roleRequired("empresa", "centro", "admin"),
+        roleRequired("empresa"),
         validate(applicationStatusSchema),
         applicationsController.updateStatus
     );

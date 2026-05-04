@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/context/AuthContext';
 import { api } from '../../../services/api';
 import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
+    Alert,
     EmptyState,
     PageHeader,
     SectionCard,
@@ -12,7 +13,16 @@ import {
     StatusBadge,
 } from '../../../shared/components/ui';
 
-function InternshipCard({ item, onApply }) {
+function applicationErrorMessage(error) {
+    const message = error?.message || '';
+    if (message.includes('Ya postulaste')) return 'Ya existe una candidatura para esta oferta.';
+    if (message.includes('no esta disponible')) return 'La oferta ya no esta disponible para candidaturas.';
+    if (message.includes('no tiene plazas') || message.includes('No quedan plazas')) return 'La oferta no tiene plazas disponibles.';
+    if (message.includes('permisos') || message.includes('Solo cuentas de alumno')) return 'No tienes permisos para postularte a esta oferta.';
+    return message || 'No se pudo enviar la candidatura.';
+}
+
+function InternshipCard({ item, onApply, alreadyApplied = false }) {
     return (
         <div className="list-card">
             <div className="list-card-header">
@@ -27,8 +37,12 @@ function InternshipCard({ item, onApply }) {
                 <span className="tag">{item.schedule || 'Sin horario'}</span>
                 <span className="tag">{item.slots} plaza{item.slots !== 1 ? 's' : ''}</span>
                 {onApply && (
-                    <button className="btn-sm btn-primary" onClick={() => onApply(item.id)}>
-                        Postularme
+                    <button
+                        className="btn-sm btn-primary"
+                        onClick={() => onApply(item.id)}
+                        disabled={alreadyApplied || Number(item.available_slots || 0) <= 0}
+                    >
+                        {alreadyApplied ? 'Enviada' : 'Postularme'}
                     </button>
                 )}
             </div>
@@ -41,6 +55,7 @@ function AlumnoDashboard() {
     const [internships, setInternships] = useState([]);
     const [applications, setApplications] = useState([]);
     const [msg, setMsg] = useState('');
+    const [msgType, setMsgType] = useState('success');
 
     useEffect(() => {
         Promise.all([api.getInternships(), api.myApplications()])
@@ -51,15 +66,17 @@ function AlumnoDashboard() {
     async function applyTo(id) {
         try {
             await api.applyToInternship(id);
+            setMsgType('success');
             setMsg('Candidatura enviada correctamente.');
             const a = await api.myApplications();
             setApplications(a);
         } catch (err) {
-            setMsg(err.message);
+            setMsgType('error');
+            setMsg(applicationErrorMessage(err));
         }
     }
 
-    const appliedIds = new Set(applications.map((a) => a.title));
+    const appliedIds = new Set(applications.map((a) => Number(a.internship_id)));
 
     return (
         <div className="dashboard">
@@ -75,14 +92,14 @@ function AlumnoDashboard() {
                 />
                 <StatCard
                     icon="&#9203;"
-                    label="Pendientes"
-                    value={applications.filter((a) => a.status === 'pendiente').length}
+                    label="En revision"
+                    value={applications.filter((a) => ['enviada', 'en_revision', 'a_entrevista'].includes(a.status)).length}
                     color="amber"
                 />
                 <StatCard icon="&#128188;" label="Ofertas disponibles" value={internships.length} color="purple" />
             </div>
 
-            {msg && <div className="alert-success">{msg}</div>}
+            {msg && <Alert variant={msgType}>{msg}</Alert>}
 
             <div className="dashboard-grid">
                 <SectionCard>
@@ -94,7 +111,12 @@ function AlumnoDashboard() {
                         <p className="empty-msg">No hay ofertas disponibles.</p>
                     ) : (
                         internships.map((item) => (
-                            <InternshipCard key={item.id} item={item} onApply={applyTo} />
+                            <InternshipCard
+                                key={item.id}
+                                item={item}
+                                onApply={applyTo}
+                                alreadyApplied={appliedIds.has(Number(item.id))}
+                            />
                         ))
                     )}
                 </SectionCard>

@@ -612,7 +612,7 @@ function initSchema() {
     ensureColumn("empresas", "activo", "activo TINYINT(1) NOT NULL DEFAULT 1");
     ensureColumn("empresas", "actualizado_en", "actualizado_en VARCHAR(40) DEFAULT NULL");
 
-    run("DROP VIEW IF EXISTS followups, agreements, interviews, applications, students, companies, centers, users");
+    run("DROP VIEW IF EXISTS followups, agreements, interviews, students, companies, centers, users");
 
     run(`CREATE VIEW users AS
          SELECT id, nombre AS name, correo AS email, hash_contrasena AS password_hash, rol AS role, creado_en AS created_at
@@ -641,10 +641,6 @@ function initSchema() {
     run(`CREATE VIEW students AS
           SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, creado_en AS created_at
          FROM alumnos`);
-
-    run(`CREATE VIEW applications AS
-         SELECT id, practica_id AS internship_id, alumno_id AS student_id, estado AS status, creado_en AS created_at
-         FROM candidaturas`);
 
     run(`CREATE VIEW interviews AS
          SELECT id, candidatura_id AS application_id, fecha_entrevista AS interview_at, notas AS notes, creado_en AS created_at

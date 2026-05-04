@@ -1,7 +1,10 @@
 const STATUS_STYLES = {
     pendiente: 'badge badge-amber',
+    enviada: 'badge badge-blue',
+    en_revision: 'badge badge-amber',
     aceptada: 'badge badge-green',
     rechazada: 'badge badge-red',
+    a_entrevista: 'badge badge-purple',
     rechazado: 'badge badge-red',
     entregado: 'badge badge-blue',
     validado: 'badge badge-green',
@@ -20,8 +23,11 @@ const STATUS_STYLES = {
 
 const STATUS_LABELS = {
     pendiente: 'Pendiente',
+    enviada: 'Enviada',
+    en_revision: 'En revision',
     aceptada: 'Aceptada',
     rechazada: 'Rechazada',
+    a_entrevista: 'A entrevista',
     rechazado: 'Rechazado',
     entregado: 'Entregado',
     validado: 'Validado',

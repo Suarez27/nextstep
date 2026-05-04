@@ -12,13 +12,33 @@ function createApplicationsController({ applicationsService }) {
             return ok(res, result);
         },
 
+        company(req, res) {
+            const result = applicationsService.companyApplications(req.user);
+            return ok(res, result);
+        },
+
+        center(req, res) {
+            const result = applicationsService.centerApplications(req.user);
+            return ok(res, result);
+        },
+
         byInternship(req, res) {
             const result = applicationsService.internshipApplications(req.user, Number(req.params.id));
             return ok(res, result);
         },
 
+        detail(req, res) {
+            const result = applicationsService.applicationDetail(req.user, Number(req.params.id));
+            return ok(res, result);
+        },
+
+        events(req, res) {
+            const result = applicationsService.applicationEvents(req.user, Number(req.params.id));
+            return ok(res, result);
+        },
+
         updateStatus(req, res) {
-            const result = applicationsService.updateStatus(req.user, Number(req.params.id), req.body.status);
+            const result = applicationsService.updateStatus(req.user, Number(req.params.id), req.body);
             return ok(res, result);
         },
     };

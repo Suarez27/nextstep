@@ -1,3 +1,8 @@
+const { APPLICATION_STATUSES } = require("../../validators/applications/applications.schema");
+
+const APPLICATION_CREATED_EVENT = "created";
+const APPLICATION_STATUS_CHANGED_EVENT = "status_changed";
+
 function createError(message, status, code) {
     const err = new Error(message);
     err.status = status;
@@ -9,22 +14,100 @@ function normalizeBoolean(value) {
     return value === true || value === 1 || value === "1";
 }
 
-function hasAvailableSlots(internship) {
-    return Number(internship?.available_slots || 0) > 0;
+function hasAvailableSlots(internshipOrApplication) {
+    return Number(internshipOrApplication?.available_slots || 0) > 0;
+}
+
+function sanitizeApplicationForRole(application, role) {
+    if (!application || role === "empresa" || role === "admin") return application;
+
+    const { internal_notes: _internalNotes, ...safeApplication } = application;
+    return safeApplication;
+}
+
+function sanitizeApplicationsForRole(applications, role) {
+    return applications.map((application) => sanitizeApplicationForRole(application, role));
+}
+
+function sanitizeEventsForRole(events, role) {
+    if (role !== "alumno") return events;
+
+    return events.map(({ notes: _notes, ...event }) => event);
 }
 
 function createApplicationsService({ applicationsRepository, nowIso }) {
-    function assertManagerCanReview(authUser, internship) {
+    function getCompanyForUser(authUser) {
+        const company = applicationsRepository.findCompanyByUserId(authUser.id);
+        if (!company) {
+            throw createError("Perfil de empresa incompleto", 400, "COMPANY_PROFILE_INCOMPLETE");
+        }
+
+        return company;
+    }
+
+    function getCenterForUser(authUser) {
+        const center = applicationsRepository.findCenterByUserId(authUser.id);
+        if (!center) {
+            throw createError("Perfil de centro incompleto", 400, "CENTER_PROFILE_INCOMPLETE");
+        }
+
+        return center;
+    }
+
+    function assertCompanyOwnsApplication(authUser, application) {
+        const company = getCompanyForUser(authUser);
+        if (Number(company.id) !== Number(application.company_id)) {
+            throw createError("No puedes gestionar esta candidatura", 403, "APPLICATION_NOT_OWNED");
+        }
+
+        return company;
+    }
+
+    function assertCanViewApplication(authUser, application) {
+        if (!application) {
+            throw createError("Candidatura no encontrada", 404, "APPLICATION_NOT_FOUND");
+        }
+
+        if (authUser.role === "admin") return;
+
+        if (authUser.role === "alumno") {
+            if (Number(application.student_user_id) === Number(authUser.id)) return;
+            throw createError("No puedes ver esta candidatura", 403, "APPLICATION_FORBIDDEN");
+        }
+
+        if (authUser.role === "empresa") {
+            assertCompanyOwnsApplication(authUser, application);
+            return;
+        }
+
+        if (authUser.role === "centro") {
+            const center = getCenterForUser(authUser);
+            if (Number(center.id) === Number(application.center_id)) return;
+            throw createError("No puedes ver candidaturas de otro centro", 403, "APPLICATION_CENTER_FORBIDDEN");
+        }
+
+        throw createError("Sin permisos", 403, "APPLICATION_FORBIDDEN");
+    }
+
+    function assertCanListInternshipApplications(authUser, internship) {
         if (!internship) {
             throw createError("Oferta no encontrada", 404, "INTERNSHIP_NOT_FOUND");
         }
 
-        if (authUser.role !== "empresa") return;
+        if (authUser.role === "admin" || authUser.role === "centro") return;
 
-        const company = applicationsRepository.findCompanyByUserId(authUser.id);
-        if (!company || Number(company.id) !== Number(internship.company_id)) {
+        if (authUser.role === "empresa") {
+            const company = getCompanyForUser(authUser);
+            if (Number(company.id) === Number(internship.company_id)) return;
             throw createError("No puedes revisar candidaturas de esta oferta", 403, "INTERNSHIP_NOT_OWNED");
         }
+
+        throw createError("Sin permisos", 403, "APPLICATIONS_FORBIDDEN");
+    }
+
+    function assertValidStatus(status) {
+        if (APPLICATION_STATUSES.includes(status)) return;
+        throw createError("Estado de candidatura no valido", 400, "APPLICATION_STATUS_INVALID");
     }
 
     return {
@@ -52,13 +135,24 @@ function createApplicationsService({ applicationsRepository, nowIso }) {
                 throw createError("Ya postulaste a esta oferta", 409, "APPLICATION_ALREADY_EXISTS");
             }
 
+            const createdAt = nowIso();
             const id = applicationsRepository.createApplication({
                 internshipId,
                 studentId: student.id,
-                createdAt: nowIso(),
+                createdAt,
             });
 
-            return { id, status: "pendiente" };
+            applicationsRepository.createEvent({
+                applicationId: id,
+                eventType: APPLICATION_CREATED_EVENT,
+                fromStatus: null,
+                toStatus: "enviada",
+                actorUserId: authUser.id,
+                notes: null,
+                createdAt,
+            });
+
+            return applicationsRepository.findApplicationDetailById(id) || { id, status: "enviada" };
         },
 
         myApplications(authUser) {
@@ -67,33 +161,104 @@ function createApplicationsService({ applicationsRepository, nowIso }) {
                 throw createError("Solo cuentas de alumno tienen candidaturas", 403, "STUDENT_ONLY");
             }
 
-            return applicationsRepository.listMyApplications(student.id);
+            return sanitizeApplicationsForRole(
+                applicationsRepository.listMyApplications(student.id),
+                authUser.role
+            );
+        },
+
+        companyApplications(authUser) {
+            if (authUser.role === "admin") {
+                return applicationsRepository.listAllApplications();
+            }
+
+            const company = getCompanyForUser(authUser);
+            return applicationsRepository.listByCompanyId(company.id);
+        },
+
+        centerApplications(authUser) {
+            if (authUser.role === "admin") {
+                return applicationsRepository.listAllApplications();
+            }
+
+            const center = getCenterForUser(authUser);
+            return sanitizeApplicationsForRole(
+                applicationsRepository.listByCenterId(center.id),
+                authUser.role
+            );
         },
 
         internshipApplications(authUser, internshipId) {
             const internship = applicationsRepository.findInternshipById(internshipId);
-            assertManagerCanReview(authUser, internship);
+            assertCanListInternshipApplications(authUser, internship);
 
-            return applicationsRepository.listByInternshipId(internshipId);
+            if (authUser.role === "centro") {
+                const center = getCenterForUser(authUser);
+                return sanitizeApplicationsForRole(
+                    applicationsRepository.listByInternshipId(internshipId, { centerId: center.id }),
+                    authUser.role
+                );
+            }
+
+            return sanitizeApplicationsForRole(
+                applicationsRepository.listByInternshipId(internshipId),
+                authUser.role
+            );
         },
 
-        updateStatus(authUser, applicationId, status) {
-            const application = applicationsRepository.findApplicationById(applicationId);
+        applicationDetail(authUser, applicationId) {
+            const application = applicationsRepository.findApplicationDetailById(applicationId);
+            assertCanViewApplication(authUser, application);
+
+            return sanitizeApplicationForRole(application, authUser.role);
+        },
+
+        applicationEvents(authUser, applicationId) {
+            const application = applicationsRepository.findApplicationDetailById(applicationId);
+            assertCanViewApplication(authUser, application);
+
+            return sanitizeEventsForRole(
+                applicationsRepository.listEventsByApplicationId(applicationId),
+                authUser.role
+            );
+        },
+
+        updateStatus(authUser, applicationId, payload) {
+            const nextStatus = payload.status;
+            assertValidStatus(nextStatus);
+
+            const application = applicationsRepository.findApplicationDetailById(applicationId);
             if (!application) {
                 throw createError("Candidatura no encontrada", 404, "APPLICATION_NOT_FOUND");
             }
 
-            assertManagerCanReview(authUser, {
-                id: application.internship_id,
-                company_id: application.company_id,
-            });
+            assertCompanyOwnsApplication(authUser, application);
 
-            if (status === "aceptada" && application.status !== "aceptada" && !hasAvailableSlots(application)) {
+            if (nextStatus === "aceptada" && application.status !== "aceptada" && !hasAvailableSlots(application)) {
                 throw createError("No quedan plazas disponibles para aceptar esta candidatura", 409, "INTERNSHIP_FULL");
             }
 
-            applicationsRepository.updateStatus(applicationId, status);
-            return applicationsRepository.findStatusById(applicationId);
+            const updatedAt = nowIso();
+            applicationsRepository.updateStatus({
+                applicationId,
+                status: nextStatus,
+                internalNotes: payload.internal_notes,
+                updatedAt,
+            });
+
+            if (application.status !== nextStatus) {
+                applicationsRepository.createEvent({
+                    applicationId,
+                    eventType: APPLICATION_STATUS_CHANGED_EVENT,
+                    fromStatus: application.status,
+                    toStatus: nextStatus,
+                    actorUserId: authUser.id,
+                    notes: payload.notes || null,
+                    createdAt: updatedAt,
+                });
+            }
+
+            return applicationsRepository.findApplicationDetailById(applicationId);
         },
     };
 }

@@ -117,15 +117,39 @@ export const api = {
     return res.data;
   },
 
+  companyApplications: async () => {
+    const res = await req('/api/applications/company');
+    return res.data;
+  },
+
+  centerApplications: async () => {
+    const res = await req('/api/applications/center');
+    return res.data;
+  },
+
   internshipApplications: async (id) => {
     const res = await req(`/api/applications/internship/${id}`);
     return res.data;
   },
 
-  setApplicationStatus: async (id, status) => {
+  getApplication: async (id) => {
+    const res = await req(`/api/applications/${id}`);
+    return res.data;
+  },
+
+  applicationEvents: async (id) => {
+    const res = await req(`/api/applications/${id}/events`);
+    return res.data;
+  },
+
+  setApplicationStatus: async (id, status, options = {}) => {
     const res = await req(`/api/applications/${id}/status`, {
       method: 'POST',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({
+        status,
+        notes: options.notes || undefined,
+        internal_notes: options.internal_notes,
+      }),
     });
     return res.data;
   },
