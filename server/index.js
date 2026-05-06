@@ -67,6 +67,10 @@ const { createCatalogItemsRepository } = require("./repositories/catalogItems/ca
 const { createCatalogItemsService } = require("./services/catalogItems/catalogItems.service");
 const { createCatalogItemsController } = require("./controllers/catalogItems/catalogItems.controller");
 const { createCatalogItemsRoutes } = require("./routes/catalog-items.routes");
+const { createVerificationAuditsRepository } = require("./repositories/verificationAudits/verificationAudits.repository");
+const { createVerificationAuditsService } = require("./services/verificationAudits/verificationAudits.service");
+const { createVerificationAuditsController } = require("./controllers/verificationAudits/verificationAudits.controller");
+const { createVerificationAuditsRoutes } = require("./routes/verificationAudits.routes");
 
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "nextstep-dev-secret";
@@ -1181,6 +1185,19 @@ async function start() {
     catalogItemsService,
   });
 
+  const verificationAuditsRepository = createVerificationAuditsRepository({
+    get,
+    all,
+  });
+
+  const verificationAuditsService = createVerificationAuditsService({
+    verificationAuditsRepository,
+  });
+
+  const verificationAuditsController = createVerificationAuditsController({
+    verificationAuditsService,
+  });
+
   app.use(helmet());
   app.use(cors());
   app.use(express.json({ limit: "1mb" }));
@@ -1230,6 +1247,7 @@ async function start() {
   app.use("/api/followups", createFollowupsRoutes({ followupsController }));
   app.use("/api/admin/catalogs", createCatalogsRoutes({ catalogsController }));
   app.use("/api/admin/catalog-items", createCatalogItemsRoutes({ catalogItemsController }));
+  app.use("/api/admin/verification-audits", createVerificationAuditsRoutes({ verificationAuditsController }));
 
   app.use(errorHandler);
   app.use(express.static(path.join(__dirname, "..", "public")));

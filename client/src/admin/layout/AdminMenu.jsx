@@ -34,6 +34,7 @@ export default function AdminMenu() {
             <Menu.ResourceItem name="internships" primaryText="Practicas" leftIcon={<WorkIcon />} />
             <Menu.ResourceItem name="catalogs" primaryText="Catalogos" leftIcon={<AutoStoriesIcon />} />
             <Menu.ResourceItem name="catalog-items" primaryText="Items de catalogo" leftIcon={<ChecklistRtlIcon />} />
+            <Menu.ResourceItem name="verification-audits" primaryText="Auditoria validaciones" leftIcon={<ChecklistRtlIcon />} />
         </Menu>
     );
 }

@@ -33,6 +33,9 @@ import {
     InternshipsList,
     InternshipsShow,
 } from '../resources/internships';
+import {
+    VerificationAuditsList,
+} from '../resources/verification-audits';
 import adminTheme from '../theme/adminTheme';
 
 export default function AdminApp() {
@@ -85,6 +88,13 @@ export default function AdminApp() {
                 show={CatalogItemsShow}
                 icon={ChecklistRtlIcon}
                 options={{ label: 'Items de catalogo' }}
+            />
+
+            <Resource
+                name="verification-audits"
+                list={VerificationAuditsList}
+                icon={ChecklistRtlIcon}
+                options={{ label: 'Auditoria validaciones' }}
             />
         </Admin>
     );
