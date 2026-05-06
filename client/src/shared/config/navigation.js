@@ -17,7 +17,7 @@ export const NAV_ITEMS = [
         key: 'adminPanel',
         to: '/admin',
         label: {
-            [ROLES.ADMIN]: 'Backoffice',
+            [ROLES.ADMIN]: 'Administracion',
         },
         icon: '&#9881;',
     },

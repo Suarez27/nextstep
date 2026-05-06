@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../../shared/context/LanguageContext';
 
 const BENEFITS = {
     es: [
@@ -352,7 +353,7 @@ const UI_TEXT = {
 };
 
 export default function Home() {
-    const [lang, setLang] = useState('es');
+    const { language: lang, toggleLanguage } = useLanguage();
     const [billing, setBilling] = useState('monthly');
     const [activeRole, setActiveRole] = useState('centro');
     const [activeFaq, setActiveFaq] = useState(0);
@@ -395,7 +396,7 @@ export default function Home() {
                         <button
                             type="button"
                             className="home-btn home-btn-ghost nav-lang"
-                            onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
+                            onClick={toggleLanguage}
                             aria-label={copy.nav.ariaLang}
                         >
                             {lang === 'es' ? 'EN' : 'ES'}

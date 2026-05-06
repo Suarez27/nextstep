@@ -2,6 +2,7 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import WorkIcon from '@mui/icons-material/Work';
 import { Admin, Resource } from 'react-admin';
+import adminI18nProvider from '../i18n/adminI18nProvider';
 import { dataProvider } from '../dataProvider';
 import AdminLayout from '../layout/AdminLayout';
 import {
@@ -37,10 +38,20 @@ import {
     VerificationAuditsList,
 } from '../resources/verification-audits';
 import adminTheme from '../theme/adminTheme';
+import { useLanguage } from '../../shared/context/LanguageContext';
 
 export default function AdminApp() {
+    const { language } = useLanguage();
+
     return (
-        <Admin basename="/admin" dataProvider={dataProvider} theme={adminTheme} layout={AdminLayout}>
+        <Admin
+            basename="/admin"
+            dataProvider={dataProvider}
+            theme={adminTheme}
+            layout={AdminLayout}
+            i18nProvider={adminI18nProvider}
+            locale={language}
+        >
             <Resource
                 name="centers"
                 list={CentersList}

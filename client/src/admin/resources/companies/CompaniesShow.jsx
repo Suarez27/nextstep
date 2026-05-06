@@ -1,9 +1,11 @@
 import {
     DateField,
     EmailField,
+    FunctionField,
     TextField,
 } from 'react-admin';
 import { AdminBooleanField, BaseShow, BaseShowLayout } from '../../shared/crud';
+import { statusLabel } from '../../shared/statusPresentation';
 
 export default function CompaniesShow() {
     return (
@@ -21,7 +23,11 @@ export default function CompaniesShow() {
                 <EmailField source="email" label="Email de acceso" />
                 <AdminBooleanField source="is_active" />
                 <AdminBooleanField source="is_verified" label="Verificada" />
-                <TextField source="verification_status" label="Estado validacion" />
+                <FunctionField
+                    source="verification_status"
+                    label="Estado validacion"
+                    render={(record) => statusLabel(record?.verification_status)}
+                />
                 <TextField source="verification_note" label="Motivo" />
                 <TextField source="verified_by_user_id" label="Validado por" />
                 <DateField source="verified_at" label="Fecha validacion" showTime />

@@ -20,7 +20,7 @@ export default function AdminMenu() {
         >
             <Box sx={{ px: 2.5, pb: 1.5 }}>
                 <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1 }}>
-                    Backoffice
+                    Administracion
                 </Typography>
                 <Typography variant="h6" sx={{ lineHeight: 1.2, pr: 1 }}>
                     Gestion administrativa
