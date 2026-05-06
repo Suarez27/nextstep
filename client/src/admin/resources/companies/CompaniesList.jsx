@@ -12,6 +12,7 @@ import {
     useRecordContext,
 } from 'react-admin';
 import { AdminBooleanField, BaseDatagrid, BaseList } from '../../shared/crud';
+import { statusBadgeClass, statusLabel } from '../../shared/statusPresentation';
 
 function CompanyVerifyAction() {
     const record = useRecordContext();
@@ -81,6 +82,16 @@ const companyFilters = [
         ]}
     />,
     <SelectInput
+        key="verification_status"
+        source="verification_status"
+        label="Estado validacion"
+        choices={[
+            { id: 'pending', name: 'Pendiente' },
+            { id: 'approved', name: 'Aprobado' },
+            { id: 'rejected', name: 'Rechazado' },
+        ]}
+    />,
+    <SelectInput
         key="is_verified"
         source="is_verified"
         label="Verificacion"
@@ -104,6 +115,15 @@ export default function CompaniesList() {
                 <TextField source="contact_phone" label="Telefono" />
                 <AdminBooleanField source="is_active" />
                 <AdminBooleanField source="is_verified" label="Verificada" />
+                <FunctionField
+                    source="verification_status"
+                    label="Estado"
+                    render={(record) => (
+                        <span className={statusBadgeClass(record?.verification_status)}>
+                            {statusLabel(record?.verification_status)}
+                        </span>
+                    )}
+                />
                 <DateField source="updated_at" label="Actualizada" showTime />
                 <FunctionField label="Accion" render={() => <CompanyVerifyAction />} />
             </BaseDatagrid>

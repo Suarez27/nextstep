@@ -185,6 +185,11 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                 params[":is_active"] = isActive ? 1 : 0;
             }
 
+            if (filter.verification_status) {
+                where.push("c.verification_status = :verification_status");
+                params[":verification_status"] = String(filter.verification_status);
+            }
+
             const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
             const sortMap = {
                 id: "c.id",

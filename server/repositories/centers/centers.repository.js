@@ -78,6 +78,11 @@ function createCentersRepository({ get, all, run }) {
                 params[":is_verified"] = isVerified ? 1 : 0;
             }
 
+            if (filter.verification_status) {
+                where.push("c.verification_status = :verification_status");
+                params[":verification_status"] = String(filter.verification_status);
+            }
+
             const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
             const sortMap = {
                 id: "c.id",

@@ -78,7 +78,7 @@ export default function Students() {
     const [msg, setMsg] = useState('');
     const [error, setError] = useState('');
     const [createdCredentials, setCreatedCredentials] = useState(null);
-    const [tab, setTab] = useState('pendientes'); // 'pendientes' | 'validados'
+    const [tab, setTab] = useState('pendientes'); // 'pendientes' | 'rechazados' | 'validados'
     const [creatingStudent, setCreatingStudent] = useState(false);
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '' });
     const [followupForm, setFollowupForm] = useState({ content: '', progress: 50 });
@@ -233,9 +233,10 @@ export default function Students() {
 
     useEffect(() => { load(); }, []);
 
-    const pending = students.filter((s) => !s.validated);
+    const pending = students.filter((s) => !s.validated && normalizeStudentStatus(s) !== 'rejected');
+    const rejected = students.filter((s) => normalizeStudentStatus(s) === 'rejected');
     const validated = students.filter((s) => s.validated);
-    const listed = tab === 'pendientes' ? pending : validated;
+    const listed = tab === 'pendientes' ? pending : tab === 'rechazados' ? rejected : validated;
     const documentRows = useMemo(
         () => buildDocumentRows(documentTypes, selectedDocuments),
         [documentTypes, selectedDocuments]
@@ -289,6 +290,13 @@ export default function Students() {
                 >
                     Validados
                 </button>
+                <button
+                    className={`tab-btn${tab === 'rechazados' ? ' active' : ''}`}
+                    onClick={() => { setTab('rechazados'); setSelected(null); }}
+                >
+                    Rechazados
+                    {rejected.length > 0 && <span className="tab-badge">{rejected.length}</span>}
+                </button>
             </div>
 
             <div className="two-col-layout">
@@ -336,7 +344,9 @@ export default function Students() {
                         <p className="empty-msg">
                             {tab === 'pendientes'
                                 ? 'No hay alumnos pendientes de validar.'
-                                : 'No hay alumnos validados todavia.'}
+                                : tab === 'rechazados'
+                                    ? 'No hay alumnos rechazados.'
+                                    : 'No hay alumnos validados todavia.'}
                         </p>
                     ) : (
                         listed.map((s) => (

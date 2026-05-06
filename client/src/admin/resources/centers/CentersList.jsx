@@ -12,6 +12,7 @@ import {
     useRecordContext,
 } from 'react-admin';
 import { AdminBooleanField, BaseDatagrid, BaseList } from '../../shared/crud';
+import { statusBadgeClass, statusLabel } from '../../shared/statusPresentation';
 
 function CenterVerifyAction() {
     const record = useRecordContext();
@@ -65,6 +66,16 @@ function CenterVerifyAction() {
 const centerFilters = [
     <TextInput key="q" source="q" label="Buscar" alwaysOn />,
     <SelectInput
+        key="verification_status"
+        source="verification_status"
+        label="Estado validacion"
+        choices={[
+            { id: 'pending', name: 'Pendiente' },
+            { id: 'approved', name: 'Aprobado' },
+            { id: 'rejected', name: 'Rechazado' },
+        ]}
+    />,
+    <SelectInput
         key="is_verified"
         source="is_verified"
         label="Verificacion"
@@ -84,6 +95,15 @@ export default function CentersList() {
                 <TextField source="city" label="Ciudad" />
                 <EmailField source="email" label="Email de acceso" />
                 <AdminBooleanField source="is_verified" label="Verificado" />
+                <FunctionField
+                    source="verification_status"
+                    label="Estado"
+                    render={(record) => (
+                        <span className={statusBadgeClass(record?.verification_status)}>
+                            {statusLabel(record?.verification_status)}
+                        </span>
+                    )}
+                />
                 <DateField source="created_at" label="Registro" showTime />
                 <FunctionField label="Accion" render={() => <CenterVerifyAction />} />
             </BaseDatagrid>
