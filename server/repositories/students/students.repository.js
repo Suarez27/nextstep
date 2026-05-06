@@ -24,7 +24,7 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
     return {
         findProfileByUserId(userId) {
             return get(
-                `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, u.name, u.email
+                `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, s.verification_status, s.verification_note, s.verified_by_user_id, s.verified_at, u.name, u.email
          FROM students s
          JOIN users u ON u.id = s.user_id
          WHERE s.user_id = :uid`,
@@ -34,7 +34,7 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
 
         findStudentByUserId(userId) {
             return get(
-                `SELECT id, user_id, center_id, cv_pdf_url, validated
+                `SELECT id, user_id, center_id, cv_pdf_url, validated, verification_status, verification_note, verified_by_user_id, verified_at
          FROM students
          WHERE user_id = :uid`,
                 { ":uid": userId }
@@ -262,7 +262,7 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
 
         findAllByCenterId(centerId) {
             return all(
-                `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, u.name, u.email
+                `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, s.verification_status, s.verification_note, s.verified_at, u.name, u.email
          FROM students s
          JOIN users u ON u.id = s.user_id
          WHERE s.center_id = :cid
@@ -273,7 +273,7 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
 
         findAllDetailed() {
             return all(
-                `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, u.name, u.email, c.center_name
+                `SELECT s.id, s.center_id, s.cv_text, s.cv_pdf_url, s.skills, s.validated, s.verification_status, s.verification_note, s.verified_at, u.name, u.email, c.center_name
          FROM students s
          JOIN users u ON u.id = s.user_id
          LEFT JOIN centers c ON c.id = s.center_id
@@ -291,6 +291,10 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
                     s.cv_pdf_url,
                     s.skills,
                     s.validated,
+                    s.verification_status,
+                    s.verification_note,
+                    s.verified_by_user_id,
+                    s.verified_at,
                     s.created_at,
                     u.name,
                     u.email,
@@ -366,8 +370,8 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
 
         createStudentRecord({ userId, centerId, createdAt }) {
             run(
-                `INSERT INTO students (user_id, center_id, cv_text, skills, validated, created_at)
-         VALUES (:user_id, :center_id, '', '', 0, :created_at)`,
+                `INSERT INTO students (user_id, center_id, cv_text, skills, validated, verification_status, verification_note, verified_by_user_id, verified_at, created_at)
+         VALUES (:user_id, :center_id, '', '', 0, 'pending', NULL, NULL, NULL, :created_at)`,
                 {
                     ":user_id": userId,
                     ":center_id": centerId,
@@ -378,7 +382,7 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
 
         findCreatedSummaryByUserId(userId) {
             return get(
-                `SELECT s.id, s.center_id, s.validated, u.name, u.email
+                `SELECT s.id, s.center_id, s.validated, s.verification_status, s.verification_note, u.name, u.email
          FROM students s
          JOIN users u ON u.id = s.user_id
          WHERE s.user_id = :uid`,
@@ -388,23 +392,68 @@ function createStudentsRepository({ get, all, run, lastInsertId }) {
 
         findStudentById(studentId) {
             return get(
-                `SELECT id, user_id, center_id, validated
+                `SELECT id, user_id, center_id, validated, verification_status, verification_note, verified_by_user_id, verified_at
          FROM students
          WHERE id = :id`,
                 { ":id": studentId }
             );
         },
 
-        validateStudent(studentId) {
-            run("UPDATE students SET validated = 1 WHERE id = :id", {
-                ":id": studentId,
-            });
+        updateValidationStatus({ studentId, validated, verificationStatus, verificationNote, verifiedByUserId, verifiedAt }) {
+            run(
+                `UPDATE students
+                 SET validated = :validated,
+                     verification_status = :verification_status,
+                     verification_note = :verification_note,
+                     verified_by_user_id = :verified_by_user_id,
+                     verified_at = :verified_at
+                 WHERE id = :id`,
+                {
+                    ":id": studentId,
+                    ":validated": validated ? 1 : 0,
+                    ":verification_status": verificationStatus,
+                    ":verification_note": verificationNote,
+                    ":verified_by_user_id": verifiedByUserId,
+                    ":verified_at": verifiedAt,
+                }
+            );
         },
 
         findValidationResult(studentId) {
             return get(
-                "SELECT id, validated FROM students WHERE id = :id",
+                "SELECT id, validated, verification_status, verification_note, verified_by_user_id, verified_at FROM students WHERE id = :id",
                 { ":id": studentId }
+            );
+        },
+
+        createVerificationAudit({ entityId, previousStatus, newStatus, note, validatedByUserId, createdAt }) {
+            run(
+                `INSERT INTO verification_audits (
+                    entity_type,
+                    entity_id,
+                    previous_status,
+                    new_status,
+                    note,
+                    validated_by_user_id,
+                    created_at
+                )
+                 VALUES (
+                    'student',
+                    :entity_id,
+                    :previous_status,
+                    :new_status,
+                    :note,
+                    :validated_by_user_id,
+                    :created_at
+                )`,
+                {
+                    ":entity_id": entityId,
+                    ":previous_status": previousStatus,
+                    ":new_status": newStatus,
+                    ":note": note,
+                    ":validated_by_user_id": validatedByUserId,
+                    ":created_at": createdAt,
+                }
             );
         },
 

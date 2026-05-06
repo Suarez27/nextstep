@@ -377,7 +377,81 @@ function createStudentsService({
                 }
             }
 
-            studentsRepository.validateStudent(studentId);
+            const previousStatus = student.verification_status || (student.validated ? "approved" : "pending");
+            const now = nowIso();
+
+            studentsRepository.updateValidationStatus({
+                studentId,
+                validated: true,
+                verificationStatus: "approved",
+                verificationNote: null,
+                verifiedByUserId: authUser.id,
+                verifiedAt: now,
+            });
+
+            if (previousStatus !== "approved") {
+                studentsRepository.createVerificationAudit({
+                    entityId: studentId,
+                    previousStatus,
+                    newStatus: "approved",
+                    note: null,
+                    validatedByUserId: authUser.id,
+                    createdAt: now,
+                });
+            }
+
+            return studentsRepository.findValidationResult(studentId);
+        },
+
+        rejectStudent(authUser, studentId, notes) {
+            const student = studentsRepository.findStudentById(studentId);
+
+            if (!student) {
+                const err = new Error("Alumno no encontrado");
+                err.status = 404;
+                err.code = "STUDENT_NOT_FOUND";
+                throw err;
+            }
+
+            if (authUser.role === "centro") {
+                const center = ensureCenterForUser(authUser.id, `Centro de ${authUser.name}`, "");
+                if (student.center_id !== center.id) {
+                    const err = new Error("No puedes rechazar alumnos de otro centro");
+                    err.status = 403;
+                    err.code = "CENTER_SCOPE_FORBIDDEN";
+                    throw err;
+                }
+            }
+
+            const reason = String(notes || "").trim();
+            if (!reason) {
+                const err = new Error("Debes indicar un motivo para rechazar al alumno");
+                err.status = 400;
+                err.code = "VALIDATION_NOTE_REQUIRED";
+                throw err;
+            }
+
+            const previousStatus = student.verification_status || (student.validated ? "approved" : "pending");
+            const now = nowIso();
+
+            studentsRepository.updateValidationStatus({
+                studentId,
+                validated: false,
+                verificationStatus: "rejected",
+                verificationNote: reason,
+                verifiedByUserId: authUser.id,
+                verifiedAt: now,
+            });
+
+            studentsRepository.createVerificationAudit({
+                entityId: studentId,
+                previousStatus,
+                newStatus: "rejected",
+                note: reason,
+                validatedByUserId: authUser.id,
+                createdAt: now,
+            });
+
             return studentsRepository.findValidationResult(studentId);
         },
 

@@ -42,6 +42,13 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
 
         if (user.role === "alumno") {
             const student = authRepository.findStudentApprovalByUserId(user.id);
+            if (student && student.verification_status === "rejected") {
+                const reason = student.verification_note ? ` Motivo: ${student.verification_note}` : "";
+                const err = new Error(`Tu cuenta de alumno fue rechazada por el centro.${reason}`);
+                err.status = 403;
+                err.code = "STUDENT_REJECTED";
+                throw err;
+            }
             if (!student || Number(student.validated) !== 1) {
                 const err = new Error("Tu cuenta de alumno esta pendiente de validacion por tu centro educativo");
                 err.status = 403;

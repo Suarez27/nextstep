@@ -143,6 +143,11 @@ function createStudentsController({
             return ok(res, result);
         },
 
+        reject(req, res) {
+            const result = studentsService.rejectStudent(req.user, Number(req.params.id), req.body.notes);
+            return ok(res, result);
+        },
+
         resetPassword(req, res) {
             const result = studentsService.resetStudentPassword(
                 req.user,

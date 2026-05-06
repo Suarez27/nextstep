@@ -7,6 +7,7 @@ const {
     resetStudentPasswordSchema,
     documentValidationSchema,
     documentRejectionSchema,
+    studentRejectionSchema,
 } = require("../validators/students/students.schema");
 
 function createStudentsRoutes({ studentsController }) {
@@ -84,6 +85,15 @@ function createStudentsRoutes({ studentsController }) {
         permissionRequired("studentValidate"),
         roleRequired("centro", "admin"),
         studentsController.validate
+    );
+
+    router.post(
+        "/:id/reject",
+        authRequired,
+        permissionRequired("studentValidate"),
+        roleRequired("centro", "admin"),
+        validate(studentRejectionSchema),
+        studentsController.reject
     );
 
     router.post(

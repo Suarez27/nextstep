@@ -33,10 +33,15 @@ const documentRejectionSchema = z.object({
     notes: z.preprocess((value) => String(value || "").trim(), z.string().min(1).max(1000)),
 });
 
+const studentRejectionSchema = z.object({
+    notes: z.preprocess((value) => String(value || "").trim(), z.string().min(1).max(500)),
+});
+
 module.exports = {
     studentProfileSchema,
     createStudentSchema,
     resetStudentPasswordSchema,
     documentValidationSchema,
     documentRejectionSchema,
+    studentRejectionSchema,
 };

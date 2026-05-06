@@ -31,6 +31,12 @@ function normalizeStatus(status, hasDocument) {
     return hasDocument ? 'entregado' : 'pendiente';
 }
 
+function normalizeStudentStatus(student) {
+    const status = String(student?.verification_status || '').toLowerCase();
+    if (status) return status;
+    return student?.validated ? 'approved' : 'pending';
+}
+
 function buildDocumentRows(documentTypes, documents) {
     const byType = new Map();
     documents.forEach((document) => {
@@ -149,6 +155,24 @@ export default function Students() {
             await api.validateStudent(s.id);
             setError('');
             setMsg(`${s.name} validado correctamente.`);
+            setSelected(null);
+            load();
+        } catch (e) {
+            setError(e.message);
+        }
+    }
+
+    async function handleReject(s) {
+        const reason = window.prompt(`Motivo de rechazo para ${s.name}:`, '');
+        if (!reason || !reason.trim()) {
+            setError('Debes indicar un motivo para rechazar al alumno.');
+            return;
+        }
+
+        try {
+            await api.rejectStudent(s.id, reason.trim());
+            setError('');
+            setMsg(`${s.name} rechazado correctamente.`);
             setSelected(null);
             load();
         } catch (e) {
@@ -345,19 +369,33 @@ export default function Students() {
                                 <span>
                                     {selected.name}
                                     <StatusBadge
-                                        status={selected.validated ? 'validado' : 'pendiente'}
+                                        status={normalizeStudentStatus(selected)}
                                         className="ml"
-                                        label={selected.validated ? 'Perfil validado' : 'Perfil pendiente'}
+                                        label={
+                                            normalizeStudentStatus(selected) === 'approved'
+                                                ? 'Perfil validado'
+                                                : normalizeStudentStatus(selected) === 'rejected'
+                                                    ? 'Perfil rechazado'
+                                                    : 'Perfil pendiente'
+                                        }
                                     />
                                 </span>
-                                {!selected.validated && (
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    {!selected.validated && (
+                                        <button
+                                            className="btn-primary btn-sm"
+                                            onClick={() => handleValidate(selected)}
+                                        >
+                                            Validar alumno
+                                        </button>
+                                    )}
                                     <button
-                                        className="btn-primary btn-sm"
-                                        onClick={() => handleValidate(selected)}
+                                        className="btn-ghost btn-sm"
+                                        onClick={() => handleReject(selected)}
                                     >
-                                        Validar alumno
+                                        Rechazar alumno
                                     </button>
-                                )}
+                                </div>
                             </div>
 
                             {loadingDetail ? (
@@ -404,6 +442,13 @@ export default function Students() {
                                     ) : (
                                         <div className="detail-section">
                                             <span className="empty-msg">Sin habilidades registradas.</span>
+                                        </div>
+                                    )}
+
+                                    {selected.verification_note && (
+                                        <div className="detail-section">
+                                            <strong>Motivo de validacion:</strong>
+                                            <p className="cv-text">{selected.verification_note}</p>
                                         </div>
                                     )}
 

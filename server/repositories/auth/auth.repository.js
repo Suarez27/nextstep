@@ -117,7 +117,7 @@ function createAuthRepository({ get, run, lastInsertId }) {
         },
 
         findStudentApprovalByUserId(userId) {
-            return get("SELECT id, validated FROM students WHERE user_id = :user_id", {
+            return get("SELECT id, validated, verification_status, verification_note FROM students WHERE user_id = :user_id", {
                 ":user_id": userId,
             });
         },

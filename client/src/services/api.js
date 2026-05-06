@@ -274,6 +274,14 @@ export const api = {
     return res.data;
   },
 
+  rejectStudent: async (id, notes) => {
+    const res = await req(`/api/students/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+    return res.data;
+  },
+
   resetStudentPassword: async (id, password) => {
     const res = await req(`/api/students/${id}/reset-password`, {
       method: 'POST',

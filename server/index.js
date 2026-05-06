@@ -306,6 +306,10 @@ function migrateSchema() {
     ensureColumn("empresas", "nota_validacion", "nota_validacion TEXT NULL");
     ensureColumn("empresas", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
     ensureColumn("empresas", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
+    ensureColumn("alumnos", "estado_validacion", "estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending'");
+    ensureColumn("alumnos", "nota_validacion", "nota_validacion TEXT NULL");
+    ensureColumn("alumnos", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
+    ensureColumn("alumnos", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
   } else {
     ensureColumn("centers", "is_verified", "is_verified INTEGER NOT NULL DEFAULT 0");
     ensureColumn("centers", "verification_status", "verification_status TEXT NOT NULL DEFAULT 'pending'");
@@ -317,6 +321,10 @@ function migrateSchema() {
     ensureColumn("companies", "verification_note", "verification_note TEXT");
     ensureColumn("companies", "verified_by_user_id", "verified_by_user_id INTEGER");
     ensureColumn("companies", "verified_at", "verified_at TEXT");
+    ensureColumn("students", "verification_status", "verification_status TEXT NOT NULL DEFAULT 'pending'");
+    ensureColumn("students", "verification_note", "verification_note TEXT");
+    ensureColumn("students", "verified_by_user_id", "verified_by_user_id INTEGER");
+    ensureColumn("students", "verified_at", "verified_at TEXT");
   }
 
   if (USE_MYSQL) {
@@ -477,14 +485,18 @@ function seedIfEmpty() {
   }
 
   run(
-    `INSERT INTO students (user_id, center_id, cv_text, skills, validated, created_at)
-     VALUES (:user_id, :center_id, :cv_text, :skills, :validated, :created_at)`,
+    `INSERT INTO students (user_id, center_id, cv_text, skills, validated, verification_status, verification_note, verified_by_user_id, verified_at, created_at)
+     VALUES (:user_id, :center_id, :cv_text, :skills, :validated, :verification_status, :verification_note, :verified_by_user_id, :verified_at, :created_at)`,
     {
       ":user_id": alumnoUser.id,
       ":center_id": center ? center.id : null,
       ":cv_text": "Estudiante DAW con conocimientos en JS y SQL.",
       ":skills": "JavaScript, HTML, CSS, Node.js, SQL",
       ":validated": 1,
+      ":verification_status": "approved",
+      ":verification_note": "Alumno demo aprobado",
+      ":verified_by_user_id": centroUser ? centroUser.id : null,
+      ":verified_at": ts,
       ":created_at": ts,
     }
   );
@@ -619,6 +631,10 @@ function initSchema() {
       url_cv_pdf VARCHAR(500) DEFAULT NULL,
       habilidades TEXT,
       validado TINYINT(1) NOT NULL DEFAULT 0,
+      estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending',
+      nota_validacion TEXT NULL,
+      validado_por_usuario_id INT NULL,
+      validado_en VARCHAR(40) DEFAULT NULL,
       creado_en VARCHAR(40) NOT NULL,
       CONSTRAINT fk_alumnos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
       CONSTRAINT fk_alumnos_centro FOREIGN KEY (centro_id) REFERENCES centros_educativos(id)
@@ -722,6 +738,10 @@ function initSchema() {
     ensureColumn("empresas", "nota_validacion", "nota_validacion TEXT NULL");
     ensureColumn("empresas", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
     ensureColumn("empresas", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
+    ensureColumn("alumnos", "estado_validacion", "estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending'");
+    ensureColumn("alumnos", "nota_validacion", "nota_validacion TEXT NULL");
+    ensureColumn("alumnos", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
+    ensureColumn("alumnos", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
     ensureColumn("empresas", "descripcion", "descripcion TEXT NULL");
     ensureColumn("empresas", "correo_contacto", "correo_contacto VARCHAR(200) DEFAULT NULL");
     ensureColumn("empresas", "telefono_contacto", "telefono_contacto VARCHAR(50) DEFAULT NULL");
@@ -772,8 +792,8 @@ function initSchema() {
             creado_en AS created_at
          FROM auditoria_validaciones`);
 
-    run(`CREATE VIEW students AS
-          SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, creado_en AS created_at
+        run(`CREATE VIEW students AS
+          SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, estado_validacion AS verification_status, nota_validacion AS verification_note, validado_por_usuario_id AS verified_by_user_id, validado_en AS verified_at, creado_en AS created_at
          FROM alumnos`);
 
     run(`CREATE VIEW interviews AS
@@ -848,6 +868,10 @@ function initSchema() {
     cv_pdf_url TEXT,
     skills TEXT,
     validated INTEGER NOT NULL DEFAULT 0,
+    verification_status TEXT NOT NULL DEFAULT 'pending',
+    verification_note TEXT,
+    verified_by_user_id INTEGER,
+    verified_at TEXT,
     created_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(center_id) REFERENCES centers(id)
