@@ -7,6 +7,10 @@ function normalizeCompany(row) {
             row.is_active === true ||
             row.is_active === 1 ||
             row.is_active === "1",
+        is_verified:
+            row.is_verified === true ||
+            row.is_verified === 1 ||
+            row.is_verified === "1",
     };
 }
 
@@ -25,6 +29,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     c.contact_phone,
                     c.contact_person,
                     c.is_active,
+                    c.is_verified,
                     c.created_at,
                     c.updated_at,
                     u.email
@@ -49,6 +54,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
             contactPhone,
             contactPerson,
             isActive,
+            isVerified,
             createdAt,
             updatedAt,
         }) {
@@ -63,6 +69,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     telefono_contacto,
                     persona_contacto,
                     activo,
+                    verificado_admin,
                     creado_en,
                     actualizado_en
                 )
@@ -76,6 +83,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     :contact_phone,
                     :contact_person,
                     :is_active,
+                    :is_verified,
                     :created_at,
                     :updated_at
                 )`,
@@ -89,6 +97,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     ":contact_phone": contactPhone,
                     ":contact_person": contactPerson,
                     ":is_active": isActive,
+                    ":is_verified": isVerified ? 1 : 0,
                     ":created_at": createdAt,
                     ":updated_at": updatedAt,
                 }
@@ -170,6 +179,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                 contact_phone: "c.contact_phone",
                 contact_person: "c.contact_person",
                 is_active: "c.is_active",
+                is_verified: "c.is_verified",
                 created_at: "c.created_at",
                 updated_at: "c.updated_at",
                 email: "u.email",
@@ -198,6 +208,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     c.contact_phone,
                     c.contact_person,
                     c.is_active,
+                    c.is_verified,
                     c.created_at,
                     c.updated_at,
                     u.email
@@ -228,6 +239,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     c.contact_phone,
                     c.contact_person,
                     c.is_active,
+                    c.is_verified,
                     c.created_at,
                     c.updated_at,
                     u.email
@@ -297,6 +309,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     telefono_contacto,
                     persona_contacto,
                     activo,
+                    verificado_admin,
                     creado_en,
                     actualizado_en
                 )
@@ -310,6 +323,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     :contact_phone,
                     :contact_person,
                     :is_active,
+                    :is_verified,
                     :created_at,
                     :updated_at
                 )`,
@@ -323,6 +337,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     ":contact_phone": payload.contact_phone,
                     ":contact_person": payload.contact_person,
                     ":is_active": payload.is_active,
+                    ":is_verified": payload.is_verified ? 1 : 0,
                     ":created_at": createdAt,
                     ":updated_at": createdAt,
                 }
@@ -346,6 +361,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                      telefono_contacto = :contact_phone,
                      persona_contacto = :contact_person,
                      activo = :is_active,
+                     verificado_admin = :is_verified,
                      actualizado_en = :updated_at
                  WHERE id = :id`,
                 {
@@ -358,6 +374,7 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     ":contact_phone": payload.contact_phone,
                     ":contact_person": payload.contact_person,
                     ":is_active": payload.is_active,
+                    ":is_verified": payload.is_verified ? 1 : 0,
                     ":updated_at": updatedAt,
                 }
             );

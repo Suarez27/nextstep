@@ -20,6 +20,26 @@ function createCentersController({ centersService }) {
 
             return ok(res, result);
         },
+
+        listApproved(_req, res) {
+            const result = centersService.listApproved();
+            return ok(res, result);
+        },
+
+        listAdmin(req, res) {
+            const result = centersService.listAdmin(req.query);
+            return ok(res, result.data, result.meta);
+        },
+
+        getAdmin(req, res) {
+            const result = centersService.getById(Number(req.params.id));
+            return ok(res, result);
+        },
+
+        updateAdmin(req, res) {
+            const result = centersService.updateAdmin(Number(req.params.id), req.body);
+            return ok(res, result);
+        },
     };
 }
 

@@ -20,6 +20,7 @@ export default function CompaniesShow() {
                 <EmailField source="contact_email" label="Email de contacto" />
                 <EmailField source="email" label="Email de acceso" />
                 <AdminBooleanField source="is_active" />
+                <AdminBooleanField source="is_verified" label="Verificada" />
                 <DateField source="created_at" label="Creada" showTime />
                 <DateField source="updated_at" label="Actualizada" showTime />
             </BaseShowLayout>

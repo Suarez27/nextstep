@@ -44,9 +44,17 @@ export function AuthProvider({ children }) {
     }, []);
 
     const register = useCallback(async (data) => {
-        const { token, user } = await api.register(data);
-        localStorage.setItem('ns_token', token);
-        setUser(user);
+        const result = await api.register(data);
+
+        if (result?.token && result?.user) {
+            localStorage.setItem('ns_token', result.token);
+            setUser(result.user);
+        } else {
+            localStorage.removeItem('ns_token');
+            setUser(null);
+        }
+
+        return result;
     }, []);
 
     const logout = useCallback(() => {

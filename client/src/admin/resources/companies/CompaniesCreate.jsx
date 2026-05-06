@@ -13,7 +13,7 @@ const emailValidation = [email(), maxLength(200)];
 export default function CompaniesCreate() {
     return (
         <BaseCreate>
-            <BaseForm defaultValues={{ is_active: true }}>
+            <BaseForm defaultValues={{ is_active: true, is_verified: true }}>
                 <TextInput source="company_name" label="Empresa" validate={companyNameValidation} fullWidth />
                 <TextInput source="sector" label="Sector" validate={maxLength(120)} fullWidth />
                 <TextInput source="city" label="Ciudad" validate={maxLength(120)} fullWidth />
@@ -23,6 +23,7 @@ export default function CompaniesCreate() {
                 <TextInput source="contact_email" label="Email de contacto" type="email" validate={emailValidation} fullWidth />
                 <TextInput source="email" label="Email de acceso" type="email" validate={emailValidation} fullWidth />
                 <BooleanInput source="is_active" label="Activa" />
+                <BooleanInput source="is_verified" label="Verificada por admin" />
             </BaseForm>
         </BaseCreate>
     );

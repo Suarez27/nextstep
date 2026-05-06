@@ -27,7 +27,7 @@ const { createCompaniesRoutes, createAdminCompaniesRoutes } = require("./routes/
 const { createCentersRepository } = require("./repositories/centers/centers.repository");
 const { createCentersService } = require("./services/centers/centers.service");
 const { createCentersController } = require("./controllers/centers/centers.controller");
-const { createCentersRoutes } = require("./routes/centers.routes");
+const { createCentersRoutes, createAdminCentersRoutes } = require("./routes/centers.routes");
 
 const { createStudentsRepository } = require("./repositories/students/students.repository");
 const { createStudentsService } = require("./services/students/students.service");
@@ -254,7 +254,7 @@ function lastInsertId() {
 }
 
 function getCenterForUser(userId) {
-  return get("SELECT id, user_id, center_name, city, created_at FROM centers WHERE user_id = :uid", { ":uid": userId });
+  return get("SELECT id, user_id, center_name, city, is_verified, created_at FROM centers WHERE user_id = :uid", { ":uid": userId });
 }
 
 function ensureCenterForUser(userId, fallbackName = "Centro Educativo", fallbackCity = "") {
@@ -263,12 +263,13 @@ function ensureCenterForUser(userId, fallbackName = "Centro Educativo", fallback
 
   const createdAt = nowIso();
   run(
-    `INSERT INTO centers (user_id, center_name, city, created_at)
-     VALUES (:user_id, :center_name, :city, :created_at)`,
+    `INSERT INTO centers (user_id, center_name, city, is_verified, created_at)
+     VALUES (:user_id, :center_name, :city, :is_verified, :created_at)`,
     {
       ":user_id": userId,
       ":center_name": fallbackName,
       ":city": fallbackCity,
+      ":is_verified": 0,
       ":created_at": createdAt,
     }
   );
@@ -293,6 +294,14 @@ function ensureColumn(table, columnName, columnDefinition) {
 
 function migrateSchema() {
   ensureColumn("students", "center_id", "center_id INTEGER");
+
+  if (USE_MYSQL) {
+    ensureColumn("centros_educativos", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+    ensureColumn("empresas", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+  } else {
+    ensureColumn("centers", "is_verified", "is_verified INTEGER NOT NULL DEFAULT 0");
+    ensureColumn("companies", "is_verified", "is_verified INTEGER NOT NULL DEFAULT 0");
+  }
 
   if (USE_MYSQL) {
     ensureColumn("alumnos", "url_cv_pdf", "url_cv_pdf VARCHAR(500) NULL");
@@ -366,29 +375,71 @@ function seedIfEmpty() {
   const alumnoUser = get("SELECT id FROM users WHERE email = 'alumno@nextstep.local'");
 
   run(
-    `INSERT INTO centers (user_id, center_name, city, created_at)
-     VALUES (:user_id, :center_name, :city, :created_at)`,
+    `INSERT INTO centers (user_id, center_name, city, is_verified, created_at)
+     VALUES (:user_id, :center_name, :city, :is_verified, :created_at)`,
     {
       ":user_id": centroUser.id,
       ":center_name": "IES Innovacion Digital",
       ":city": "Madrid",
+      ":is_verified": 1,
       ":created_at": ts,
     }
   );
 
   const center = get("SELECT id FROM centers WHERE user_id = :uid", { ":uid": centroUser.id });
 
-  run(
-    `INSERT INTO companies (user_id, company_name, sector, city, created_at)
-     VALUES (:user_id, :company_name, :sector, :city, :created_at)`,
-    {
-      ":user_id": empresaUser.id,
-      ":company_name": "TechBridge S.L.",
-      ":sector": "Software",
-      ":city": "Madrid",
-      ":created_at": ts,
-    }
-  );
+  if (USE_MYSQL) {
+    run(
+      `INSERT INTO empresas (
+        usuario_id,
+        nombre_empresa,
+        sector,
+        ciudad,
+        descripcion,
+        correo_contacto,
+        telefono_contacto,
+        persona_contacto,
+        activo,
+        verificado_admin,
+        creado_en,
+        actualizado_en
+      )
+       VALUES (
+        :user_id,
+        :company_name,
+        :sector,
+        :city,
+        '',
+        '',
+        '',
+        '',
+        1,
+        1,
+        :created_at,
+        :created_at
+      )`,
+      {
+        ":user_id": empresaUser.id,
+        ":company_name": "TechBridge S.L.",
+        ":sector": "Software",
+        ":city": "Madrid",
+        ":created_at": ts,
+      }
+    );
+  } else {
+    run(
+      `INSERT INTO companies (user_id, company_name, sector, city, is_verified, created_at)
+       VALUES (:user_id, :company_name, :sector, :city, :is_verified, :created_at)`,
+      {
+        ":user_id": empresaUser.id,
+        ":company_name": "TechBridge S.L.",
+        ":sector": "Software",
+        ":city": "Madrid",
+        ":is_verified": 1,
+        ":created_at": ts,
+      }
+    );
+  }
 
   run(
     `INSERT INTO students (user_id, center_id, cv_text, skills, validated, created_at)
@@ -484,6 +535,7 @@ function initSchema() {
       usuario_id INT NOT NULL UNIQUE,
       nombre_centro VARCHAR(200) NOT NULL,
       ciudad VARCHAR(120) DEFAULT '',
+      verificado_admin TINYINT(1) NOT NULL DEFAULT 0,
       creado_en VARCHAR(40) NOT NULL,
       CONSTRAINT fk_centros_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
@@ -499,6 +551,7 @@ function initSchema() {
       telefono_contacto VARCHAR(50) DEFAULT NULL,
       persona_contacto VARCHAR(150) DEFAULT NULL,
       activo TINYINT(1) NOT NULL DEFAULT 1,
+      verificado_admin TINYINT(1) NOT NULL DEFAULT 0,
       creado_en VARCHAR(40) NOT NULL,
       actualizado_en VARCHAR(40) DEFAULT NULL,
       CONSTRAINT fk_empresas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
@@ -605,6 +658,8 @@ function initSchema() {
     }
 
     ensureColumn("alumnos", "url_cv_pdf", "url_cv_pdf VARCHAR(500) NULL");
+    ensureColumn("centros_educativos", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+    ensureColumn("empresas", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
     ensureColumn("empresas", "descripcion", "descripcion TEXT NULL");
     ensureColumn("empresas", "correo_contacto", "correo_contacto VARCHAR(200) DEFAULT NULL");
     ensureColumn("empresas", "telefono_contacto", "telefono_contacto VARCHAR(50) DEFAULT NULL");
@@ -619,7 +674,7 @@ function initSchema() {
          FROM usuarios`);
 
     run(`CREATE VIEW centers AS
-         SELECT id, usuario_id AS user_id, nombre_centro AS center_name, ciudad AS city, creado_en AS created_at
+          SELECT id, usuario_id AS user_id, nombre_centro AS center_name, ciudad AS city, verificado_admin AS is_verified, creado_en AS created_at
          FROM centros_educativos`);
 
     run(`CREATE VIEW companies AS
@@ -634,6 +689,7 @@ function initSchema() {
            telefono_contacto AS contact_phone,
            persona_contacto AS contact_person,
            activo AS is_active,
+           verificado_admin AS is_verified,
            creado_en AS created_at,
            actualizado_en AS updated_at
          FROM empresas`);
@@ -671,6 +727,7 @@ function initSchema() {
     user_id INTEGER NOT NULL UNIQUE,
     center_name TEXT NOT NULL,
     city TEXT,
+    is_verified INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
@@ -681,6 +738,7 @@ function initSchema() {
     company_name TEXT NOT NULL,
     sector TEXT,
     city TEXT,
+    is_verified INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
@@ -821,7 +879,7 @@ async function start() {
     companiesService,
   });
 
-  const centersRepository = createCentersRepository({ get, run });
+  const centersRepository = createCentersRepository({ get, all, run });
   const centersService = createCentersService({
     centersRepository,
     nowIso,
@@ -1037,6 +1095,7 @@ async function start() {
   app.use("/api/companies", createCompaniesRoutes({ companiesController }));
   app.use("/api/admin/companies", createAdminCompaniesRoutes({ companiesController }));
   app.use("/api/centers", createCentersRoutes({ centersController }));
+  app.use("/api/admin/centers", createAdminCentersRoutes({ centersController }));
   app.use("/api/catalogs", createCatalogsPublicRoutes({ catalogsController }));
 
   app.use("/api/students", createStudentsRoutes({ studentsController }));

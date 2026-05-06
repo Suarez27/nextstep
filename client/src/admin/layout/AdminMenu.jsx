@@ -1,4 +1,3 @@
-import ApartmentIcon from '@mui/icons-material/Apartment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import WorkIcon from '@mui/icons-material/Work';
@@ -30,7 +29,8 @@ export default function AdminMenu() {
 
             <Divider sx={{ mx: 2, mb: 1.5 }} />
 
-            <Menu.ResourceItem name="companies" primaryText="Empresas" leftIcon={<ApartmentIcon />} />
+            <Menu.ResourceItem name="companies" primaryText="Empresas" leftIcon={<WorkIcon />} />
+            <Menu.ResourceItem name="centers" primaryText="Centros" leftIcon={<WorkIcon />} />
             <Menu.ResourceItem name="internships" primaryText="Practicas" leftIcon={<WorkIcon />} />
             <Menu.ResourceItem name="catalogs" primaryText="Catalogos" leftIcon={<AutoStoriesIcon />} />
             <Menu.ResourceItem name="catalog-items" primaryText="Items de catalogo" leftIcon={<ChecklistRtlIcon />} />

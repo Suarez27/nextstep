@@ -18,6 +18,15 @@ const companyFilters = [
             { id: 'false', name: 'Inactivas' },
         ]}
     />,
+    <SelectInput
+        key="is_verified"
+        source="is_verified"
+        label="Verificacion"
+        choices={[
+            { id: 'true', name: 'Verificadas' },
+            { id: 'false', name: 'Pendientes' },
+        ]}
+    />,
 ];
 
 export default function CompaniesList() {
@@ -32,6 +41,7 @@ export default function CompaniesList() {
                 <EmailField source="contact_email" label="Email contacto" />
                 <TextField source="contact_phone" label="Telefono" />
                 <AdminBooleanField source="is_active" />
+                <AdminBooleanField source="is_verified" label="Verificada" />
                 <DateField source="updated_at" label="Actualizada" showTime />
             </BaseDatagrid>
         </BaseList>

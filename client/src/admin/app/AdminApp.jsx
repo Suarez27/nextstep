@@ -1,4 +1,3 @@
-import ApartmentIcon from '@mui/icons-material/Apartment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import WorkIcon from '@mui/icons-material/Work';
@@ -18,6 +17,11 @@ import {
     CatalogsShow,
 } from '../resources/catalogs';
 import {
+    CentersEdit,
+    CentersList,
+    CentersShow,
+} from '../resources/centers';
+import {
     CompaniesCreate,
     CompaniesEdit,
     CompaniesList,
@@ -35,12 +39,21 @@ export default function AdminApp() {
     return (
         <Admin basename="/admin" dataProvider={dataProvider} theme={adminTheme} layout={AdminLayout}>
             <Resource
+                name="centers"
+                list={CentersList}
+                edit={CentersEdit}
+                show={CentersShow}
+                icon={WorkIcon}
+                options={{ label: 'Centros' }}
+            />
+
+            <Resource
                 name="companies"
                 list={CompaniesList}
                 create={CompaniesCreate}
                 edit={CompaniesEdit}
                 show={CompaniesShow}
-                icon={ApartmentIcon}
+                icon={WorkIcon}
                 options={{ label: 'Empresas' }}
             />
 

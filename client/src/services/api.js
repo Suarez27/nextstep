@@ -72,6 +72,11 @@ export const api = {
     return res.data;
   },
 
+  getApprovedCenters: async () => {
+    const res = await req('/api/centers/approved');
+    return res.data;
+  },
+
   getActiveCatalogs: async () => {
     const res = await req('/api/catalogs');
     return res.data;

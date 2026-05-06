@@ -39,6 +39,7 @@ const companyProfileSchema = z.object({
 const companyAdminSchema = companyProfileSchema.extend({
     email: optionalEmail,
     is_active: activeFlag,
+    is_verified: activeFlag,
 });
 
 module.exports = {

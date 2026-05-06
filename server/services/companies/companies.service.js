@@ -109,6 +109,11 @@ function createCompaniesService({ companiesRepository, nowIso }) {
         },
 
         createAdmin(payload) {
+            const normalizedPayload = {
+                ...payload,
+                is_verified: typeof payload.is_verified === "boolean" ? payload.is_verified : true,
+            };
+
             const safeEmail = payload.email || `empresa_${Date.now()}@nextstep.local`;
             const emailExists = companiesRepository.findUserByEmail(safeEmail);
             if (emailExists) {
@@ -135,7 +140,7 @@ function createCompaniesService({ companiesRepository, nowIso }) {
 
             const companyId = companiesRepository.createAdmin({
                 userId,
-                payload,
+                payload: normalizedPayload,
                 createdAt,
             });
 
@@ -151,6 +156,11 @@ function createCompaniesService({ companiesRepository, nowIso }) {
                 throw err;
             }
 
+            const normalizedPayload = {
+                ...payload,
+                is_verified: typeof payload.is_verified === "boolean" ? payload.is_verified : !!existing.is_verified,
+            };
+
             if (payload.email) {
                 const duplicateUser = companiesRepository.findUserByEmail(payload.email);
                 if (duplicateUser && duplicateUser.id !== existing.user_id) {
@@ -163,7 +173,7 @@ function createCompaniesService({ companiesRepository, nowIso }) {
 
             companiesRepository.updateAdmin({
                 id,
-                payload,
+                payload: normalizedPayload,
                 updatedAt: nowIso(),
             });
 

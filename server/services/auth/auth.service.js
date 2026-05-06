@@ -1,14 +1,60 @@
 const bcrypt = require("bcryptjs");
 
 function createAuthService({ authRepository, buildToken, nowIso }) {
+    function ensureAccountApproved(user) {
+        if (user.role === "admin") return;
+
+        if (user.role === "centro") {
+            const center = authRepository.findCenterApprovalByUserId(user.id);
+            if (!center || Number(center.is_verified) !== 1) {
+                const err = new Error("Tu cuenta de centro esta pendiente de validacion por un administrador");
+                err.status = 403;
+                err.code = "CENTER_PENDING_APPROVAL";
+                throw err;
+            }
+            return;
+        }
+
+        if (user.role === "empresa") {
+            const company = authRepository.findCompanyApprovalByUserId(user.id);
+            if (!company || Number(company.is_verified) !== 1) {
+                const err = new Error("Tu cuenta de empresa esta pendiente de validacion por un administrador");
+                err.status = 403;
+                err.code = "COMPANY_PENDING_APPROVAL";
+                throw err;
+            }
+            return;
+        }
+
+        if (user.role === "alumno") {
+            const student = authRepository.findStudentApprovalByUserId(user.id);
+            if (!student || Number(student.validated) !== 1) {
+                const err = new Error("Tu cuenta de alumno esta pendiente de validacion por tu centro educativo");
+                err.status = 403;
+                err.code = "STUDENT_PENDING_APPROVAL";
+                throw err;
+            }
+        }
+    }
+
     return {
-        register({ name, email, password, role }) {
+        register({ name, email, password, role, center_id }) {
             const exists = authRepository.findUserByEmail(email);
             if (exists) {
                 const err = new Error("Email ya registrado");
                 err.status = 409;
                 err.code = "EMAIL_ALREADY_EXISTS";
                 throw err;
+            }
+
+            if (role === "alumno") {
+                const center = authRepository.findCenterById(center_id);
+                if (!center || Number(center.is_verified) !== 1) {
+                    const err = new Error("El centro seleccionado no esta disponible para registro");
+                    err.status = 400;
+                    err.code = "CENTER_NOT_APPROVED";
+                    throw err;
+                }
             }
 
             const createdAt = nowIso();
@@ -27,6 +73,7 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
                     userId,
                     companyName: `Empresa de ${name}`,
                     createdAt,
+                    isVerified: 0,
                 });
             }
 
@@ -35,14 +82,27 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
                     userId,
                     centerName: `Centro de ${name}`,
                     createdAt,
+                    isVerified: 0,
+                });
+            }
+
+            if (role === "alumno") {
+                authRepository.createStudentProfile({
+                    userId,
+                    centerId: center_id,
+                    createdAt,
                 });
             }
 
             const user = authRepository.findSafeUserById(userId);
 
             return {
-                token: buildToken(user),
                 user,
+                approval_required: user.role !== "admin",
+                message:
+                    user.role === "alumno"
+                        ? "Registro completado. Tu centro debe validar tu cuenta para que puedas iniciar sesion."
+                        : "Registro completado. Un administrador debe validar tu cuenta para que puedas iniciar sesion.",
             };
         },
 
@@ -63,6 +123,8 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
                 err.code = "INVALID_CREDENTIALS";
                 throw err;
             }
+
+            ensureAccountApproved(user);
 
             const safeUser = {
                 id: user.id,
@@ -89,6 +151,8 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
                 err.code = "USER_NOT_FOUND";
                 throw err;
             }
+
+            ensureAccountApproved(user);
 
             return user;
         },

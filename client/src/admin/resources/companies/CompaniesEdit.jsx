@@ -24,6 +24,7 @@ export default function CompaniesEdit() {
                 <TextInput source="contact_email" label="Email de contacto" type="email" validate={emailValidation} fullWidth />
                 <TextInput source="email" label="Email de acceso" type="email" validate={emailValidation} fullWidth />
                 <BooleanInput source="is_active" label="Activa" />
+                <BooleanInput source="is_verified" label="Verificada por admin" />
             </BaseForm>
         </BaseEdit>
     );
