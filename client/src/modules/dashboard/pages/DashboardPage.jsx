@@ -189,6 +189,8 @@ function CentroAdminDashboard() {
     const [internships, setInternships] = useState([]);
     const [students, setStudents] = useState([]);
     const [agreements, setAgreements] = useState([]);
+    const [pendingCenters, setPendingCenters] = useState(0);
+    const [pendingCompanies, setPendingCompanies] = useState(0);
     const canOpenAdminPanel = useCanAccess('adminPanel');
 
     useEffect(() => {
@@ -200,6 +202,23 @@ function CentroAdminDashboard() {
             .then(([i, s, ag]) => { setInternships(i); setStudents(s); setAgreements(ag); })
             .catch(() => { });
     }, []);
+
+    useEffect(() => {
+        if (!canOpenAdminPanel) return;
+
+        Promise.all([
+            api.adminCenters({ page: 1, perPage: 1, sortField: 'id', sortOrder: 'ASC', filter: JSON.stringify({ is_verified: false }) }),
+            api.adminCompanies({ page: 1, perPage: 1, sortField: 'id', sortOrder: 'ASC', filter: JSON.stringify({ is_verified: false }) }),
+        ])
+            .then(([centersRes, companiesRes]) => {
+                setPendingCenters(Number(centersRes?.meta?.total || 0));
+                setPendingCompanies(Number(companiesRes?.meta?.total || 0));
+            })
+            .catch(() => {
+                setPendingCenters(0);
+                setPendingCompanies(0);
+            });
+    }, [canOpenAdminPanel]);
 
     return (
         <div className="dashboard">
@@ -220,6 +239,13 @@ function CentroAdminDashboard() {
                 <StatCard icon="&#128203;" label="Convenios firmados" value={agreements.length} color="purple" />
             </div>
 
+            {canOpenAdminPanel && (
+                <div className="stats-row">
+                    <StatCard icon="&#127979;" label="Centros pendientes" value={pendingCenters} color="amber" />
+                    <StatCard icon="&#127970;" label="Empresas pendientes" value={pendingCompanies} color="amber" />
+                </div>
+            )}
+
             <div className="dashboard-grid">
                 <SectionCard>
                     <SectionHeader
@@ -232,6 +258,24 @@ function CentroAdminDashboard() {
                 </SectionCard>
 
                 <SectionCard>
+                    {canOpenAdminPanel && (
+                        <SectionHeader
+                            title="Pendientes de validacion"
+                            action={<Link to="/admin" className="link-more">Ir al backoffice</Link>}
+                        />
+                    )}
+                    {canOpenAdminPanel && (
+                        <div className="list-card compact">
+                            <div className="list-card-header">
+                                <div>
+                                    <div className="list-card-title">Centros pendientes: {pendingCenters}</div>
+                                    <div className="list-card-sub">Empresas pendientes: {pendingCompanies}</div>
+                                </div>
+                                <Link to="/admin" className="btn-sm btn-primary">Revisar ahora</Link>
+                            </div>
+                        </div>
+                    )}
+
                     <SectionHeader
                         title="Convenios recientes"
                         action={<Link to="/agreements" className="link-more">Ver todos</Link>}

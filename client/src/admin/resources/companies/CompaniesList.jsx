@@ -1,11 +1,62 @@
 import {
+    Button,
     DateField,
     EmailField,
+    FunctionField,
     SelectInput,
     TextField,
     TextInput,
+    useDataProvider,
+    useNotify,
+    useRefresh,
+    useRecordContext,
 } from 'react-admin';
 import { AdminBooleanField, BaseDatagrid, BaseList } from '../../shared/crud';
+
+function CompanyVerifyAction() {
+    const record = useRecordContext();
+    const dataProvider = useDataProvider();
+    const notify = useNotify();
+    const refresh = useRefresh();
+
+    if (!record) return null;
+
+    const isVerified = !!record.is_verified;
+
+    const handleToggle = async (event) => {
+        event.stopPropagation();
+        try {
+            await dataProvider.update('companies', {
+                id: record.id,
+                data: {
+                    company_name: record.company_name || '',
+                    sector: record.sector || '',
+                    city: record.city || '',
+                    description: record.description || '',
+                    contact_email: record.contact_email || '',
+                    contact_phone: record.contact_phone || '',
+                    contact_person: record.contact_person || '',
+                    email: record.email || '',
+                    is_active: !!record.is_active,
+                    is_verified: !isVerified,
+                },
+                previousData: record,
+            });
+            notify(!isVerified ? 'Empresa verificada' : 'Empresa marcada como pendiente', { type: 'success' });
+            refresh();
+        } catch (error) {
+            notify(error?.message || 'No se pudo actualizar la empresa', { type: 'error' });
+        }
+    };
+
+    return (
+        <Button
+            label={isVerified ? 'Marcar pendiente' : 'Aprobar'}
+            onClick={handleToggle}
+            size="small"
+        />
+    );
+}
 
 const companyFilters = [
     <TextInput key="q" source="q" label="Buscar" alwaysOn />,
@@ -43,6 +94,7 @@ export default function CompaniesList() {
                 <AdminBooleanField source="is_active" />
                 <AdminBooleanField source="is_verified" label="Verificada" />
                 <DateField source="updated_at" label="Actualizada" showTime />
+                <FunctionField label="Accion" render={() => <CompanyVerifyAction />} />
             </BaseDatagrid>
         </BaseList>
     );

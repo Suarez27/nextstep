@@ -77,6 +77,28 @@ export const api = {
     return res.data;
   },
 
+  adminCenters: async (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (typeof value !== 'undefined' && value !== null) {
+        query.set(key, typeof value === 'string' ? value : String(value));
+      }
+    });
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    return req(`/api/admin/centers${suffix}`);
+  },
+
+  adminCompanies: async (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (typeof value !== 'undefined' && value !== null) {
+        query.set(key, typeof value === 'string' ? value : String(value));
+      }
+    });
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    return req(`/api/admin/companies${suffix}`);
+  },
+
   getActiveCatalogs: async () => {
     const res = await req('/api/catalogs');
     return res.data;
