@@ -297,10 +297,26 @@ function migrateSchema() {
 
   if (USE_MYSQL) {
     ensureColumn("centros_educativos", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+    ensureColumn("centros_educativos", "estado_validacion", "estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending'");
+    ensureColumn("centros_educativos", "nota_validacion", "nota_validacion TEXT NULL");
+    ensureColumn("centros_educativos", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
+    ensureColumn("centros_educativos", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
     ensureColumn("empresas", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+    ensureColumn("empresas", "estado_validacion", "estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending'");
+    ensureColumn("empresas", "nota_validacion", "nota_validacion TEXT NULL");
+    ensureColumn("empresas", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
+    ensureColumn("empresas", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
   } else {
     ensureColumn("centers", "is_verified", "is_verified INTEGER NOT NULL DEFAULT 0");
+    ensureColumn("centers", "verification_status", "verification_status TEXT NOT NULL DEFAULT 'pending'");
+    ensureColumn("centers", "verification_note", "verification_note TEXT");
+    ensureColumn("centers", "verified_by_user_id", "verified_by_user_id INTEGER");
+    ensureColumn("centers", "verified_at", "verified_at TEXT");
     ensureColumn("companies", "is_verified", "is_verified INTEGER NOT NULL DEFAULT 0");
+    ensureColumn("companies", "verification_status", "verification_status TEXT NOT NULL DEFAULT 'pending'");
+    ensureColumn("companies", "verification_note", "verification_note TEXT");
+    ensureColumn("companies", "verified_by_user_id", "verified_by_user_id INTEGER");
+    ensureColumn("companies", "verified_at", "verified_at TEXT");
   }
 
   if (USE_MYSQL) {
@@ -373,15 +389,20 @@ function seedIfEmpty() {
   const centroUser = get("SELECT id FROM users WHERE email = 'centro@nextstep.local'");
   const empresaUser = get("SELECT id FROM users WHERE email = 'empresa@nextstep.local'");
   const alumnoUser = get("SELECT id FROM users WHERE email = 'alumno@nextstep.local'");
+  const adminUser = get("SELECT id FROM users WHERE email = 'admin@nextstep.local'");
 
   run(
-    `INSERT INTO centers (user_id, center_name, city, is_verified, created_at)
-     VALUES (:user_id, :center_name, :city, :is_verified, :created_at)`,
+    `INSERT INTO centers (user_id, center_name, city, is_verified, verification_status, verification_note, verified_by_user_id, verified_at, created_at)
+     VALUES (:user_id, :center_name, :city, :is_verified, :verification_status, :verification_note, :verified_by_user_id, :verified_at, :created_at)`,
     {
       ":user_id": centroUser.id,
       ":center_name": "IES Innovacion Digital",
       ":city": "Madrid",
       ":is_verified": 1,
+      ":verification_status": "approved",
+      ":verification_note": "Centro demo aprobado",
+      ":verified_by_user_id": adminUser ? adminUser.id : null,
+      ":verified_at": ts,
       ":created_at": ts,
     }
   );
@@ -401,6 +422,10 @@ function seedIfEmpty() {
         persona_contacto,
         activo,
         verificado_admin,
+        estado_validacion,
+        nota_validacion,
+        validado_por_usuario_id,
+        validado_en,
         creado_en,
         actualizado_en
       )
@@ -415,6 +440,10 @@ function seedIfEmpty() {
         '',
         1,
         1,
+        'approved',
+        'Empresa demo aprobada',
+        :verified_by_user_id,
+        :verified_at,
         :created_at,
         :created_at
       )`,
@@ -423,19 +452,25 @@ function seedIfEmpty() {
         ":company_name": "TechBridge S.L.",
         ":sector": "Software",
         ":city": "Madrid",
+        ":verified_by_user_id": adminUser ? adminUser.id : null,
+        ":verified_at": ts,
         ":created_at": ts,
       }
     );
   } else {
     run(
-      `INSERT INTO companies (user_id, company_name, sector, city, is_verified, created_at)
-       VALUES (:user_id, :company_name, :sector, :city, :is_verified, :created_at)`,
+      `INSERT INTO companies (user_id, company_name, sector, city, is_verified, verification_status, verification_note, verified_by_user_id, verified_at, created_at)
+       VALUES (:user_id, :company_name, :sector, :city, :is_verified, :verification_status, :verification_note, :verified_by_user_id, :verified_at, :created_at)`,
       {
         ":user_id": empresaUser.id,
         ":company_name": "TechBridge S.L.",
         ":sector": "Software",
         ":city": "Madrid",
         ":is_verified": 1,
+        ":verification_status": "approved",
+        ":verification_note": "Empresa demo aprobada",
+        ":verified_by_user_id": adminUser ? adminUser.id : null,
+        ":verified_at": ts,
         ":created_at": ts,
       }
     );
@@ -536,6 +571,10 @@ function initSchema() {
       nombre_centro VARCHAR(200) NOT NULL,
       ciudad VARCHAR(120) DEFAULT '',
       verificado_admin TINYINT(1) NOT NULL DEFAULT 0,
+      estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending',
+      nota_validacion TEXT NULL,
+      validado_por_usuario_id INT NULL,
+      validado_en VARCHAR(40) DEFAULT NULL,
       creado_en VARCHAR(40) NOT NULL,
       CONSTRAINT fk_centros_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
@@ -552,9 +591,24 @@ function initSchema() {
       persona_contacto VARCHAR(150) DEFAULT NULL,
       activo TINYINT(1) NOT NULL DEFAULT 1,
       verificado_admin TINYINT(1) NOT NULL DEFAULT 0,
+      estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending',
+      nota_validacion TEXT NULL,
+      validado_por_usuario_id INT NULL,
+      validado_en VARCHAR(40) DEFAULT NULL,
       creado_en VARCHAR(40) NOT NULL,
       actualizado_en VARCHAR(40) DEFAULT NULL,
       CONSTRAINT fk_empresas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+    run(`CREATE TABLE IF NOT EXISTS auditoria_validaciones (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      entidad_tipo VARCHAR(20) NOT NULL,
+      entidad_id INT NOT NULL,
+      estado_anterior VARCHAR(20) NOT NULL,
+      estado_nuevo VARCHAR(20) NOT NULL,
+      nota TEXT NULL,
+      validado_por_usuario_id INT NULL,
+      creado_en VARCHAR(40) NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
     run(`CREATE TABLE IF NOT EXISTS alumnos (
@@ -659,7 +713,15 @@ function initSchema() {
 
     ensureColumn("alumnos", "url_cv_pdf", "url_cv_pdf VARCHAR(500) NULL");
     ensureColumn("centros_educativos", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+    ensureColumn("centros_educativos", "estado_validacion", "estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending'");
+    ensureColumn("centros_educativos", "nota_validacion", "nota_validacion TEXT NULL");
+    ensureColumn("centros_educativos", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
+    ensureColumn("centros_educativos", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
     ensureColumn("empresas", "verificado_admin", "verificado_admin TINYINT(1) NOT NULL DEFAULT 0");
+    ensureColumn("empresas", "estado_validacion", "estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pending'");
+    ensureColumn("empresas", "nota_validacion", "nota_validacion TEXT NULL");
+    ensureColumn("empresas", "validado_por_usuario_id", "validado_por_usuario_id INT NULL");
+    ensureColumn("empresas", "validado_en", "validado_en VARCHAR(40) DEFAULT NULL");
     ensureColumn("empresas", "descripcion", "descripcion TEXT NULL");
     ensureColumn("empresas", "correo_contacto", "correo_contacto VARCHAR(200) DEFAULT NULL");
     ensureColumn("empresas", "telefono_contacto", "telefono_contacto VARCHAR(50) DEFAULT NULL");
@@ -667,14 +729,14 @@ function initSchema() {
     ensureColumn("empresas", "activo", "activo TINYINT(1) NOT NULL DEFAULT 1");
     ensureColumn("empresas", "actualizado_en", "actualizado_en VARCHAR(40) DEFAULT NULL");
 
-    run("DROP VIEW IF EXISTS followups, agreements, interviews, students, companies, centers, users");
+    run("DROP VIEW IF EXISTS verification_audits, followups, agreements, interviews, students, companies, centers, users");
 
     run(`CREATE VIEW users AS
          SELECT id, nombre AS name, correo AS email, hash_contrasena AS password_hash, rol AS role, creado_en AS created_at
          FROM usuarios`);
 
     run(`CREATE VIEW centers AS
-          SELECT id, usuario_id AS user_id, nombre_centro AS center_name, ciudad AS city, verificado_admin AS is_verified, creado_en AS created_at
+          SELECT id, usuario_id AS user_id, nombre_centro AS center_name, ciudad AS city, verificado_admin AS is_verified, estado_validacion AS verification_status, nota_validacion AS verification_note, validado_por_usuario_id AS verified_by_user_id, validado_en AS verified_at, creado_en AS created_at
          FROM centros_educativos`);
 
     run(`CREATE VIEW companies AS
@@ -690,9 +752,25 @@ function initSchema() {
            persona_contacto AS contact_person,
            activo AS is_active,
            verificado_admin AS is_verified,
+           estado_validacion AS verification_status,
+           nota_validacion AS verification_note,
+           validado_por_usuario_id AS verified_by_user_id,
+           validado_en AS verified_at,
            creado_en AS created_at,
            actualizado_en AS updated_at
          FROM empresas`);
+
+    run(`CREATE VIEW verification_audits AS
+         SELECT
+            id,
+            entidad_tipo AS entity_type,
+            entidad_id AS entity_id,
+            estado_anterior AS previous_status,
+            estado_nuevo AS new_status,
+            nota AS note,
+            validado_por_usuario_id AS validated_by_user_id,
+            creado_en AS created_at
+         FROM auditoria_validaciones`);
 
     run(`CREATE VIEW students AS
           SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, creado_en AS created_at
@@ -728,6 +806,10 @@ function initSchema() {
     center_name TEXT NOT NULL,
     city TEXT,
     is_verified INTEGER NOT NULL DEFAULT 0,
+    verification_status TEXT NOT NULL DEFAULT 'pending',
+    verification_note TEXT,
+    verified_by_user_id INTEGER,
+    verified_at TEXT,
     created_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
@@ -739,8 +821,23 @@ function initSchema() {
     sector TEXT,
     city TEXT,
     is_verified INTEGER NOT NULL DEFAULT 0,
+    verification_status TEXT NOT NULL DEFAULT 'pending',
+    verification_note TEXT,
+    verified_by_user_id INTEGER,
+    verified_at TEXT,
     created_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id)
+  )`);
+
+  run(`CREATE TABLE IF NOT EXISTS verification_audits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_type TEXT NOT NULL,
+    entity_id INTEGER NOT NULL,
+    previous_status TEXT NOT NULL,
+    new_status TEXT NOT NULL,
+    note TEXT,
+    validated_by_user_id INTEGER,
+    created_at TEXT NOT NULL
   )`);
 
   run(`CREATE TABLE IF NOT EXISTS students (

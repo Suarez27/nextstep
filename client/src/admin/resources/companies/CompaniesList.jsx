@@ -25,6 +25,16 @@ function CompanyVerifyAction() {
 
     const handleToggle = async (event) => {
         event.stopPropagation();
+        let validationNote = '';
+
+        if (isVerified) {
+            validationNote = window.prompt('Indica el motivo del rechazo de la empresa:', '') || '';
+            if (!validationNote.trim()) {
+                notify('Debes indicar un motivo para rechazar', { type: 'warning' });
+                return;
+            }
+        }
+
         try {
             await dataProvider.update('companies', {
                 id: record.id,
@@ -39,10 +49,11 @@ function CompanyVerifyAction() {
                     email: record.email || '',
                     is_active: !!record.is_active,
                     is_verified: !isVerified,
+                    validation_note: validationNote,
                 },
                 previousData: record,
             });
-            notify(!isVerified ? 'Empresa verificada' : 'Empresa marcada como pendiente', { type: 'success' });
+            notify(!isVerified ? 'Empresa verificada' : 'Empresa rechazada', { type: 'success' });
             refresh();
         } catch (error) {
             notify(error?.message || 'No se pudo actualizar la empresa', { type: 'error' });
@@ -51,7 +62,7 @@ function CompanyVerifyAction() {
 
     return (
         <Button
-            label={isVerified ? 'Marcar pendiente' : 'Aprobar'}
+            label={isVerified ? 'Rechazar' : 'Aprobar'}
             onClick={handleToggle}
             size="small"
         />

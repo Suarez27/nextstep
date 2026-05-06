@@ -40,6 +40,18 @@ const companyAdminSchema = companyProfileSchema.extend({
     email: optionalEmail,
     is_active: activeFlag,
     is_verified: activeFlag,
+    validation_note: optionalText(500),
+}).superRefine((data, ctx) => {
+    if (!data.is_verified) {
+        const note = String(data.validation_note || "").trim();
+        if (!note) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["validation_note"],
+                message: "El motivo es obligatorio al rechazar",
+            });
+        }
+    }
 });
 
 module.exports = {

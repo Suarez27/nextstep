@@ -25,6 +25,16 @@ function CenterVerifyAction() {
 
     const handleToggle = async (event) => {
         event.stopPropagation();
+        let validationNote = '';
+
+        if (isVerified) {
+            validationNote = window.prompt('Indica el motivo del rechazo del centro:', '') || '';
+            if (!validationNote.trim()) {
+                notify('Debes indicar un motivo para rechazar', { type: 'warning' });
+                return;
+            }
+        }
+
         try {
             await dataProvider.update('centers', {
                 id: record.id,
@@ -32,10 +42,11 @@ function CenterVerifyAction() {
                     center_name: record.center_name || '',
                     city: record.city || '',
                     is_verified: !isVerified,
+                    validation_note: validationNote,
                 },
                 previousData: record,
             });
-            notify(!isVerified ? 'Centro verificado' : 'Centro marcado como pendiente', { type: 'success' });
+            notify(!isVerified ? 'Centro verificado' : 'Centro rechazado', { type: 'success' });
             refresh();
         } catch (error) {
             notify(error?.message || 'No se pudo actualizar el centro', { type: 'error' });
@@ -44,7 +55,7 @@ function CenterVerifyAction() {
 
     return (
         <Button
-            label={isVerified ? 'Marcar pendiente' : 'Aprobar'}
+            label={isVerified ? 'Rechazar' : 'Aprobar'}
             onClick={handleToggle}
             size="small"
         />

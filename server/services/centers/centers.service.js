@@ -73,7 +73,7 @@ function createCentersService({ centersRepository, nowIso }) {
             return center;
         },
 
-        updateAdmin(id, payload) {
+        updateAdmin(id, payload, actorUserId) {
             const existing = centersRepository.findById(id);
             if (!existing) {
                 const err = new Error("Centro no encontrado");
@@ -82,7 +82,43 @@ function createCentersService({ centersRepository, nowIso }) {
                 throw err;
             }
 
-            centersRepository.updateAdmin({ id, payload });
+            const previousStatus = existing.verification_status || (existing.is_verified ? "approved" : "pending");
+            const shouldApprove = !!payload.is_verified;
+            const note = String(payload.validation_note || "").trim();
+
+            if (!shouldApprove && !note) {
+                const err = new Error("Debes indicar un motivo al rechazar o desactivar un centro");
+                err.status = 400;
+                err.code = "VALIDATION_NOTE_REQUIRED";
+                throw err;
+            }
+
+            const nextStatus = shouldApprove ? "approved" : "rejected";
+            const now = nowIso();
+            const auditNote = note || null;
+
+            centersRepository.updateAdmin({
+                id,
+                payload: {
+                    ...payload,
+                    verification_status: nextStatus,
+                    verification_note: auditNote,
+                    verified_by_user_id: actorUserId,
+                    verified_at: now,
+                },
+            });
+
+            if (previousStatus !== nextStatus || auditNote) {
+                centersRepository.createVerificationAudit({
+                    entityId: id,
+                    previousStatus,
+                    newStatus: nextStatus,
+                    note: auditNote,
+                    validatedByUserId: actorUserId,
+                    createdAt: now,
+                });
+            }
+
             return centersRepository.findById(id);
         },
     };

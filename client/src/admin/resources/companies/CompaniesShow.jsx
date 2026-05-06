@@ -21,6 +21,10 @@ export default function CompaniesShow() {
                 <EmailField source="email" label="Email de acceso" />
                 <AdminBooleanField source="is_active" />
                 <AdminBooleanField source="is_verified" label="Verificada" />
+                <TextField source="verification_status" label="Estado validacion" />
+                <TextField source="verification_note" label="Motivo" />
+                <TextField source="verified_by_user_id" label="Validado por" />
+                <DateField source="verified_at" label="Fecha validacion" showTime />
                 <DateField source="created_at" label="Creada" showTime />
                 <DateField source="updated_at" label="Actualizada" showTime />
             </BaseShowLayout>

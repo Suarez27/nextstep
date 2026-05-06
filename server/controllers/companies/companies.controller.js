@@ -33,7 +33,7 @@ function createCompaniesController({ companiesService }) {
         },
 
         updateAdmin(req, res) {
-            const result = companiesService.updateAdmin(Number(req.params.id), req.body);
+            const result = companiesService.updateAdmin(Number(req.params.id), req.body, req.user.id);
             return ok(res, result);
         },
 

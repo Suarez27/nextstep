@@ -2,14 +2,14 @@ function createCentersRepository({ get, all, run }) {
     return {
         findByUserId(userId) {
             return get(
-                "SELECT id, user_id, center_name, city, is_verified, created_at FROM centers WHERE user_id = :uid",
+                "SELECT id, user_id, center_name, city, is_verified, verification_status, verification_note, verified_by_user_id, verified_at, created_at FROM centers WHERE user_id = :uid",
                 { ":uid": userId }
             );
         },
 
         findById(id) {
             return get(
-                `SELECT c.id, c.user_id, c.center_name, c.city, c.is_verified, c.created_at, u.email
+                `SELECT c.id, c.user_id, c.center_name, c.city, c.is_verified, c.verification_status, c.verification_note, c.verified_by_user_id, c.verified_at, c.created_at, u.email
                  FROM centers c
                  LEFT JOIN users u ON u.id = c.user_id
                  WHERE c.id = :id`,
@@ -84,6 +84,8 @@ function createCentersRepository({ get, all, run }) {
                 center_name: "c.center_name",
                 city: "c.city",
                 is_verified: "c.is_verified",
+                verification_status: "c.verification_status",
+                verified_at: "c.verified_at",
                 created_at: "c.created_at",
                 email: "u.email",
             };
@@ -106,6 +108,10 @@ function createCentersRepository({ get, all, run }) {
                     c.center_name,
                     c.city,
                     c.is_verified,
+                    c.verification_status,
+                    c.verification_note,
+                    c.verified_by_user_id,
+                    c.verified_at,
                     c.created_at,
                     u.email
                  FROM centers c
@@ -127,13 +133,52 @@ function createCentersRepository({ get, all, run }) {
                 `UPDATE centers
                  SET center_name = :center_name,
                      city = :city,
-                     is_verified = :is_verified
+                     is_verified = :is_verified,
+                     verification_status = :verification_status,
+                     verification_note = :verification_note,
+                     verified_by_user_id = :verified_by_user_id,
+                     verified_at = :verified_at
                  WHERE id = :id`,
                 {
                     ":id": id,
                     ":center_name": payload.center_name,
                     ":city": payload.city,
                     ":is_verified": payload.is_verified ? 1 : 0,
+                    ":verification_status": payload.verification_status,
+                    ":verification_note": payload.verification_note,
+                    ":verified_by_user_id": payload.verified_by_user_id,
+                    ":verified_at": payload.verified_at,
+                }
+            );
+        },
+
+        createVerificationAudit({ entityId, previousStatus, newStatus, note, validatedByUserId, createdAt }) {
+            run(
+                `INSERT INTO verification_audits (
+                    entity_type,
+                    entity_id,
+                    previous_status,
+                    new_status,
+                    note,
+                    validated_by_user_id,
+                    created_at
+                )
+                 VALUES (
+                    'center',
+                    :entity_id,
+                    :previous_status,
+                    :new_status,
+                    :note,
+                    :validated_by_user_id,
+                    :created_at
+                )`,
+                {
+                    ":entity_id": entityId,
+                    ":previous_status": previousStatus,
+                    ":new_status": newStatus,
+                    ":note": note,
+                    ":validated_by_user_id": validatedByUserId,
+                    ":created_at": createdAt,
                 }
             );
         },

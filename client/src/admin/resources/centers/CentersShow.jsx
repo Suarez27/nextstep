@@ -15,6 +15,10 @@ export default function CentersShow() {
                 <TextField source="city" label="Ciudad" />
                 <EmailField source="email" label="Email de acceso" />
                 <AdminBooleanField source="is_verified" label="Verificado" />
+                <TextField source="verification_status" label="Estado validacion" />
+                <TextField source="verification_note" label="Motivo" />
+                <TextField source="verified_by_user_id" label="Validado por" />
+                <DateField source="verified_at" label="Fecha validacion" showTime />
                 <DateField source="created_at" label="Registro" showTime />
             </BaseShowLayout>
         </BaseShow>

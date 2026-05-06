@@ -6,6 +6,13 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
 
         if (user.role === "centro") {
             const center = authRepository.findCenterApprovalByUserId(user.id);
+            if (center && center.verification_status === "rejected") {
+                const reason = center.verification_note ? ` Motivo: ${center.verification_note}` : "";
+                const err = new Error(`Tu cuenta de centro fue rechazada.${reason}`);
+                err.status = 403;
+                err.code = "CENTER_REJECTED";
+                throw err;
+            }
             if (!center || Number(center.is_verified) !== 1) {
                 const err = new Error("Tu cuenta de centro esta pendiente de validacion por un administrador");
                 err.status = 403;
@@ -17,6 +24,13 @@ function createAuthService({ authRepository, buildToken, nowIso }) {
 
         if (user.role === "empresa") {
             const company = authRepository.findCompanyApprovalByUserId(user.id);
+            if (company && company.verification_status === "rejected") {
+                const reason = company.verification_note ? ` Motivo: ${company.verification_note}` : "";
+                const err = new Error(`Tu cuenta de empresa fue rechazada.${reason}`);
+                err.status = 403;
+                err.code = "COMPANY_REJECTED";
+                throw err;
+            }
             if (!company || Number(company.is_verified) !== 1) {
                 const err = new Error("Tu cuenta de empresa esta pendiente de validacion por un administrador");
                 err.status = 403;

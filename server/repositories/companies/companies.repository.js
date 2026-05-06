@@ -30,6 +30,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     c.contact_person,
                     c.is_active,
                     c.is_verified,
+                    c.verification_status,
+                    c.verification_note,
+                    c.verified_by_user_id,
+                    c.verified_at,
                     c.created_at,
                     c.updated_at,
                     u.email
@@ -70,6 +74,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     persona_contacto,
                     activo,
                     verificado_admin,
+                    estado_validacion,
+                    nota_validacion,
+                    validado_por_usuario_id,
+                    validado_en,
                     creado_en,
                     actualizado_en
                 )
@@ -84,6 +92,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     :contact_person,
                     :is_active,
                     :is_verified,
+                    :verification_status,
+                    :verification_note,
+                    :verified_by_user_id,
+                    :verified_at,
                     :created_at,
                     :updated_at
                 )`,
@@ -98,6 +110,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     ":contact_person": contactPerson,
                     ":is_active": isActive,
                     ":is_verified": isVerified ? 1 : 0,
+                    ":verification_status": isVerified ? "approved" : "pending",
+                    ":verification_note": null,
+                    ":verified_by_user_id": null,
+                    ":verified_at": null,
                     ":created_at": createdAt,
                     ":updated_at": updatedAt,
                 }
@@ -180,6 +196,8 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                 contact_person: "c.contact_person",
                 is_active: "c.is_active",
                 is_verified: "c.is_verified",
+                verification_status: "c.verification_status",
+                verified_at: "c.verified_at",
                 created_at: "c.created_at",
                 updated_at: "c.updated_at",
                 email: "u.email",
@@ -209,6 +227,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     c.contact_person,
                     c.is_active,
                     c.is_verified,
+                    c.verification_status,
+                    c.verification_note,
+                    c.verified_by_user_id,
+                    c.verified_at,
                     c.created_at,
                     c.updated_at,
                     u.email
@@ -240,6 +262,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     c.contact_person,
                     c.is_active,
                     c.is_verified,
+                    c.verification_status,
+                    c.verification_note,
+                    c.verified_by_user_id,
+                    c.verified_at,
                     c.created_at,
                     c.updated_at,
                     u.email
@@ -310,6 +336,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     persona_contacto,
                     activo,
                     verificado_admin,
+                    estado_validacion,
+                    nota_validacion,
+                    validado_por_usuario_id,
+                    validado_en,
                     creado_en,
                     actualizado_en
                 )
@@ -324,6 +354,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     :contact_person,
                     :is_active,
                     :is_verified,
+                    :verification_status,
+                    :verification_note,
+                    :verified_by_user_id,
+                    :verified_at,
                     :created_at,
                     :updated_at
                 )`,
@@ -338,6 +372,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     ":contact_person": payload.contact_person,
                     ":is_active": payload.is_active,
                     ":is_verified": payload.is_verified ? 1 : 0,
+                    ":verification_status": payload.verification_status,
+                    ":verification_note": payload.verification_note,
+                    ":verified_by_user_id": payload.verified_by_user_id,
+                    ":verified_at": payload.verified_at,
                     ":created_at": createdAt,
                     ":updated_at": createdAt,
                 }
@@ -362,6 +400,10 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                      persona_contacto = :contact_person,
                      activo = :is_active,
                      verificado_admin = :is_verified,
+                     estado_validacion = :verification_status,
+                     nota_validacion = :verification_note,
+                     validado_por_usuario_id = :verified_by_user_id,
+                     validado_en = :verified_at,
                      actualizado_en = :updated_at
                  WHERE id = :id`,
                 {
@@ -375,7 +417,42 @@ function createCompaniesRepository({ get, all, run, lastInsertId }) {
                     ":contact_person": payload.contact_person,
                     ":is_active": payload.is_active,
                     ":is_verified": payload.is_verified ? 1 : 0,
+                    ":verification_status": payload.verification_status,
+                    ":verification_note": payload.verification_note,
+                    ":verified_by_user_id": payload.verified_by_user_id,
+                    ":verified_at": payload.verified_at,
                     ":updated_at": updatedAt,
+                }
+            );
+        },
+
+        createVerificationAudit({ entityId, previousStatus, newStatus, note, validatedByUserId, createdAt }) {
+            run(
+                `INSERT INTO verification_audits (
+                    entity_type,
+                    entity_id,
+                    previous_status,
+                    new_status,
+                    note,
+                    validated_by_user_id,
+                    created_at
+                )
+                 VALUES (
+                    'company',
+                    :entity_id,
+                    :previous_status,
+                    :new_status,
+                    :note,
+                    :validated_by_user_id,
+                    :created_at
+                )`,
+                {
+                    ":entity_id": entityId,
+                    ":previous_status": previousStatus,
+                    ":new_status": newStatus,
+                    ":note": note,
+                    ":validated_by_user_id": validatedByUserId,
+                    ":created_at": createdAt,
                 }
             );
         },

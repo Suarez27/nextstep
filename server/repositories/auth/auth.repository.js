@@ -105,13 +105,13 @@ function createAuthRepository({ get, run, lastInsertId }) {
         },
 
         findCenterApprovalByUserId(userId) {
-            return get("SELECT id, is_verified FROM centers WHERE user_id = :user_id", {
+            return get("SELECT id, is_verified, verification_status, verification_note FROM centers WHERE user_id = :user_id", {
                 ":user_id": userId,
             });
         },
 
         findCompanyApprovalByUserId(userId) {
-            return get("SELECT id, is_verified FROM companies WHERE user_id = :user_id", {
+            return get("SELECT id, is_verified, verification_status, verification_note FROM companies WHERE user_id = :user_id", {
                 ":user_id": userId,
             });
         },

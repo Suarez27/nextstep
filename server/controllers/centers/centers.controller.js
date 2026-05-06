@@ -37,7 +37,7 @@ function createCentersController({ centersService }) {
         },
 
         updateAdmin(req, res) {
-            const result = centersService.updateAdmin(Number(req.params.id), req.body);
+            const result = centersService.updateAdmin(Number(req.params.id), req.body, req.user.id);
             return ok(res, result);
         },
     };

@@ -109,9 +109,23 @@ function createCompaniesService({ companiesRepository, nowIso }) {
         },
 
         createAdmin(payload) {
+            const shouldApprove = typeof payload.is_verified === "boolean" ? payload.is_verified : true;
+            const note = String(payload.validation_note || "").trim();
+
+            if (!shouldApprove && !note) {
+                const err = new Error("Debes indicar un motivo al crear una empresa no verificada");
+                err.status = 400;
+                err.code = "VALIDATION_NOTE_REQUIRED";
+                throw err;
+            }
+
             const normalizedPayload = {
                 ...payload,
-                is_verified: typeof payload.is_verified === "boolean" ? payload.is_verified : true,
+                is_verified: shouldApprove,
+                verification_status: shouldApprove ? "approved" : "rejected",
+                verification_note: note || null,
+                verified_by_user_id: null,
+                verified_at: shouldApprove ? nowIso() : null,
             };
 
             const safeEmail = payload.email || `empresa_${Date.now()}@nextstep.local`;
@@ -147,7 +161,7 @@ function createCompaniesService({ companiesRepository, nowIso }) {
             return companiesRepository.findById(companyId);
         },
 
-        updateAdmin(id, payload) {
+        updateAdmin(id, payload, actorUserId) {
             const existing = companiesRepository.findById(id);
             if (!existing) {
                 const err = new Error("Empresa no encontrada");
@@ -156,9 +170,27 @@ function createCompaniesService({ companiesRepository, nowIso }) {
                 throw err;
             }
 
+            const previousStatus = existing.verification_status || (existing.is_verified ? "approved" : "pending");
+            const shouldApprove = typeof payload.is_verified === "boolean" ? payload.is_verified : !!existing.is_verified;
+            const note = String(payload.validation_note || "").trim();
+
+            if (!shouldApprove && !note) {
+                const err = new Error("Debes indicar un motivo al rechazar o desactivar una empresa");
+                err.status = 400;
+                err.code = "VALIDATION_NOTE_REQUIRED";
+                throw err;
+            }
+
+            const nextStatus = shouldApprove ? "approved" : "rejected";
+            const now = nowIso();
+
             const normalizedPayload = {
                 ...payload,
-                is_verified: typeof payload.is_verified === "boolean" ? payload.is_verified : !!existing.is_verified,
+                is_verified: shouldApprove,
+                verification_status: nextStatus,
+                verification_note: note || null,
+                verified_by_user_id: actorUserId,
+                verified_at: now,
             };
 
             if (payload.email) {
@@ -174,8 +206,19 @@ function createCompaniesService({ companiesRepository, nowIso }) {
             companiesRepository.updateAdmin({
                 id,
                 payload: normalizedPayload,
-                updatedAt: nowIso(),
+                updatedAt: now,
             });
+
+            if (previousStatus !== nextStatus || normalizedPayload.verification_note) {
+                companiesRepository.createVerificationAudit({
+                    entityId: id,
+                    previousStatus,
+                    newStatus: nextStatus,
+                    note: normalizedPayload.verification_note,
+                    validatedByUserId: actorUserId,
+                    createdAt: now,
+                });
+            }
 
             companiesRepository.updateCompanyUser({
                 userId: existing.user_id,
