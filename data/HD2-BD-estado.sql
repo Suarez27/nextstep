@@ -1,0 +1,65 @@
+-- HD2 - Estado actual de BD
+-- No generar scripts SQL. La BD ya fue modificada manualmente.
+
+-- Tabla real: candidaturas
+-- Columnas relevantes:
+-- id
+-- practica_id
+-- alumno_id
+-- estado enum('enviada','en_revision','aceptada','rechazada','a_entrevista')
+-- notas_internas
+-- creado_en
+-- actualizado_en
+-- Unique: (practica_id, alumno_id)
+
+-- Vista: applications
+-- Campos expuestos:
+-- id
+-- internship_id
+-- internship_title
+-- internship_status
+-- internship_is_active
+-- company_id
+-- company_name
+-- student_id
+-- student_user_id
+-- student_name
+-- student_email
+-- center_id
+-- center_name
+-- cv_text
+-- cv_pdf_url
+-- skills
+-- student_validated
+-- status
+-- internal_notes
+-- created_at
+-- updated_at
+
+-- Tabla real: eventos_candidatura
+-- id
+-- candidatura_id
+-- event_type
+-- from_status
+-- to_status
+-- actor_user_id
+-- notes
+-- creado_en
+
+-- Vista: application_events
+-- id
+-- application_id
+-- event_type
+-- from_status
+-- to_status
+-- actor_user_id
+-- actor_name
+-- notes
+-- created_at
+
+-- Compatibilidad importante:
+-- NO cambiar la estructura de BD desde Codex
+-- NO eliminar candidaturas ni la vista applications
+-- Para lectura usar applications y application_events cuando tenga sentido
+-- Para escritura usar candidaturas y eventos_candidatura
+-- Ya existen registros históricos migrados
