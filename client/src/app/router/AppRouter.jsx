@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from '../../shared/layouts/AppLayout';
 import ProtectedRoute from '../../shared/router/ProtectedRoute';
 import PublicRoute from '../../shared/router/PublicRoute';
+import AdminPage from '../../modules/admin/pages/AdminPage';
 import { PRIVATE_ROUTES, PUBLIC_ROUTES } from './routeConfig';
 
 function AppRoutes() {
@@ -53,6 +54,16 @@ function AppRoutes() {
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
+
+            {/* Admin: ruta completamente independiente, sin AppLayout */}
+            <Route
+                path="/admin/*"
+                element={
+                    <ProtectedRoute permissionKey="adminPanel">
+                        <AdminPage />
+                    </ProtectedRoute>
+                }
+            />
         </Routes>
     );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'nextstep_lang';
 
@@ -17,21 +17,31 @@ const LanguageContext = createContext({
 export function LanguageProvider({ children }) {
     const [language, setLanguageState] = useState(resolveInitialLanguage);
 
-    function setLanguage(nextLanguage) {
+    // Sincroniza el atributo lang del <html> para que el navegador
+    // no auto-traduzca la página (Chrome translate, etc.)
+    useEffect(() => {
+        document.documentElement.lang = language;
+        document.documentElement.setAttribute('translate', 'no');
+    }, [language]);
+
+    const setLanguage = useCallback((nextLanguage) => {
         const normalized = nextLanguage === 'en' ? 'en' : 'es';
         setLanguageState(normalized);
-        if (typeof window !== 'undefined') {
-            window.localStorage.setItem(STORAGE_KEY, normalized);
-        }
-    }
+        window.localStorage.setItem(STORAGE_KEY, normalized);
+    }, []);
 
-    function toggleLanguage() {
-        setLanguage(language === 'es' ? 'en' : 'es');
-    }
+    // Usa setState funcional para no capturar 'language' por closure
+    const toggleLanguage = useCallback(() => {
+        setLanguageState((prev) => {
+            const next = prev === 'es' ? 'en' : 'es';
+            window.localStorage.setItem(STORAGE_KEY, next);
+            return next;
+        });
+    }, []);
 
     const value = useMemo(
         () => ({ language, setLanguage, toggleLanguage }),
-        [language],
+        [language, setLanguage, toggleLanguage],
     );
 
     return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

@@ -1,6 +1,6 @@
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
-import WorkIcon from '@mui/icons-material/Work';
+import BusinessIcon from '@mui/icons-material/Business';
 import { Admin, Resource } from 'react-admin';
 import adminI18nProvider from '../i18n/adminI18nProvider';
 import { dataProvider } from '../dataProvider';
@@ -57,7 +57,7 @@ export default function AdminApp() {
                 list={CentersList}
                 edit={CentersEdit}
                 show={CentersShow}
-                icon={WorkIcon}
+                icon={BusinessIcon}
                 options={{ label: 'Centros' }}
             />
 
@@ -67,7 +67,7 @@ export default function AdminApp() {
                 create={CompaniesCreate}
                 edit={CompaniesEdit}
                 show={CompaniesShow}
-                icon={WorkIcon}
+                icon={BusinessIcon}
                 options={{ label: 'Empresas' }}
             />
 
@@ -77,7 +77,7 @@ export default function AdminApp() {
                 create={InternshipsCreate}
                 edit={InternshipsEdit}
                 show={InternshipsShow}
-                icon={WorkIcon}
+                icon={BusinessIcon}
                 options={{ label: 'Practicas' }}
             />
 

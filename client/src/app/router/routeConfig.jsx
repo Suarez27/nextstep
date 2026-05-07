@@ -7,7 +7,6 @@ import ProfilePage from '../../modules/profile/pages/ProfilePage';
 import StudentsPage from '../../modules/students/pages/StudentsPage';
 import InterviewsPage from '../../modules/interviews/pages/InterviewsPage';
 import AgreementsPage from '../../modules/agreements/pages/AgreementsPage';
-import AdminPage from '../../modules/admin/pages/AdminPage';
 
 export const PUBLIC_ROUTES = [
     {
@@ -56,10 +55,5 @@ export const PRIVATE_ROUTES = [
         path: 'agreements',
         element: <AgreementsPage />,
         permissionKey: 'agreements',
-    },
-    {
-        path: 'admin/*',
-        element: <AdminPage />,
-        permissionKey: 'adminPanel',
     },
 ];
