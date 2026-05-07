@@ -124,7 +124,22 @@ function createApplicationsRepository({ get, all, run, lastInsertId }) {
                 }
             );
 
-            return lastInsertId();
+            // En MySQL, LAST_INSERT_ID() no es fiable aquí porque cada consulta
+            // se ejecuta en un proceso/conexión distinto.
+            const created = get(
+                `SELECT id
+                 FROM candidaturas
+                 WHERE practica_id = :internship_id
+                   AND alumno_id = :student_id
+                 ORDER BY id DESC
+                 LIMIT 1`,
+                {
+                    ":internship_id": internshipId,
+                    ":student_id": studentId,
+                }
+            );
+
+            return created ? created.id : lastInsertId();
         },
 
         listMyApplications(studentId) {

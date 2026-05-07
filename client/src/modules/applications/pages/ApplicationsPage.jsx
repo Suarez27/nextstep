@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
-import { api } from '../../../services/api';
+import { api, resolveFileUrl } from '../../../services/api';
 import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
     Alert,
@@ -42,9 +42,7 @@ function splitSkills(skills) {
 }
 
 function cvUrl(value) {
-    if (!value) return '';
-    if (/^https?:\/\//i.test(value)) return value;
-    return value.startsWith('/') ? value : `/${value}`;
+    return resolveFileUrl(value);
 }
 
 function eventLabel(event) {

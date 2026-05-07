@@ -74,11 +74,15 @@ export default function AdminLayout(props) {
             menu={AdminMenu}
             sx={{
                 '& .RaLayout-contentWithSidebar': {
+                    height: 'calc(100vh - 88px)',
+                    overflowY: 'auto',
                     background:
                         'radial-gradient(circle at top right, rgba(29, 78, 216, 0.08), transparent 24%), #f4f8fb',
                 },
                 '& .RaLayout-content': {
                     padding: { xs: 2, md: 3 },
+                    minHeight: '100%',
+                    overflowY: 'auto',
                 },
                 '& .RaSidebar-fixed': {
                     top: 88,

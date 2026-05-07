@@ -1,6 +1,7 @@
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import BusinessIcon from '@mui/icons-material/Business';
+import { useEffect } from 'react';
 import { Admin, Resource } from 'react-admin';
 import adminI18nProvider from '../i18n/adminI18nProvider';
 import { dataProvider } from '../dataProvider';
@@ -42,6 +43,19 @@ import { useLanguage } from '../../shared/context/LanguageContext';
 
 export default function AdminApp() {
     const { language } = useLanguage();
+
+    useEffect(() => {
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+        const previousBodyOverflow = document.body.style.overflow;
+
+        document.documentElement.style.overflow = 'auto';
+        document.body.style.overflow = 'auto';
+
+        return () => {
+            document.documentElement.style.overflow = previousHtmlOverflow;
+            document.body.style.overflow = previousBodyOverflow;
+        };
+    }, []);
 
     return (
         <Admin

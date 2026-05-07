@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
-import { api } from '../../../services/api';
+import { api, resolveFileUrl } from '../../../services/api';
 import { useCatalogItems } from '../../../shared/hooks/useCatalogs';
 import {
     Alert,
@@ -504,7 +504,7 @@ export default function Students() {
 
                                                             {document?.file_url ? (
                                                                 <div className="center-document-actions">
-                                                                    <a className="btn-ghost document-open-link" href={document.file_url} target="_blank" rel="noreferrer">
+                                                                    <a className="btn-ghost document-open-link" href={resolveFileUrl(document.file_url)} target="_blank" rel="noreferrer">
                                                                         Abrir documento
                                                                     </a>
                                                                     <FormField label="Observacion">

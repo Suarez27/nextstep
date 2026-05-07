@@ -113,7 +113,7 @@ const SORT_MAP = {
 function createInternshipsRepository({ get, all, run, lastInsertId }) {
     return {
         findCompanyByUserId(userId) {
-            return get("SELECT id FROM companies WHERE user_id = :uid", {
+            return get("SELECT id, verification_status FROM companies WHERE user_id = :uid", {
                 ":uid": userId,
             });
         },

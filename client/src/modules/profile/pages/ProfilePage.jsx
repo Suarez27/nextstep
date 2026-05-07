@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../auth/context/AuthContext';
-import { api } from '../../../services/api';
+import { api, resolveFileUrl } from '../../../services/api';
 import { useCatalogDocumentType, useCatalogItems, useCatalogOptions } from '../../../shared/hooks/useCatalogs';
 import CompanyDetailPanel from '../../companies/components/CompanyDetailPanel';
 import {
@@ -198,7 +198,7 @@ function StudentProfile() {
             disabled={uploadingPdf}
           />
           {cvPdfUrl && (
-            <a href={cvPdfUrl} target="_blank" rel="noreferrer">
+            <a href={resolveFileUrl(cvPdfUrl)} target="_blank" rel="noreferrer">
               Ver CV PDF actual
             </a>
           )}
@@ -464,7 +464,7 @@ function StudentProfileHd1() {
             disabled={uploadingPdf}
           />
           {cvPdfUrl && (
-            <a className="file-link" href={cvPdfUrl} target="_blank" rel="noreferrer">
+            <a className="file-link" href={resolveFileUrl(cvPdfUrl)} target="_blank" rel="noreferrer">
               Ver CV PDF actual
             </a>
           )}
@@ -565,7 +565,7 @@ function StudentProfileHd1() {
 
                   <div className="document-actions">
                     {document?.file_url && (
-                      <a className="btn-ghost document-open-link" href={document.file_url} target="_blank" rel="noreferrer">
+                      <a className="btn-ghost document-open-link" href={resolveFileUrl(document.file_url)} target="_blank" rel="noreferrer">
                         Abrir documento
                       </a>
                     )}

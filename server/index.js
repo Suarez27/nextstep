@@ -753,17 +753,20 @@ function initSchema() {
     ensureColumn("empresas", "activo", "activo TINYINT(1) NOT NULL DEFAULT 1");
     ensureColumn("empresas", "actualizado_en", "actualizado_en VARCHAR(40) DEFAULT NULL");
 
-    run("DROP VIEW IF EXISTS verification_audits, followups, agreements, interviews, students, companies, centers, users");
+    // Si existe un esquema legacy mixto, elimina tablas en ingles que colisionan con vistas.
+    run("DROP TABLE IF EXISTS followups, agreements, interviews, applications, internships, students, companies, centers, users");
 
-    run(`CREATE VIEW users AS
+    run("DROP VIEW IF EXISTS verification_audits, application_events, applications, internships, followups, agreements, interviews, students, companies, centers, users");
+
+    run(`CREATE OR REPLACE VIEW users AS
          SELECT id, nombre AS name, correo AS email, hash_contrasena AS password_hash, rol AS role, creado_en AS created_at
          FROM usuarios`);
 
-    run(`CREATE VIEW centers AS
+    run(`CREATE OR REPLACE VIEW centers AS
           SELECT id, usuario_id AS user_id, nombre_centro AS center_name, ciudad AS city, verificado_admin AS is_verified, estado_validacion AS verification_status, nota_validacion AS verification_note, validado_por_usuario_id AS verified_by_user_id, validado_en AS verified_at, creado_en AS created_at
          FROM centros_educativos`);
 
-    run(`CREATE VIEW companies AS
+    run(`CREATE OR REPLACE VIEW companies AS
          SELECT
            id,
            usuario_id AS user_id,
@@ -784,7 +787,7 @@ function initSchema() {
            actualizado_en AS updated_at
          FROM empresas`);
 
-    run(`CREATE VIEW verification_audits AS
+    run(`CREATE OR REPLACE VIEW verification_audits AS
          SELECT
             id,
             entidad_tipo AS entity_type,
@@ -796,19 +799,76 @@ function initSchema() {
             creado_en AS created_at
          FROM auditoria_validaciones`);
 
-        run(`CREATE VIEW students AS
+        run(`CREATE OR REPLACE VIEW students AS
           SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, estado_validacion AS verification_status, nota_validacion AS verification_note, validado_por_usuario_id AS verified_by_user_id, validado_en AS verified_at, creado_en AS created_at
          FROM alumnos`);
 
-    run(`CREATE VIEW interviews AS
+    run(`CREATE OR REPLACE VIEW interviews AS
          SELECT id, candidatura_id AS application_id, fecha_entrevista AS interview_at, notas AS notes, creado_en AS created_at
          FROM entrevistas`);
 
-    run(`CREATE VIEW agreements AS
+    run(`CREATE OR REPLACE VIEW agreements AS
          SELECT id, practica_id AS internship_id, alumno_id AS student_id, centro_id AS center_id, firmado_en AS signed_at, notas AS notes, creado_en AS created_at
          FROM convenios`);
 
-    run(`CREATE VIEW followups AS
+        run(`CREATE OR REPLACE VIEW internships AS
+          SELECT
+         p.id,
+         p.empresa_id AS company_id,
+         e.nombre_empresa AS company_name,
+         p.area_item_id,
+           ci.valor AS area_value,
+           COALESCE(ci.etiqueta, ci.valor) AS area_label,
+         p.titulo AS title,
+         p.descripcion AS description,
+         p.horas_totales AS hours_total,
+         p.horario AS schedule,
+         p.plazas AS slots,
+         p.requisitos AS requirements,
+         p.estado AS status,
+         p.fecha_inicio_estimada AS start_date,
+         p.fecha_fin_estimada AS end_date,
+         p.fecha_limite_candidatura AS application_deadline,
+         p.activo AS is_active,
+         e.activo AS company_is_active,
+         COALESCE(acc.accepted_applications_count, 0) AS accepted_applications_count,
+         GREATEST(p.plazas - COALESCE(acc.accepted_applications_count, 0), 0) AS available_slots,
+         p.creado_en AS created_at,
+         p.actualizado_en AS updated_at
+          FROM practicas p
+          LEFT JOIN empresas e ON e.id = p.empresa_id
+          LEFT JOIN catalogo_items ci ON ci.id = p.area_item_id
+          LEFT JOIN (
+          SELECT practica_id, COUNT(*) AS accepted_applications_count
+          FROM candidaturas
+          WHERE estado = 'aceptada'
+          GROUP BY practica_id
+          ) acc ON acc.practica_id = p.id`);
+
+        run(`CREATE OR REPLACE VIEW applications AS
+          SELECT
+          id,
+          practica_id AS internship_id,
+          alumno_id AS student_id,
+          estado AS status,
+          creado_en AS created_at,
+          actualizado_en AS updated_at
+          FROM candidaturas`);
+
+        run(`CREATE OR REPLACE VIEW application_events AS
+          SELECT
+          id,
+          candidatura_id AS application_id,
+          event_type,
+          from_status,
+          to_status,
+          actor_user_id,
+              NULL AS actor_name,
+          notes,
+          creado_en AS created_at
+          FROM eventos_candidatura`);
+
+    run(`CREATE OR REPLACE VIEW followups AS
          SELECT id, alumno_id AS student_id, usuario_autor_id AS author_user_id, contenido AS content, progreso AS progress, creado_en AS created_at
          FROM seguimientos`);
 

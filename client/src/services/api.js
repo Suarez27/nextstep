@@ -1,3 +1,13 @@
+const API_ROOT = import.meta.env.VITE_API_BASE || 'http://localhost:4000/api';
+const API_ORIGIN = API_ROOT.endsWith('/api') ? API_ROOT.slice(0, -4) : API_ROOT.replace(/\/+$/, '');
+
+export function resolveFileUrl(fileUrl) {
+  if (!fileUrl) return '';
+  if (/^https?:\/\//i.test(fileUrl)) return fileUrl;
+  const normalizedPath = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+  return `${API_ORIGIN}${normalizedPath}`;
+}
+
 /**
  * Función base para realizar peticiones fetch al servidor.
  * Maneja automáticamente el token de autenticación, tipos de contenido y errores comunes.

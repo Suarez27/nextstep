@@ -100,9 +100,13 @@ function createInternshipsService({ internshipsRepository, nowIso }) {
             const company = getCompanyForUser(authUser);
             assertAreaItemIsValid(payload.area_item_id);
 
+            // Si la empresa ya está verificada, activar la práctica automáticamente
+            const autoActive = company.verification_status === 'approved';
+            const enrichedPayload = { ...payload, is_active: autoActive };
+
             const id = internshipsRepository.createInternship({
                 companyId: company.id,
-                payload,
+                payload: enrichedPayload,
                 createdAt: nowIso(),
             });
 
