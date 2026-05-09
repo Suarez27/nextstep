@@ -8,6 +8,7 @@ import {
   INTERNSHIP_STATUS_OPTIONS,
 } from '../../../shared/config/internships';
 import CompanyDetailPanel from '../../companies/components/CompanyDetailPanel';
+import InternshipMatchesPanel from '../components/InternshipMatchesPanel';
 import {
   Alert,
   Button,
@@ -254,6 +255,7 @@ function InternshipDetailModal({
   canManage,
   canApply,
   alreadyApplied,
+  isCenter,
   onApply,
   onClose,
   onEdit,
@@ -356,6 +358,8 @@ function InternshipDetailModal({
           </tbody>
         </table>
       </div>
+
+      {isCenter && <InternshipMatchesPanel internshipId={internship.id} />}
     </Modal>
   );
 }
@@ -648,6 +652,7 @@ export default function InternshipsPage() {
           canManage={canManageInternships}
           canApply={canApplyToInternship}
           alreadyApplied={appliedInternshipIds.has(Number(selectedInternship.id))}
+          isCenter={isCenter}
           onApply={applyTo}
           onClose={() => setSelectedInternship(null)}
           onEdit={openEditForm}

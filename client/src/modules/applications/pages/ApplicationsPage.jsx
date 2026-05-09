@@ -67,6 +67,7 @@ function ApplicationDetailModal({
     onInternalNotesDraftChange,
     onSaveStatus,
     onClose,
+    showMatchBadge = false,
 }) {
     const skills = splitSkills(application?.skills);
     const resolvedCvUrl = cvUrl(application?.cv_pdf_url);
@@ -99,6 +100,9 @@ function ApplicationDetailModal({
                             <div className="offer-tags">
                                 <StatusBadge status={application.status} />
                                 {application.center_name && <span className="tag tag-gray">{application.center_name}</span>}
+                                {showMatchBadge && ['recomendado', 'preseleccionado'].includes(application?.match_status) && (
+                                    <span className="tag tag-blue">Recomendado por el centro</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -324,6 +328,7 @@ function AlumnoApplications() {
                     eventsLoading={eventsLoading}
                     canChangeStatus={false}
                     onClose={closeDetail}
+                    showMatchBadge={false}
                 />
             )}
         </div>
@@ -494,6 +499,11 @@ function ManagerApplications() {
                                         <div className="applicant-name">{application.student_name}</div>
                                         <div className="applicant-email">{application.student_email}</div>
                                         <div className="applicant-email">{application.center_name || 'Sin centro asignado'}</div>
+                                        {['recomendado', 'preseleccionado'].includes(application.match_status) && (
+                                            <div className="mt-1">
+                                                <span className="tag tag-blue">Recomendado por el centro</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="applicant-actions">
@@ -525,6 +535,7 @@ function ManagerApplications() {
                     onInternalNotesDraftChange={setInternalNotesDraft}
                     onSaveStatus={saveStatus}
                     onClose={closeDetail}
+                    showMatchBadge={true}
                 />
             )}
         </div>
@@ -623,6 +634,11 @@ function CenterApplications() {
                                     <td>
                                         <strong>{application.student_name || 'Alumno sin nombre'}</strong>
                                         <div className="applicant-email">{application.student_email}</div>
+                                        {['recomendado', 'preseleccionado'].includes(application.match_status) && (
+                                            <div className="mt-1">
+                                                <span className="tag tag-blue">Recomendado por el centro</span>
+                                            </div>
+                                        )}
                                     </td>
                                     <td>{displayInternshipTitle(application)}</td>
                                     <td>{application.company_name || 'Sin empresa'}</td>
@@ -649,6 +665,7 @@ function CenterApplications() {
                     eventsLoading={eventsLoading}
                     canChangeStatus={false}
                     onClose={closeDetail}
+                    showMatchBadge={true}
                 />
             )}
         </div>

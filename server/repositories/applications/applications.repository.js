@@ -21,12 +21,14 @@ const APPLICATION_LIST_SELECT = `
         c.estado AS status,
         c.notas_internas AS internal_notes,
         c.creado_en AS created_at,
-        c.actualizado_en AS updated_at
+        c.actualizado_en AS updated_at,
+        pm.estado_matching AS match_status
     FROM candidaturas c
     JOIN internships i ON i.id = c.practica_id
     JOIN students s ON s.id = c.alumno_id
     JOIN users u ON u.id = s.user_id
-    LEFT JOIN centers ce ON ce.id = s.center_id`;
+    LEFT JOIN centers ce ON ce.id = s.center_id
+    LEFT JOIN recomendaciones_practica pm ON pm.practica_id = c.practica_id AND pm.alumno_id = c.alumno_id`;
 
 const APPLICATION_DETAIL_SELECT = `
     SELECT
@@ -60,12 +62,14 @@ const APPLICATION_DETAIL_SELECT = `
         i.requirements,
         i.start_date,
         i.end_date,
-        i.application_deadline
+        i.application_deadline,
+        pm.estado_matching AS match_status
     FROM candidaturas c
     JOIN internships i ON i.id = c.practica_id
     JOIN students s ON s.id = c.alumno_id
     JOIN users u ON u.id = s.user_id
-    LEFT JOIN centers ce ON ce.id = s.center_id`;
+    LEFT JOIN centers ce ON ce.id = s.center_id
+    LEFT JOIN recomendaciones_practica pm ON pm.practica_id = c.practica_id AND pm.alumno_id = c.alumno_id`;
 
 function createApplicationsRepository({ get, all, run, lastInsertId }) {
     return {

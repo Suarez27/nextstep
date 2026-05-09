@@ -72,6 +72,12 @@ const { createVerificationAuditsService } = require("./services/verificationAudi
 const { createVerificationAuditsController } = require("./controllers/verificationAudits/verificationAudits.controller");
 const { createVerificationAuditsRoutes } = require("./routes/verificationAudits.routes");
 
+const { createPracticeMatchesRepository } = require("./repositories/practiceMatches/practiceMatches.repository");
+const { createPracticeMatchesService } = require("./services/practiceMatches/practiceMatches.service");
+const { createPracticeMatchesController } = require("./controllers/practiceMatches/practiceMatches.controller");
+const { createPracticeMatchesRoutes } = require("./routes/practiceMatches.routes");
+
+
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "nextstep-dev-secret";
 const DB_CLIENT = (process.env.DB_CLIENT || "mysql").toLowerCase();
@@ -1258,6 +1264,22 @@ async function start() {
     verificationAuditsService,
   });
 
+  const practiceMatchesRepository = createPracticeMatchesRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const practiceMatchesService = createPracticeMatchesService({
+    practiceMatchesRepository,
+    ensureCenterForUser,
+  });
+
+  const practiceMatchesController = createPracticeMatchesController({
+    practiceMatchesService,
+  });
+
   app.use(helmet());
   app.use(cors());
   app.use(express.json({ limit: "1mb" }));
@@ -1299,6 +1321,7 @@ async function start() {
   app.use("/api/students", createStudentsRoutes({ studentsController }));
 
   app.use("/api/internships", createInternshipsRoutes({ internshipsController }));
+  app.use("/api/internships", createPracticeMatchesRoutes({ practiceMatchesController }));
   app.use("/api/admin/internships", createAdminInternshipsRoutes({ internshipsController }));
   app.use("/api/applications", createApplicationsRoutes({ applicationsController }));
 

@@ -328,6 +328,21 @@ export const api = {
     return res.data;
   },
 
+  getInternshipMatches: async (internshipId, filters = {}) => {
+    const query = new URLSearchParams(filters);
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const res = await req(`/api/internships/${internshipId}/matches${suffix}`);
+    return res.data;
+  },
+
+  setMatchStatus: async (internshipId, studentId, status, notes = '') => {
+    const res = await req(`/api/internships/${internshipId}/matches`, {
+      method: 'POST',
+      body: JSON.stringify({ studentId, matchStatus: status, notes }),
+    });
+    return res.data;
+  },
+
   getCompanyDetail: async (id) => {
     const res = await req(`/api/companies/${id}`);
     return res.data;
