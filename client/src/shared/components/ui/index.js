@@ -11,3 +11,10 @@ export { default as FormRow } from './FormRow';
 export { default as FormActions } from './FormActions';
 export { default as Alert } from './Alert';
 export { default as Modal } from './Modal';
+
+// Nuevos componentes Tailwind Refactor
+export { default as NsButton } from './NsButton';
+export { default as NsBadge } from './NsBadge';
+export { default as NsAlert } from './NsAlert';
+export { default as NsCard } from './NsCard';
+export { default as NsConfirmModal } from './NsConfirmModal';

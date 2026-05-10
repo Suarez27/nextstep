@@ -3,20 +3,22 @@ import { useAuth } from '../../auth/context/AuthContext';
 import { api, resolveFileUrl } from '../../../services/api';
 import { useCanAccess } from '../../../shared/hooks/useCanAccess';
 import {
-    Alert,
-    Button,
+    NsAlert,
+    NsButton,
     EmptyState,
     FormField,
     FormRow,
     LoadingState,
     Modal,
     PageHeader,
-    StatusBadge,
+    NsBadge,
+    NsCard
 } from '../../../shared/components/ui';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 const STATUS_OPTIONS = [
     { value: 'enviada', label: 'Enviada' },
-    { value: 'en_revision', label: 'En revision' },
+    { value: 'en_revision', label: 'En revisión' },
     { value: 'aceptada', label: 'Aceptada' },
     { value: 'rechazada', label: 'Rechazada' },
     { value: 'a_entrevista', label: 'A entrevista' },
@@ -30,7 +32,7 @@ function formatDate(value) {
 }
 
 function displayInternshipTitle(application) {
-    return application?.internship_title || application?.title || 'Oferta sin titulo';
+    return application?.internship_title || application?.title || 'Oferta sin título';
 }
 
 function splitSkills(skills) {
@@ -46,9 +48,24 @@ function cvUrl(value) {
 }
 
 function eventLabel(event) {
-    if (event?.event_type === 'created') return 'Creacion de candidatura';
+    if (event?.event_type === 'created') return 'Creación de candidatura';
     if (event?.event_type === 'status_changed') return 'Cambio de estado';
     return event?.event_type || 'Evento';
+}
+
+function getStatusBadgeType(status) {
+    switch (status) {
+        case 'enviada': return 'info';
+        case 'en_revision': return 'warning';
+        case 'aceptada': return 'success';
+        case 'rechazada': return 'error';
+        case 'a_entrevista': return 'brand';
+        default: return 'default';
+    }
+}
+
+function getStatusLabel(status) {
+    return STATUS_OPTIONS.find(o => o.value === status)?.label || status;
 }
 
 function ApplicationDetailModal({
@@ -77,149 +94,172 @@ function ApplicationDetailModal({
             title="Detalle de candidatura"
             onClose={onClose}
             actions={
-                <Button type="button" variant="ghost" onClick={onClose}>
+                <NsButton variant="ghost" onClick={onClose}>
                     Cerrar
-                </Button>
+                </NsButton>
             }
         >
             {loading ? (
                 <LoadingState />
             ) : error ? (
-                <Alert variant="error">{error}</Alert>
+                <NsAlert type="error">{error}</NsAlert>
             ) : !application ? (
                 <EmptyState message="No se pudo cargar la candidatura." />
             ) : (
-                <>
-                    <div className="applicant-detail-header">
-                        <div className="applicant-avatar large">
-                            {application.student_name?.[0]?.toUpperCase() || 'A'}
+                <div className="space-y-6 max-w-7xl mx-auto">
+                    <div className="flex items-center gap-4 border-b border-gray-100 pb-4">
+                        <div className="w-14 h-14 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">
+                            {application?.student_name?.[0]?.toUpperCase() || 'A'}
                         </div>
-                        <div>
-                            <h3>{application.student_name || 'Alumno sin nombre'}</h3>
-                            <p>{application.student_email}</p>
-                            <div className="offer-tags">
-                                <StatusBadge status={application.status} />
-                                {application.center_name && <span className="tag tag-gray">{application.center_name}</span>}
+                        <div className="min-w-0">
+                            <h3 className="text-xl font-bold text-gray-900 truncate" title={application?.student_name}>{application?.student_name || 'Alumno sin nombre'}</h3>
+                            <p className="text-sm text-gray-500 truncate" title={application?.student_email}>{application?.student_email}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                <NsBadge type={getStatusBadgeType(application?.status)}>
+                                    {getStatusLabel(application?.status)}
+                                </NsBadge>
+                                {application?.center_name && <NsBadge type="default">{application?.center_name}</NsBadge>}
                                 {showMatchBadge && ['recomendado', 'preseleccionado'].includes(application?.match_status) && (
-                                    <span className="tag tag-blue">Recomendado por el centro</span>
+                                    <NsBadge type="brand">★ Recomendado por el centro</NsBadge>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="application-detail-grid">
-                        <div>
-                            <span>Oferta</span>
-                            <strong>{displayInternshipTitle(application)}</strong>
-                        </div>
-                        <div>
-                            <span>Empresa</span>
-                            <strong>{application.company_name || 'Sin empresa'}</strong>
-                        </div>
-                        <div>
-                            <span>Fecha candidatura</span>
-                            <strong>{formatDate(application.created_at)}</strong>
-                        </div>
-                        <div>
-                            <span>Centro educativo</span>
-                            <strong>{application.center_name || 'Sin centro asignado'}</strong>
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <NsCard padding="p-4">
+                            <span className="text-xs font-semibold text-gray-500 uppercase">Oferta</span>
+                            <div className="mt-1 font-medium text-gray-900">{displayInternshipTitle(application)}</div>
+                        </NsCard>
+                        <NsCard padding="p-4">
+                            <span className="text-xs font-semibold text-gray-500 uppercase">Empresa</span>
+                            <div className="mt-1 font-medium text-gray-900">{application?.company_name || 'Sin empresa'}</div>
+                        </NsCard>
+                        <NsCard padding="p-4">
+                            <span className="text-xs font-semibold text-gray-500 uppercase">Fecha candidatura</span>
+                            <div className="mt-1 font-medium text-gray-900">{formatDate(application?.created_at)}</div>
+                        </NsCard>
+                        <NsCard padding="p-4">
+                            <span className="text-xs font-semibold text-gray-500 uppercase">Centro educativo</span>
+                            <div className="mt-1 font-medium text-gray-900">{application?.center_name || 'Sin centro asignado'}</div>
+                        </NsCard>
                     </div>
 
-                    <div className="detail-section">
-                        <h4>Habilidades</h4>
+                    <NsCard padding="p-5">
+                        <h4 className="font-bold text-gray-900 mb-3">Habilidades</h4>
                         {skills.length ? (
-                            <div className="skills-preview">
+                            <div className="flex flex-wrap gap-2">
                                 {skills.map((skill) => (
-                                    <span key={skill} className="skill-tag">{skill}</span>
+                                    <span key={skill} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                                        {skill}
+                                    </span>
                                 ))}
                             </div>
                         ) : (
-                            <p className="empty-msg">Sin habilidades informadas.</p>
+                            <p className="text-gray-500 text-sm">Sin habilidades informadas.</p>
                         )}
+                    </NsCard>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <NsCard padding="p-5">
+                            <h4 className="font-bold text-gray-900 mb-3">CV Texto</h4>
+                            <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                                {application?.cv_text || 'Sin CV de texto informado.'}
+                            </p>
+                        </NsCard>
+
+                        <NsCard padding="p-5">
+                            <h4 className="font-bold text-gray-900 mb-3">CV PDF</h4>
+                            {resolvedCvUrl ? (
+                                <a href={resolvedCvUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-brand-600 hover:text-brand-800 font-medium text-sm transition-colors">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Descargar CV PDF
+                                </a>
+                            ) : (
+                                <p className="text-gray-500 text-sm">Sin CV PDF subido.</p>
+                            )}
+                        </NsCard>
                     </div>
 
-                    <div className="detail-section">
-                        <h4>CV texto</h4>
-                        <p className="cv-text">{application.cv_text || 'Sin CV de texto informado.'}</p>
-                    </div>
-
-                    <div className="detail-section">
-                        <h4>CV PDF</h4>
-                        {resolvedCvUrl ? (
-                            <a className="btn-ghost inline-action" href={resolvedCvUrl} target="_blank" rel="noreferrer">
-                                Abrir CV PDF
-                            </a>
-                        ) : (
-                            <p className="empty-msg">Sin CV PDF subido.</p>
-                        )}
-                    </div>
-
-                    <div className="detail-section">
-                        <h4>Historial</h4>
+                    <NsCard padding="p-5">
+                        <h4 className="font-bold text-gray-900 mb-4">Historial de eventos</h4>
                         {eventsLoading ? (
-                            <p className="empty-msg">Cargando historial...</p>
-                        ) : events.length === 0 ? (
-                            <p className="empty-msg">Sin eventos registrados.</p>
+                            <p className="text-gray-500 text-sm">Cargando historial...</p>
+                        ) : !events || events.length === 0 ? (
+                            <p className="text-gray-500 text-sm">Sin eventos registrados.</p>
                         ) : (
-                            <div className="application-events-list">
-                                {events.map((event) => (
-                                    <div key={event.id} className="application-event-item">
-                                        <div>
-                                            <strong>{eventLabel(event)}</strong>
-                                            <span>{event.actor_name || 'Sistema'} - {formatDate(event.created_at)}</span>
-                                        </div>
-                                        <div className="applicant-actions">
-                                            {event.from_status && <StatusBadge status={event.from_status} />}
-                                            {event.from_status && <span className="event-arrow">-&gt;</span>}
-                                            {event.to_status && <StatusBadge status={event.to_status} />}
+                            <div className="space-y-4">
+                                {events?.map((event) => (
+                                    <div key={event.id} className="flex gap-4 items-start">
+                                        <div className="mt-1.5 w-2 h-2 rounded-full bg-brand-400 flex-shrink-0"></div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="font-semibold text-sm text-gray-900">{eventLabel(event)}</div>
+                                                <div className="text-xs text-gray-500">{formatDate(event.created_at)}</div>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mb-2">{event.actor_name || 'Sistema'}</div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                {event.from_status && <NsBadge type={getStatusBadgeType(event.from_status)}>{getStatusLabel(event.from_status)}</NsBadge>}
+                                                {event.from_status && <span className="text-gray-400">→</span>}
+                                                {event.to_status && <NsBadge type={getStatusBadgeType(event.to_status)}>{getStatusLabel(event.to_status)}</NsBadge>}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </NsCard>
 
                     {canChangeStatus && (
-                        <form className="application-status-form" onSubmit={onSaveStatus}>
-                            <FormRow>
-                                <FormField label="Estado">
-                                    <select value={statusDraft} onChange={(e) => onStatusDraftChange(e.target.value)}>
+                        <NsCard padding="p-6">
+                            <h4 className="font-bold text-gray-900 mb-4">Actualizar estado</h4>
+                            <form onSubmit={onSaveStatus} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                    <select 
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                        value={statusDraft} 
+                                        onChange={(e) => onStatusDraftChange(e.target.value)}
+                                    >
                                         {STATUS_OPTIONS.map((option) => (
                                             <option key={option.value} value={option.value}>
                                                 {option.label}
                                             </option>
                                         ))}
                                     </select>
-                                </FormField>
-                            </FormRow>
+                                </div>
 
-                            <FormField label="Observaciones internas">
-                                <textarea
-                                    value={internalNotesDraft}
-                                    onChange={(e) => onInternalNotesDraftChange(e.target.value)}
-                                    rows={3}
-                                    maxLength={2000}
-                                    placeholder="Notas visibles solo para la gestion interna de la empresa"
-                                />
-                            </FormField>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones internas</label>
+                                    <textarea
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                        value={internalNotesDraft}
+                                        onChange={(e) => onInternalNotesDraftChange(e.target.value)}
+                                        rows={3}
+                                        maxLength={2000}
+                                        placeholder="Notas visibles solo para la gestión interna de la empresa"
+                                    />
+                                </div>
 
-                            <FormField label="Nota del cambio">
-                                <textarea
-                                    value={notesDraft}
-                                    onChange={(e) => onNotesDraftChange(e.target.value)}
-                                    rows={2}
-                                    maxLength={1000}
-                                    placeholder="Motivo breve para registrar en eventos"
-                                />
-                            </FormField>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nota del cambio</label>
+                                    <textarea
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                        value={notesDraft}
+                                        onChange={(e) => onNotesDraftChange(e.target.value)}
+                                        rows={2}
+                                        maxLength={1000}
+                                        placeholder="Motivo breve para registrar en eventos"
+                                    />
+                                </div>
 
-                            <Button type="submit" disabled={saving}>
-                                {saving ? 'Guardando...' : 'Guardar estado'}
-                            </Button>
-                        </form>
+                                <NsButton type="submit" loading={saving} className="w-full sm:w-auto mt-2">
+                                    {saving ? 'Guardando...' : 'Guardar estado'}
+                                </NsButton>
+                            </form>
+                        </NsCard>
                     )}
-                </>
+                </div>
             )}
         </Modal>
     );
@@ -275,47 +315,38 @@ function AlumnoApplications() {
     if (loading) return <LoadingState />;
 
     return (
-        <div className="page">
+        <div className="max-w-7xl mx-auto space-y-6">
             <PageHeader
                 title="Mis Candidaturas"
-                subtitle={`${apps.length} candidatura${apps.length !== 1 ? 's' : ''} enviada${apps.length !== 1 ? 's' : ''}`}
+                subtitle={`${apps?.length || 0} candidatura${apps?.length !== 1 ? 's' : ''} enviada${apps?.length !== 1 ? 's' : ''}`}
             />
 
-            {msg && <Alert variant="error" onClick={() => setMsg('')}>{msg}</Alert>}
+            {msg && <NsAlert type="error" onClose={() => setMsg('')}>{msg}</NsAlert>}
 
-            {apps.length === 0 ? (
+            {!apps || apps.length === 0 ? (
                 <EmptyState
                     icon="NS"
-                    message="No has enviado ninguna candidatura todavia."
+                    message="No has enviado ninguna candidatura todavía."
                 />
             ) : (
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Oferta</th>
-                                <th>Empresa</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                                <th>Detalle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {apps.map((application) => (
-                                <tr key={application.id}>
-                                    <td><strong>{displayInternshipTitle(application)}</strong></td>
-                                    <td>{application.company_name}</td>
-                                    <td><StatusBadge status={application.status} /></td>
-                                    <td>{formatDate(application.created_at)}</td>
-                                    <td>
-                                        <button className="btn-sm btn-primary" type="button" onClick={() => openDetail(application.id)}>
-                                            Ver
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {apps?.map((application) => (
+                        <NsCard key={application.id} className="flex flex-col">
+                            <div className="mb-4">
+                                <NsBadge type={getStatusBadgeType(application.status)} className="mb-3">
+                                    {getStatusLabel(application.status)}
+                                </NsBadge>
+                                <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">{displayInternshipTitle(application)}</h3>
+                                <div className="text-sm text-gray-500">{application.company_name}</div>
+                            </div>
+                            <div className="text-xs text-gray-400 mb-4 mt-auto">
+                                Enviada el {formatDate(application.created_at)}
+                            </div>
+                            <NsButton variant="secondary" size="sm" onClick={() => openDetail(application.id)} className="w-full">
+                                Ver detalle
+                            </NsButton>
+                        </NsCard>
+                    ))}
                 </div>
             )}
 
@@ -354,6 +385,7 @@ function ManagerApplications() {
     const [notesDraft, setNotesDraft] = useState('');
     const [internalNotesDraft, setInternalNotesDraft] = useState('');
     const [savingStatus, setSavingStatus] = useState(false);
+    const [studentSearch, setStudentSearch] = useState('');
 
     useEffect(() => {
         api.getInternships()
@@ -370,6 +402,7 @@ function ManagerApplications() {
     async function loadApps(internshipId) {
         setSelectedInternshipId(internshipId);
         setLoadingApps(true);
+        setStudentSearch('');
         try {
             const data = await api.internshipApplications(internshipId);
             setApps(data);
@@ -396,8 +429,8 @@ function ManagerApplications() {
             ]);
             setDetail(data);
             setEvents(eventData);
-            setStatusDraft(data.status || 'enviada');
-            setInternalNotesDraft(data.internal_notes || '');
+            setStatusDraft(data?.status || 'enviada');
+            setInternalNotesDraft(data?.internal_notes || '');
         } catch (error) {
             setDetailError(error.message);
         } finally {
@@ -445,75 +478,127 @@ function ManagerApplications() {
         [internships, selectedInternshipId]
     );
 
+    const filteredApps = useMemo(() => {
+        if (!apps) return [];
+        if (!studentSearch.trim()) return apps;
+        const lower = studentSearch.toLowerCase();
+        return apps.filter(app => 
+            (app.student_name || '').toLowerCase().includes(lower) ||
+            (app.student_email || '').toLowerCase().includes(lower)
+        );
+    }, [apps, studentSearch]);
+
     if (pageLoading) return <LoadingState />;
 
     return (
-        <div className="page">
+        <div className="max-w-[1400px] mx-auto space-y-6">
             <PageHeader
                 title={isCompany ? 'Candidatos' : 'Candidaturas'}
                 subtitle="Selecciona una oferta para ver sus candidaturas"
             />
 
-            {msg && <Alert onClick={() => setMsg('')}>{msg}</Alert>}
+            {msg && <NsAlert type="success" onClose={() => setMsg('')}>{msg}</NsAlert>}
 
-            <div className="two-col-layout">
-                <div className="col-left">
-                    <h2 className="col-title">Ofertas</h2>
-                    {internships.length === 0 ? (
-                        <p className="empty-msg">No hay ofertas.</p>
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="w-full md:w-1/3 flex-shrink-0 md:sticky md:top-6 md:self-start md:max-h-[calc(100vh-3rem)] overflow-y-auto overflow-x-hidden">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">Ofertas</h2>
+                    {!internships || internships.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No hay ofertas.</p>
                     ) : (
-                        internships.map((internship) => (
-                            <button
-                                key={internship.id}
-                                type="button"
-                                className={`selectable-row as-button${selectedInternshipId === internship.id ? ' selected' : ''}`}
-                                onClick={() => loadApps(internship.id)}
-                            >
-                                <div className="sel-title">{internship.title}</div>
-                                <div className="sel-sub">{internship.company_name}</div>
-                                <div className="offer-tags mt-sm">
-                                    <StatusBadge status={internship.status} />
-                                    <span className="tag tag-green">{internship.available_slots} plazas</span>
-                                </div>
-                            </button>
-                        ))
+                        <div className="space-y-3 pb-4 p-2">
+                            {internships?.map((internship) => {
+                                const isSelected = selectedInternshipId === internship.id;
+                                return (
+                                    <button
+                                        key={internship.id}
+                                        type="button"
+                                        className={`w-full text-left p-4 rounded-xl border transition-all relative ${isSelected ? 'ring-2 ring-brand-500 bg-brand-50/50 shadow-md border-transparent' : 'border-gray-200 bg-white hover:border-brand-300 hover:shadow-sm'}`}
+                                        onClick={() => loadApps(internship.id)}
+                                    >
+                                        <div className={`font-semibold text-sm pr-4 ${isSelected ? 'text-brand-900' : 'text-gray-900'}`}>{internship.title}</div>
+                                        <div className="text-xs text-gray-500 mt-1">{internship.company_name}</div>
+                                        <div className="flex flex-wrap gap-2 mt-3">
+                                            <NsBadge type={internship.status === 'publicada' ? 'success' : 'default'}>{internship.status}</NsBadge>
+                                            <NsBadge type="info">{internship.available_slots} plazas</NsBadge>
+                                        </div>
+                                        {isSelected && (
+                                            <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 bg-brand-500 text-white rounded-full items-center justify-center shadow-md z-10">
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
 
-                <div className="col-right">
-                    <h2 className="col-title">
-                        {selectedInternship ? selectedInternship.title : 'Candidaturas'}
-                    </h2>
+                <div className="w-full flex-1 min-w-0">
                     {!selectedInternshipId ? (
-                        <p className="empty-msg">Selecciona una oferta a la izquierda.</p>
-                    ) : loadingApps ? (
-                        <LoadingState />
-                    ) : apps.length === 0 ? (
-                        <p className="empty-msg">Esta oferta no tiene candidatos todavia.</p>
+                        <div className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-xl shadow-sm border border-gray-100 h-full min-h-[400px]">
+                            <div className="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center text-3xl mb-4">
+                                👈
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Ninguna oferta seleccionada</h3>
+                            <p className="text-gray-500 text-center max-w-sm">Selecciona una oferta de la lista izquierda para visualizar y gestionar a los candidatos asociados.</p>
+                        </div>
                     ) : (
-                        apps.map((application) => (
-                            <div key={application.id} className="applicant-card">
-                                <div className="applicant-info">
-                                    <div className="applicant-avatar">{application.student_name?.[0]?.toUpperCase() || 'A'}</div>
-                                    <div>
-                                        <div className="applicant-name">{application.student_name}</div>
-                                        <div className="applicant-email">{application.student_email}</div>
-                                        <div className="applicant-email">{application.center_name || 'Sin centro asignado'}</div>
-                                        {['recomendado', 'preseleccionado'].includes(application.match_status) && (
-                                            <div className="mt-1">
-                                                <span className="tag tag-blue">Recomendado por el centro</span>
-                                            </div>
-                                        )}
-                                    </div>
+                        <>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                        {selectedInternship?.title}
+                                        <NsBadge type="info">{apps?.length || 0} candidato{(apps?.length !== 1) ? 's' : ''}</NsBadge>
+                                    </h2>
                                 </div>
-                                <div className="applicant-actions">
-                                    <StatusBadge status={application.status} />
-                                    <button className="btn-sm btn-primary" type="button" onClick={() => openDetail(application.id)}>
-                                        Ver detalle
-                                    </button>
+                                <div className="relative w-full sm:w-64 shrink-0">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-gray-400">
+                                        <SearchIcon className="h-4 w-4" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm py-2.5 pr-2.5 pl-[3.5rem]"
+                                        placeholder="Buscar por nombre o email..."
+                                        value={studentSearch}
+                                        onChange={(e) => setStudentSearch(e.target.value)}
+                                    />
                                 </div>
                             </div>
-                        ))
+
+                            {loadingApps ? (
+                                <LoadingState />
+                            ) : !apps || apps.length === 0 ? (
+                                <NsCard><p className="text-gray-500 py-10 text-center">Esta oferta no tiene candidatos todavía.</p></NsCard>
+                            ) : !filteredApps || filteredApps.length === 0 ? (
+                                <NsCard><p className="text-gray-500 py-10 text-center">Ningún candidato coincide con la búsqueda.</p></NsCard>
+                            ) : (
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                                    {filteredApps?.map((application) => (
+                                        <NsCard key={application.id} className="flex items-center gap-4 transition-shadow hover:shadow-md" padding="p-3">
+                                            <div className="w-10 h-10 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                                                {application.student_name?.[0]?.toUpperCase() || 'A'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <div className="font-bold text-gray-900 text-sm truncate" title={application.student_name}>{application.student_name}</div>
+                                                    {['recomendado', 'preseleccionado'].includes(application.match_status) && (
+                                                        <NsBadge type="brand" className="text-[10px] px-1.5 py-0 leading-relaxed tracking-wide">★ Recomendado</NsBadge>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs text-gray-500 truncate" title={application.student_email}>{application.student_email}</div>
+                                                <div className="text-[10px] text-gray-400 truncate mt-0.5" title={application.center_name}>{application.center_name || 'Sin centro asignado'}</div>
+                                            </div>
+                                            <div className="flex flex-col items-end justify-between gap-2 shrink-0 h-full">
+                                                <NsBadge type={getStatusBadgeType(application.status)} className="text-[10px] px-1.5">{getStatusLabel(application.status)}</NsBadge>
+                                                <NsButton variant="ghost" size="sm" onClick={() => openDetail(application.id)} className="h-7 text-xs px-2 mt-auto">
+                                                    Ver
+                                                </NsButton>
+                                            </div>
+                                        </NsCard>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
@@ -602,57 +687,42 @@ function CenterApplications() {
     if (loading) return <LoadingState />;
 
     return (
-        <div className="page">
+        <div className="max-w-7xl mx-auto space-y-6">
             <PageHeader
                 title="Candidaturas de alumnos"
-                subtitle={`${apps.length} candidatura${apps.length !== 1 ? 's' : ''} de tu centro`}
+                subtitle={`${apps?.length || 0} candidatura${apps?.length !== 1 ? 's' : ''} de tu centro`}
             />
 
-            {msg && <Alert variant="error" onClick={() => setMsg('')}>{msg}</Alert>}
+            {msg && <NsAlert type="error" onClose={() => setMsg('')}>{msg}</NsAlert>}
 
-            {apps.length === 0 ? (
+            {!apps || apps.length === 0 ? (
                 <EmptyState
                     icon="NS"
                     message="No hay candidaturas de alumnos de tu centro."
                 />
             ) : (
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Alumno</th>
-                                <th>Oferta</th>
-                                <th>Empresa</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                                <th>Detalle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {apps.map((application) => (
-                                <tr key={application.id}>
-                                    <td>
-                                        <strong>{application.student_name || 'Alumno sin nombre'}</strong>
-                                        <div className="applicant-email">{application.student_email}</div>
-                                        {['recomendado', 'preseleccionado'].includes(application.match_status) && (
-                                            <div className="mt-1">
-                                                <span className="tag tag-blue">Recomendado por el centro</span>
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td>{displayInternshipTitle(application)}</td>
-                                    <td>{application.company_name || 'Sin empresa'}</td>
-                                    <td><StatusBadge status={application.status} /></td>
-                                    <td>{formatDate(application.created_at)}</td>
-                                    <td>
-                                        <button className="btn-sm btn-primary" type="button" onClick={() => openDetail(application.id)}>
-                                            Ver
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {apps?.map((application) => (
+                        <NsCard key={application.id} className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="text-base font-bold text-gray-900 truncate" title={application.student_name}>{application.student_name || 'Alumno sin nombre'}</h3>
+                                    {['recomendado', 'preseleccionado'].includes(application.match_status) && (
+                                        <NsBadge type="brand">★ Recomendado</NsBadge>
+                                    )}
+                                </div>
+                                <div className="text-sm text-gray-500 mb-2 truncate" title={application.student_email}>{application.student_email}</div>
+                                <div className="text-sm font-medium text-gray-800 mb-1 line-clamp-1" title={displayInternshipTitle(application)}>{displayInternshipTitle(application)}</div>
+                                <div className="text-xs text-gray-500">{application.company_name || 'Sin empresa'} • {formatDate(application.created_at)}</div>
+                            </div>
+                            <div className="flex md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-3 shrink-0">
+                                <NsBadge type={getStatusBadgeType(application.status)}>{getStatusLabel(application.status)}</NsBadge>
+                                <NsButton variant="ghost" size="sm" onClick={() => openDetail(application.id)}>
+                                    Ver detalle
+                                </NsButton>
+                            </div>
+                        </NsCard>
+                    ))}
                 </div>
             )}
 

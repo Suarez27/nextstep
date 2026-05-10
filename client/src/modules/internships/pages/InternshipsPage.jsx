@@ -10,16 +10,19 @@ import {
 import CompanyDetailPanel from '../../companies/components/CompanyDetailPanel';
 import InternshipMatchesPanel from '../components/InternshipMatchesPanel';
 import {
-  Alert,
-  Button,
+  NsAlert,
+  NsButton,
+  NsBadge,
+  NsCard,
   EmptyState,
   FormField,
   FormRow,
   LoadingState,
   Modal,
   PageHeader,
-  StatusBadge,
+  NsConfirmModal,
 } from '../../../shared/components/ui';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 function formatDate(value) {
   if (!value) return 'Sin fecha';
@@ -106,16 +109,16 @@ function InternshipFormModal({ internship, areaOptions, loadingAreas, onClose, o
 
   return (
     <Modal
-      title={isEdit ? 'Editar oferta' : 'Nueva oferta de practicas'}
+      title={isEdit ? 'Editar oferta' : 'Nueva oferta de prácticas'}
       onClose={onClose}
       actions={
         <>
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <NsButton type="button" variant="ghost" onClick={onClose}>
             Cancelar
-          </Button>
-          <Button type="submit" form="internship-form" disabled={loading}>
+          </NsButton>
+          <NsButton type="submit" form="internship-form" loading={loading}>
             {loading ? 'Guardando...' : 'Guardar oferta'}
-          </Button>
+          </NsButton>
         </>
       }
     >
@@ -244,7 +247,7 @@ function InternshipFormModal({ internship, areaOptions, loadingAreas, onClose, o
           </FormField>
         </FormRow>
 
-        {err && <Alert variant="error">{err}</Alert>}
+        {err && <NsAlert type="error">{err}</NsAlert>}
       </form>
     </Modal>
   );
@@ -270,96 +273,100 @@ function InternshipDetailModal({
       onClose={onClose}
       actions={
         <>
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <NsButton type="button" variant="ghost" onClick={onClose}>
             Cerrar
-          </Button>
+          </NsButton>
           {canManage && (
             <>
-              <Button type="button" variant="ghost" onClick={() => onEdit(internship)}>
+              <NsButton type="button" variant="secondary" onClick={() => onEdit(internship)}>
                 Editar
-              </Button>
+              </NsButton>
               {internship.is_active && (
-                <Button type="button" variant="ghost" onClick={() => onDeactivate(internship)}>
+                <NsButton type="button" variant="danger" onClick={() => onDeactivate(internship)}>
                   Desactivar
-                </Button>
+                </NsButton>
               )}
             </>
           )}
           {canSendApplication && (
-            <Button type="button" onClick={() => onApply(internship.id)}>
+            <NsButton type="button" onClick={() => onApply(internship.id)}>
               Postularme
-            </Button>
+            </NsButton>
           )}
           {canApply && alreadyApplied && (
-            <Button type="button" variant="ghost" disabled>
+            <NsButton type="button" variant="ghost" disabled>
               Candidatura enviada
-            </Button>
+            </NsButton>
           )}
         </>
       }
     >
-      <div className="offer-card-top">
-        <div className="offer-icon">&#128188;</div>
-        <div>
-          <h3 className="offer-title">{internship.title}</h3>
-          <div className="offer-company">{internship.company_name}</div>
+      <div className="max-w-7xl mx-auto grid gap-6">
+        <div className="flex items-center gap-4 border-b border-gray-100 pb-4">
+          <div className="flex items-center justify-center w-12 h-12 bg-brand-50 text-brand-600 rounded-xl text-2xl">
+            💼
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">{internship.title}</h3>
+            <div className="text-sm font-medium text-gray-500">{internship.company_name}</div>
+          </div>
         </div>
+
+        <p className="text-gray-600 leading-relaxed">{internship.description}</p>
+
+        <div className="flex flex-wrap gap-2">
+          <NsBadge type={internship.status === 'publicada' ? 'success' : 'default'}>{internship.status}</NsBadge>
+          <NsBadge type={internship.is_active ? 'info' : 'default'}>{activeLabel}</NsBadge>
+          {internship.area_label && <NsBadge type="default">{internship.area_label}</NsBadge>}
+          <NsBadge type="brand">{internship.hours_total}h</NsBadge>
+          <NsBadge type="success">{internship.available_slots} disponibles</NsBadge>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200">
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500 w-1/3">Área</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{internship.area_label || 'Sin área'}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Horario</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{internship.schedule}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Plazas</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{internship.slots}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Plazas disponibles</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{internship.available_slots}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Candidaturas aceptadas</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{internship.accepted_applications_count || 0}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Requisitos</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{internship.requirements || 'Sin requisitos específicos'}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Inicio estimado</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{formatDate(internship.start_date)}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Fin estimado</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{formatDate(internship.end_date)}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-4 bg-gray-50 text-left text-sm font-medium text-gray-500">Límite candidatura</th>
+                <td className="px-6 py-4 text-sm text-gray-900">{formatDate(internship.application_deadline)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {isCenter && <InternshipMatchesPanel internshipId={internship.id} />}
       </div>
-
-      <p className="offer-desc">{internship.description}</p>
-
-      <div className="offer-tags">
-        <StatusBadge status={internship.status} />
-        <StatusBadge status={activeLabel} />
-        {internship.area_label && <span className="tag tag-gray">{internship.area_label}</span>}
-        <span className="tag tag-blue">{internship.hours_total}h</span>
-        <span className="tag tag-green">{internship.available_slots} disponibles</span>
-      </div>
-
-      <div className="table-container mt">
-        <table className="data-table">
-          <tbody>
-            <tr>
-              <th>Area</th>
-              <td>{internship.area_label || 'Sin area'}</td>
-            </tr>
-            <tr>
-              <th>Horario</th>
-              <td>{internship.schedule}</td>
-            </tr>
-            <tr>
-              <th>Plazas</th>
-              <td>{internship.slots}</td>
-            </tr>
-            <tr>
-              <th>Plazas disponibles</th>
-              <td>{internship.available_slots}</td>
-            </tr>
-            <tr>
-              <th>Candidaturas aceptadas</th>
-              <td>{internship.accepted_applications_count || 0}</td>
-            </tr>
-            <tr>
-              <th>Requisitos</th>
-              <td>{internship.requirements || 'Sin requisitos especificos'}</td>
-            </tr>
-            <tr>
-              <th>Inicio estimado</th>
-              <td>{formatDate(internship.start_date)}</td>
-            </tr>
-            <tr>
-              <th>Fin estimado</th>
-              <td>{formatDate(internship.end_date)}</td>
-            </tr>
-            <tr>
-              <th>Limite candidatura</th>
-              <td>{formatDate(internship.application_deadline)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {isCenter && <InternshipMatchesPanel internshipId={internship.id} />}
     </Modal>
   );
 }
@@ -374,6 +381,7 @@ export default function InternshipsPage() {
 
   const [internships, setInternships] = useState([]);
   const [selectedInternship, setSelectedInternship] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, internship: null });
   const [editingInternship, setEditingInternship] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -450,9 +458,14 @@ export default function InternshipsPage() {
     }
   }
 
-  async function deactivate(internship) {
-    const confirmed = window.confirm(`Desactivar "${internship.title}"?`);
-    if (!confirmed) return;
+  function deactivate(internship) {
+    setConfirmModal({ isOpen: true, internship });
+  }
+
+  async function handleConfirmDeactivate() {
+    const internship = confirmModal.internship;
+    setConfirmModal({ isOpen: false, internship: null });
+    if (!internship) return;
 
     try {
       const updated = await api.deactivateInternship(internship.id);
@@ -498,140 +511,161 @@ export default function InternshipsPage() {
   }
 
   return (
-    <div className="page">
-      <PageHeader
-        title={pageTitle}
-        subtitle={`${internships.length} oferta${internships.length !== 1 ? 's' : ''}`}
-        actions={
-          canManageInternships ? (
-            <Button onClick={openCreateForm}>+ Nueva oferta</Button>
-          ) : null
-        }
-      />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
+          <p className="text-gray-500 text-sm mt-1">{internships.length} oferta{internships.length !== 1 ? 's' : ''}</p>
+        </div>
+        {canManageInternships && (
+          <NsButton onClick={openCreateForm}>+ Nueva oferta</NsButton>
+        )}
+      </div>
 
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder={canManageInternships ? 'Buscar por titulo o descripcion...' : 'Buscar por titulo, empresa o descripcion...'}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select
-          value={selectedAreaId}
-          onChange={(e) => setSelectedAreaId(e.target.value)}
-          disabled={loadingAreas}
-        >
-          <option value="">Todas las areas</option>
-          {areaOptions.map((option) => (
-            <option key={option.item.id} value={option.item.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {!isStudent && (
-          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
-            <option value="">Todos los estados</option>
-            {INTERNSHIP_STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+      <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="relative flex-1 w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <SearchIcon className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2.5 border transition-colors"
+            placeholder={canManageInternships ? 'Buscar por título o descripción...' : 'Buscar por título, empresa o descripción...'}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex gap-4 w-full md:w-auto">
+          <select
+            className="w-full md:w-48 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2.5 border transition-colors bg-white"
+            value={selectedAreaId}
+            onChange={(e) => setSelectedAreaId(e.target.value)}
+            disabled={loadingAreas}
+          >
+            <option value="">Todas las áreas</option>
+            {areaOptions.map((option) => (
+              <option key={option.item.id} value={option.item.id}>
                 {option.label}
               </option>
             ))}
           </select>
-        )}
-        {isCenter && (
-          <label className="checkbox-inline">
-            <input
-              type="checkbox"
-              checked={onlyAvailable}
-              onChange={(e) => setOnlyAvailable(e.target.checked)}
-            />
-            Solo con plazas
-          </label>
-        )}
+
+          {!isStudent && (
+            <select 
+              className="w-full md:w-48 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2.5 border transition-colors bg-white"
+              value={selectedStatus} 
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="">Todos los estados</option>
+              {INTERNSHIP_STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {isCenter && (
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer whitespace-nowrap">
+              <input
+                type="checkbox"
+                className="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-300 focus:ring focus:ring-brand-200 focus:ring-opacity-50"
+                checked={onlyAvailable}
+                onChange={(e) => setOnlyAvailable(e.target.checked)}
+              />
+              Solo con plazas
+            </label>
+          )}
+        </div>
       </div>
 
-      {msg && <Alert variant={msgType} onClick={() => setMsg('')}>{msg} (clic para cerrar)</Alert>}
+      {msg && <NsAlert type={msgType} onClose={() => setMsg('')}>{msg}</NsAlert>}
 
       {loading ? (
         <LoadingState />
       ) : internships.length === 0 ? (
         <EmptyState
           icon="NS"
-          message="No hay ofertas que coincidan con la busqueda."
+          message="No hay ofertas que coincidan con la búsqueda."
         >
           {canManageInternships && (
-            <Button onClick={openCreateForm}>
+            <NsButton onClick={openCreateForm}>
               Publicar primera oferta
-            </Button>
+            </NsButton>
           )}
         </EmptyState>
       ) : (
-        <div className="cards-grid">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {internships.map((item) => (
-            <div key={item.id} className="offer-card">
-              <div className="offer-card-top">
-                <div className="offer-icon">&#128188;</div>
-                <div>
-                  <h3 className="offer-title">{item.title}</h3>
-                  <div className="offer-company">{item.company_name}</div>
+            <NsCard key={item.id} className="flex flex-col">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center text-xl shadow-sm flex-shrink-0">
+                  💼
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-gray-900 truncate" title={item.title}>{item.title}</h3>
+                  <div className="text-sm text-gray-500 truncate" title={item.company_name}>{item.company_name}</div>
                 </div>
               </div>
 
-              <p className="offer-desc">{item.description}</p>
+              <p className="text-sm text-gray-600 line-clamp-2 mb-4" title={item.description}>{item.description}</p>
 
-              <div className="offer-tags">
-                <StatusBadge status={item.status} />
-                {canManageInternships && <StatusBadge status={item.is_active ? 'activo' : 'inactivo'} />}
-                {item.area_label && <span className="tag tag-gray">{item.area_label}</span>}
-                <span className="tag tag-blue">{item.hours_total}h</span>
-                <span className="tag tag-green">{item.available_slots} plazas disponibles</span>
-                {item.schedule && <span className="tag tag-gray">{item.schedule}</span>}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <NsBadge type={item.status === 'publicada' ? 'success' : 'default'}>{item.status}</NsBadge>
+                {canManageInternships && <NsBadge type={item.is_active ? 'info' : 'default'}>{item.is_active ? 'activo' : 'inactivo'}</NsBadge>}
+                {item.area_label && <NsBadge type="default">{item.area_label}</NsBadge>}
+                <NsBadge type="brand">{item.hours_total}h</NsBadge>
+                <NsBadge type="success">{item.available_slots} plazas</NsBadge>
               </div>
 
-              <Button
-                variant="ghost"
-                fullWidth
-                className="mt"
-                onClick={() => setSelectedInternship(item)}
-              >
-                Ver ficha
-              </Button>
-
-              {!canManageInternships && (
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  className="mt"
-                  onClick={() => openCompany(item.company_id)}
+              <div className="mt-auto space-y-2 pt-4 border-t border-gray-100">
+                <NsButton
+                  variant="secondary"
+                  className="w-full"
+                  size="sm"
+                  onClick={() => setSelectedInternship(item)}
                 >
-                  Ver empresa
-                </Button>
-              )}
+                  Ver ficha
+                </NsButton>
 
-              {canManageInternships && (
-                <FormRow className="mt">
-                  <Button type="button" variant="ghost" onClick={() => openEditForm(item)}>
-                    Editar
-                  </Button>
-                  {item.is_active && (
-                    <Button type="button" variant="ghost" onClick={() => deactivate(item)}>
-                      Desactivar
-                    </Button>
-                  )}
-                </FormRow>
-              )}
+                {!canManageInternships && (
+                  <NsButton
+                    variant="ghost"
+                    className="w-full"
+                    size="sm"
+                    onClick={() => openCompany(item.company_id)}
+                  >
+                    Ver empresa
+                  </NsButton>
+                )}
 
-              {canApplyToInternship && (
-                <Button
-                  fullWidth
-                  className="mt"
-                  onClick={() => applyTo(item.id)}
-                  disabled={appliedInternshipIds.has(Number(item.id)) || Number(item.available_slots || 0) <= 0}
-                >
-                  {appliedInternshipIds.has(Number(item.id)) ? 'Candidatura enviada' : 'Postularme'}
-                </Button>
-              )}
-            </div>
+                {canManageInternships && (
+                  <div className="flex gap-2">
+                    <NsButton type="button" variant="ghost" size="sm" className="flex-1" onClick={() => openEditForm(item)}>
+                      Editar
+                    </NsButton>
+                    {item.is_active && (
+                      <NsButton type="button" variant="ghost" size="sm" className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => deactivate(item)}>
+                        Desactivar
+                      </NsButton>
+                    )}
+                  </div>
+                )}
+
+                {canApplyToInternship && (
+                  <NsButton
+                    variant={appliedInternshipIds.has(Number(item.id)) ? 'secondary' : 'primary'}
+                    className="w-full"
+                    size="sm"
+                    onClick={() => applyTo(item.id)}
+                    disabled={appliedInternshipIds.has(Number(item.id)) || Number(item.available_slots || 0) <= 0}
+                  >
+                    {appliedInternshipIds.has(Number(item.id)) ? 'Candidatura enviada' : 'Postularme'}
+                  </NsButton>
+                )}
+              </div>
+            </NsCard>
           ))}
         </div>
       )}
@@ -665,15 +699,15 @@ export default function InternshipsPage() {
           title="Ficha de empresa"
           onClose={closeCompany}
           actions={
-            <Button type="button" variant="ghost" onClick={closeCompany}>
+            <NsButton type="button" variant="ghost" onClick={closeCompany}>
               Cerrar
-            </Button>
+            </NsButton>
           }
         >
           {companyLoading ? (
             <LoadingState />
           ) : companyError ? (
-            <Alert variant="error">{companyError}</Alert>
+            <NsAlert type="error">{companyError}</NsAlert>
           ) : (
             <CompanyDetailPanel
               company={selectedCompany}
@@ -682,6 +716,16 @@ export default function InternshipsPage() {
           )}
         </Modal>
       )}
+
+      <NsConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, internship: null })}
+        onConfirm={handleConfirmDeactivate}
+        title="Desactivar oferta"
+        message={`¿Estás seguro de que deseas desactivar la oferta "${confirmModal.internship?.title}"? Esta acción impedirá que se envíen nuevas candidaturas.`}
+        type="danger"
+        confirmText="Desactivar"
+      />
     </div>
   );
 }
