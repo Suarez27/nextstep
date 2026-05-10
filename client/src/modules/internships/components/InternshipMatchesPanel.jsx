@@ -58,7 +58,7 @@ export default function InternshipMatchesPanel({ internshipId }) {
   return (
     <div className="mt-8">
       <h3 className="text-xl font-bold text-gray-900 mb-4">Alumnos de tu Centro</h3>
-      
+
       {error && <NsAlert type="error" className="mb-4" onClose={() => setError('')}>{error}</NsAlert>}
       {successMsg && <NsAlert type="success" className="mb-4" onClose={() => setSuccessMsg('')}>{successMsg}</NsAlert>}
 
@@ -67,7 +67,8 @@ export default function InternshipMatchesPanel({ internshipId }) {
           <p className="text-gray-500 text-center py-4">No hay alumnos en tu centro para preseleccionar.</p>
         </NsCard>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        /* CORRECCIÓN: Quitamos el md:grid-cols-2 y dejamos 1 sola columna con gap-4 */
+        <div className="grid grid-cols-1 gap-4">
           {matches.map((student) => {
             const badgeProps = getMatchBadgeProps(student.match_status);
             return (
@@ -84,12 +85,14 @@ export default function InternshipMatchesPanel({ internshipId }) {
                     <span className="font-medium text-gray-700">Skills:</span> {student.skills || 'No especificadas'}
                   </div>
                 </div>
-                
-                <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-100 items-center justify-between">
-                  <div className="flex gap-2">
+
+                {/* CORRECCIÓN: Botonera reorganizada para que no se salga de la tarjeta */}
+                <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-2 gap-2">
                     <NsButton
                       variant="primary"
                       size="sm"
+                      className="w-full"
                       disabled={updatingId === student.student_id || student.match_status === 'recomendado'}
                       onClick={() => handleStatusChange(student.student_id, 'recomendado', student.student_name)}
                     >
@@ -98,6 +101,7 @@ export default function InternshipMatchesPanel({ internshipId }) {
                     <NsButton
                       variant="secondary"
                       size="sm"
+                      className="w-full"
                       disabled={updatingId === student.student_id || student.match_status === 'preseleccionado'}
                       onClick={() => handleStatusChange(student.student_id, 'preseleccionado', student.student_name)}
                     >
@@ -107,6 +111,7 @@ export default function InternshipMatchesPanel({ internshipId }) {
                   <NsButton
                     variant="ghost"
                     size="sm"
+                    className="w-full"
                     disabled={updatingId === student.student_id || student.match_status === 'descartado'}
                     onClick={() => handleStatusChange(student.student_id, 'descartado', student.student_name)}
                   >
