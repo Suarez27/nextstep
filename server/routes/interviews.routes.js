@@ -1,21 +1,30 @@
 const express = require("express");
-const { authRequired, roleRequired, permissionRequired } = require("../middlewares/auth");
-const { validate } = require("../middlewares/validate");
-const { interviewSchema } = require("../validators/interviews/interviews.schema");
+const { authRequired, roleRequired } = require("../middlewares/auth");
 
 function createInterviewsRoutes({ interviewsController }) {
     const router = express.Router();
 
+    // POST /api/interviews: Para programar
     router.post(
         "/",
         authRequired,
-        permissionRequired("interviewCreate"),
         roleRequired("empresa", "centro", "admin"),
-        validate(interviewSchema),
-        interviewsController.create
+        interviewsController.schedule
     );
 
-    router.get("/my", authRequired, interviewsController.my);
+    // GET /api/interviews: Para el listado de la agenda
+    router.get(
+        "/", 
+        authRequired, 
+        interviewsController.agenda
+    );
+
+    // PATCH /api/interviews/:id/status: Para confirmar, cancelar o marcar como realizada
+    router.patch(
+        "/:id/status",
+        authRequired,
+        interviewsController.updateStatus
+    );
 
     return router;
 }

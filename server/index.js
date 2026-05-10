@@ -805,19 +805,31 @@ function initSchema() {
             creado_en AS created_at
          FROM auditoria_validaciones`);
 
-        run(`CREATE OR REPLACE VIEW students AS
+    run(`CREATE OR REPLACE VIEW students AS
           SELECT id, usuario_id AS user_id, centro_id AS center_id, texto_cv AS cv_text, url_cv_pdf AS cv_pdf_url, habilidades AS skills, validado AS validated, estado_validacion AS verification_status, nota_validacion AS verification_note, validado_por_usuario_id AS verified_by_user_id, validado_en AS verified_at, creado_en AS created_at
          FROM alumnos`);
 
     run(`CREATE OR REPLACE VIEW interviews AS
-         SELECT id, candidatura_id AS application_id, fecha_entrevista AS interview_at, notas AS notes, creado_en AS created_at
+         SELECT 
+            id, 
+            candidatura_id AS application_id, 
+            fecha_entrevista AS interview_at, 
+            modalidad AS mode,
+            ubicacion_enlace AS location_text,
+            notas AS notes, 
+            estado AS status,
+            confirmado_en AS confirmed_at,
+            completado_en AS completed_at,
+            cancelado_en AS cancelled_at,
+            creado_en AS created_at,
+            actualizado_en AS updated_at
          FROM entrevistas`);
 
     run(`CREATE OR REPLACE VIEW agreements AS
          SELECT id, practica_id AS internship_id, alumno_id AS student_id, centro_id AS center_id, firmado_en AS signed_at, notas AS notes, creado_en AS created_at
          FROM convenios`);
 
-        run(`CREATE OR REPLACE VIEW internships AS
+    run(`CREATE OR REPLACE VIEW internships AS
           SELECT
          p.id,
          p.empresa_id AS company_id,
@@ -851,7 +863,7 @@ function initSchema() {
           GROUP BY practica_id
           ) acc ON acc.practica_id = p.id`);
 
-        run(`CREATE OR REPLACE VIEW applications AS
+    run(`CREATE OR REPLACE VIEW applications AS
           SELECT
           id,
           practica_id AS internship_id,
@@ -861,7 +873,7 @@ function initSchema() {
           actualizado_en AS updated_at
           FROM candidaturas`);
 
-        run(`CREATE OR REPLACE VIEW application_events AS
+    run(`CREATE OR REPLACE VIEW application_events AS
           SELECT
           id,
           candidatura_id AS application_id,
@@ -1174,6 +1186,7 @@ async function start() {
   });
 
   const interviewsRepository = createInterviewsRepository({
+    get,
     all,
     run,
     lastInsertId,
@@ -1182,6 +1195,7 @@ async function start() {
   const interviewsService = createInterviewsService({
     interviewsRepository,
     nowIso,
+    applicationsService,
   });
 
   const interviewsController = createInterviewsController({

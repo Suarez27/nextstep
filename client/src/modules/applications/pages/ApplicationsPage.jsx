@@ -85,9 +85,41 @@ function ApplicationDetailModal({
     onSaveStatus,
     onClose,
     showMatchBadge = false,
+    onRefresh // <-- Nueva prop para recargar tras programar
 }) {
+    const { user } = useAuth(); // <-- Para saber si es empresa/centro
     const skills = splitSkills(application?.skills);
     const resolvedCvUrl = cvUrl(application?.cv_pdf_url);
+
+    // Estados para el formulario de entrevistas
+    const [showInterviewForm, setShowInterviewForm] = useState(false);
+    const [interviewForm, setInterviewForm] = useState({
+        interview_at: '',
+        mode: 'presencial',
+        location_text: '',
+        notes: ''
+    });
+    const [scheduling, setScheduling] = useState(false);
+    const [scheduleMsg, setScheduleMsg] = useState(null);
+
+    const handleScheduleInterview = async (e) => {
+        e.preventDefault();
+        setScheduling(true);
+        setScheduleMsg(null);
+        try {
+            await api.scheduleInterview({
+                application_id: application.id,
+                ...interviewForm
+            });
+            setScheduleMsg({ type: 'success', message: 'Entrevista programada con éxito.' });
+            setShowInterviewForm(false);
+            if (onRefresh) onRefresh(); // Recarga la info de la candidatura
+        } catch (err) {
+            setScheduleMsg({ type: 'error', message: err.message });
+        } finally {
+            setScheduling(false);
+        }
+    };
 
     return (
         <Modal
@@ -107,6 +139,7 @@ function ApplicationDetailModal({
                 <EmptyState message="No se pudo cargar la candidatura." />
             ) : (
                 <div className="space-y-6 max-w-7xl mx-auto">
+                    {/* Cabecera del Alumno */}
                     <div className="flex items-center gap-4 border-b border-gray-100 pb-4">
                         <div className="w-14 h-14 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">
                             {application?.student_name?.[0]?.toUpperCase() || 'A'}
@@ -126,6 +159,7 @@ function ApplicationDetailModal({
                         </div>
                     </div>
 
+                    {/* Tarjetas de Info */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <NsCard padding="p-4">
                             <span className="text-xs font-semibold text-gray-500 uppercase">Oferta</span>
@@ -145,6 +179,7 @@ function ApplicationDetailModal({
                         </NsCard>
                     </div>
 
+                    {/* Habilidades y CV */}
                     <NsCard padding="p-5">
                         <h4 className="font-bold text-gray-900 mb-3">Habilidades</h4>
                         {skills.length ? (
@@ -167,7 +202,6 @@ function ApplicationDetailModal({
                                 {application?.cv_text || 'Sin CV de texto informado.'}
                             </p>
                         </NsCard>
-
                         <NsCard padding="p-5">
                             <h4 className="font-bold text-gray-900 mb-3">CV PDF</h4>
                             {resolvedCvUrl ? (
@@ -181,6 +215,114 @@ function ApplicationDetailModal({
                         </NsCard>
                     </div>
 
+                    {/* NUEVO: Módulo de Entrevistas (HD4) */}
+                    {(user?.role === 'empresa' || user?.role === 'centro') && application?.status !== 'rechazada' && application?.status !== 'cancelada' && (
+                        <NsCard padding="p-6" className="border-t-4 border-t-brand-500 bg-brand-50/30">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-bold text-gray-900">Gestión de Entrevistas</h4>
+                                {!showInterviewForm && (
+                                    <NsButton size="sm" onClick={() => setShowInterviewForm(true)}>
+                                        + Programar Entrevista
+                                    </NsButton>
+                                )}
+                            </div>
+
+                            {scheduleMsg && (
+                                <div className="mb-4">
+                                    <NsAlert type={scheduleMsg.type} onClose={() => setScheduleMsg(null)}>{scheduleMsg.message}</NsAlert>
+                                </div>
+                            )}
+
+                            {showInterviewForm && (
+                                <form onSubmit={handleScheduleInterview} className="space-y-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha y Hora</label>
+                                            <input
+                                                type="datetime-local"
+                                                required
+                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                                value={interviewForm.interview_at}
+                                                onChange={e => setInterviewForm({ ...interviewForm, interview_at: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
+                                            <select
+                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                                value={interviewForm.mode}
+                                                onChange={e => setInterviewForm({ ...interviewForm, mode: e.target.value })}
+                                            >
+                                                <option value="presencial">Presencial</option>
+                                                <option value="virtual">Virtual</option>
+                                                <option value="telefonica">Telefónica</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ubicación o Enlace</label>
+                                        <input
+                                            type="text"
+                                            placeholder={interviewForm.mode === 'virtual' ? 'https://meet.google.com/...' : 'Dirección de la oficina...'}
+                                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                            value={interviewForm.location_text}
+                                            onChange={e => setInterviewForm({ ...interviewForm, location_text: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Notas / Instrucciones</label>
+                                        <textarea
+                                            rows={2}
+                                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                            value={interviewForm.notes}
+                                            onChange={e => setInterviewForm({ ...interviewForm, notes: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 justify-end mt-4">
+                                        <NsButton type="button" variant="ghost" size="sm" onClick={() => setShowInterviewForm(false)}>Cancelar</NsButton>
+                                        <NsButton type="submit" size="sm" loading={scheduling}>Programar</NsButton>
+                                    </div>
+                                </form>
+                            )}
+                        </NsCard>
+                    )}
+
+                    {/* Actualizar Estado General */}
+                    {canChangeStatus && (
+                        <NsCard padding="p-6">
+                            <h4 className="font-bold text-gray-900 mb-4">Actualizar estado de Candidatura</h4>
+                            <form onSubmit={onSaveStatus} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                    <select
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                        value={statusDraft}
+                                        onChange={(e) => onStatusDraftChange(e.target.value)}
+                                    >
+                                        {STATUS_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones internas</label>
+                                    <textarea
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
+                                        value={internalNotesDraft}
+                                        onChange={(e) => onInternalNotesDraftChange(e.target.value)}
+                                        rows={2}
+                                    />
+                                </div>
+                                <NsButton type="submit" loading={saving} className="w-full sm:w-auto mt-2">
+                                    {saving ? 'Guardando...' : 'Guardar estado'}
+                                </NsButton>
+                            </form>
+                        </NsCard>
+                    )}
+
+                    {/* Historial de eventos */}
                     <NsCard padding="p-5">
                         <h4 className="font-bold text-gray-900 mb-4">Historial de eventos</h4>
                         {eventsLoading ? (
@@ -209,56 +351,6 @@ function ApplicationDetailModal({
                             </div>
                         )}
                     </NsCard>
-
-                    {canChangeStatus && (
-                        <NsCard padding="p-6">
-                            <h4 className="font-bold text-gray-900 mb-4">Actualizar estado</h4>
-                            <form onSubmit={onSaveStatus} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                                    <select 
-                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
-                                        value={statusDraft} 
-                                        onChange={(e) => onStatusDraftChange(e.target.value)}
-                                    >
-                                        {STATUS_OPTIONS.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones internas</label>
-                                    <textarea
-                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
-                                        value={internalNotesDraft}
-                                        onChange={(e) => onInternalNotesDraftChange(e.target.value)}
-                                        rows={3}
-                                        maxLength={2000}
-                                        placeholder="Notas visibles solo para la gestión interna de la empresa"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nota del cambio</label>
-                                    <textarea
-                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm p-2 border"
-                                        value={notesDraft}
-                                        onChange={(e) => onNotesDraftChange(e.target.value)}
-                                        rows={2}
-                                        maxLength={1000}
-                                        placeholder="Motivo breve para registrar en eventos"
-                                    />
-                                </div>
-
-                                <NsButton type="submit" loading={saving} className="w-full sm:w-auto mt-2">
-                                    {saving ? 'Guardando...' : 'Guardar estado'}
-                                </NsButton>
-                            </form>
-                        </NsCard>
-                    )}
                 </div>
             )}
         </Modal>
@@ -482,7 +574,7 @@ function ManagerApplications() {
         if (!apps) return [];
         if (!studentSearch.trim()) return apps;
         const lower = studentSearch.toLowerCase();
-        return apps.filter(app => 
+        return apps.filter(app =>
             (app.student_name || '').toLowerCase().includes(lower) ||
             (app.student_email || '').toLowerCase().includes(lower)
         );
@@ -621,6 +713,11 @@ function ManagerApplications() {
                     onSaveStatus={saveStatus}
                     onClose={closeDetail}
                     showMatchBadge={true}
+                    // NUEVA LÍNEA:
+                    onRefresh={() => {
+                        openDetail(selectedId);
+                        if (selectedInternshipId) loadApps(selectedInternshipId);
+                    }}
                 />
             )}
         </div>
@@ -736,6 +833,11 @@ function CenterApplications() {
                     canChangeStatus={false}
                     onClose={closeDetail}
                     showMatchBadge={true}
+                    // NUEVA LÍNEA:
+                    onRefresh={() => {
+                        openDetail(selectedId);
+                        loadCenterApplications();
+                    }}
                 />
             )}
         </div>

@@ -399,4 +399,28 @@ export const api = {
     });
     return res.data;
   },
+
+  // Obtener agenda de entrevistas según el rol del usuario logueado
+  getInterviews: async () => {
+    const res = await req('/api/interviews');
+    return res.data;
+  },
+
+  // Programar una nueva entrevista
+  scheduleInterview: async (body) => {
+    const res = await req('/api/interviews', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    return res.data;
+  },
+
+  // Actualizar estado de una entrevista (confirmada, realizada, cancelada, no_asistio)
+  updateInterviewStatus: async (id, status) => {
+    const res = await req(`/api/interviews/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    return res.data;
+  },
 };

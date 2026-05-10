@@ -1,187 +1,145 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../../services/api';
-import { useCanAccess } from '../../../shared/hooks/useCanAccess';
+import { useAuth } from '../../../context/AuthContext';
 import {
-    Alert,
-    Button,
-    EmptyState,
-    FormField,
+    NsButton,
+    NsBadge,
+    NsCard,
+    NsAlert,
     LoadingState,
-    Modal,
-    PageHeader,
-    StatusBadge,
+    EmptyState,
+    PageHeader
 } from '../../../shared/components/ui';
 
-function NewInterviewModal({ onClose, onCreated }) {
-    const [apps, setApps] = useState([]);
-    const [form, setForm] = useState({ application_id: '', interview_at: '', notes: '' });
-    const [err, setErr] = useState('');
-    const [loading, setLoading] = useState(false);
+export default function InterviewsPage() {
+    const { user } = useAuth();
+    const [interviews, setInterviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [alert, setAlert] = useState(null);
 
-    useEffect(() => {
-        api.getInternships()
-            .then(async (internships) => {
-                const allApps = [];
-                for (const i of internships) {
-                    try {
-                        const a = await api.internshipApplications(i.id);
-                        a.forEach((app) => allApps.push({ ...app, internship_title: i.title }));
-                    } catch {/* */ }
-                }
-                setApps(allApps.filter((a) => a.status === 'aceptada'));
-            })
-            .catch(() => { });
-    }, []);
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        setErr('');
+    const loadInterviews = async () => {
         setLoading(true);
         try {
-            await api.createInterview({
-                application_id: Number(form.application_id),
-                interview_at: form.interview_at,
-                notes: form.notes,
-            });
-            onCreated();
-            onClose();
-        } catch (e) {
-            setErr(e.message);
+            const data = await api.getInterviews();
+            setInterviews(data);
+        } catch (err) {
+            setAlert({ type: 'error', message: 'No se pudieron cargar las entrevistas.' });
         } finally {
             setLoading(false);
         }
-    }
+    };
 
-    return (
-        <Modal
-            title="Programar entrevista"
-            onClose={onClose}
-            actions={
-                <>
-                    <Button type="button" variant="ghost" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit" form="new-interview-form" disabled={loading}>
-                        {loading ? 'Programando...' : 'Programar'}
-                    </Button>
-                </>
-            }
-        >
-            <form id="new-interview-form" onSubmit={handleSubmit}>
-                <FormField
-                    label="Candidato (candidatura aceptada)"
-                    hint={apps.length === 0 ? 'No hay candidaturas aceptadas disponibles.' : undefined}
-                >
-                    <select
-                        value={form.application_id}
-                        onChange={(e) => setForm((f) => ({ ...f, application_id: e.target.value }))}
-                        required
-                    >
-                        <option value="">Seleccionar...</option>
-                        {apps.map((a) => (
-                            <option key={a.id} value={a.id}>
-                                {a.student_name} — {a.internship_title}
-                            </option>
-                        ))}
-                    </select>
-                </FormField>
+    useEffect(() => {
+        loadInterviews();
+    }, []);
 
-                <FormField label="Fecha y hora">
-                    <input
-                        type="datetime-local"
-                        value={form.interview_at}
-                        onChange={(e) => setForm((f) => ({ ...f, interview_at: e.target.value }))}
-                        required
-                    />
-                </FormField>
-
-                <FormField label="Notas (opcional)">
-                    <textarea
-                        value={form.notes}
-                        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                        rows={3}
-                        placeholder="Instrucciones, enlace videollamada..."
-                    />
-                </FormField>
-
-                {err && <Alert variant="error">{err}</Alert>}
-            </form>
-        </Modal>
-    );
-}
-
-export default function Interviews() {
-    const canCreate = useCanAccess('interviewCreate');
-    const [interviews, setInterviews] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-
-    async function load() {
-        setLoading(true);
+    const handleStatusUpdate = async (id, newStatus) => {
         try {
-            const data = await api.myInterviews();
-            setInterviews(data);
-        } catch {/* */ } finally {
-            setLoading(false);
+            await api.updateInterviewStatus(id, newStatus);
+            setAlert({ type: 'success', message: `Estado actualizado a ${newStatus} correctamente.` });
+            loadInterviews();
+        } catch (err) {
+            setAlert({ type: 'error', message: err.message });
         }
-    }
+    };
 
-    useEffect(() => { load(); }, []);
+    const getStatusProps = (status) => {
+        switch (status) {
+            case 'programada': return { label: 'Programada', variant: 'info' };
+            case 'confirmada': return { label: 'Confirmada', variant: 'success' };
+            case 'realizada': return { label: 'Realizada', variant: 'brand' };
+            case 'cancelada': return { label: 'Cancelada', variant: 'error' };
+            case 'no_asistio': return { label: 'No asistió', variant: 'warning' };
+            default: return { label: status, variant: 'default' };
+        }
+    };
+
+    if (loading) return <div className="p-10"><LoadingState /></div>;
 
     return (
-        <div className="page">
+        <div className="p-6 max-w-7xl mx-auto font-sans">
             <PageHeader
-                title="Entrevistas"
-                subtitle={`${interviews.length} entrevista${interviews.length !== 1 ? 's' : ''} programada${interviews.length !== 1 ? 's' : ''}`}
-                actions={
-                    canCreate ? (
-                        <Button onClick={() => setShowModal(true)}>+ Programar entrevista</Button>
-                    ) : null
-                }
+                title="Agenda de Entrevistas"
+                subtitle="Gestiona tus citas y procesos de selección en curso."
             />
 
-            {loading ? (
-                <LoadingState />
-            ) : interviews.length === 0 ? (
-                <EmptyState
-                    icon="📅"
-                    message="No hay entrevistas programadas."
-                />
-            ) : (
-                <div className="cards-grid">
-                    {interviews.map((i) => {
-                        const date = new Date(i.interview_at);
-                        const isPast = date < new Date();
-                        return (
-                            <div key={i.id} className={`offer-card${isPast ? ' past' : ''}`}>
-                                <div className="offer-card-top">
-                                    <div className="date-box">
-                                        <div className="date-day">{date.getDate()}</div>
-                                        <div className="date-month">{date.toLocaleString('es-ES', { month: 'short' })}</div>
-                                    </div>
-                                    <div>
-                                        <h3 className="offer-title">{i.title}</h3>
-                                        <div className="offer-company">{i.student_name}</div>
-                                    </div>
-                                </div>
-                                <div className="offer-tags">
-                                    <span className="tag tag-blue">
-                                        {date.toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit' })}h
-                                    </span>
-                                    <StatusBadge
-                                        status={isPast ? 'realizada' : 'proxima'}
-                                        label={isPast ? 'Realizada' : 'Próxima'}
-                                    />
-                                </div>
-                                {i.notes && <p className="offer-desc">{i.notes}</p>}
-                            </div>
-                        );
-                    })}
+            {alert && (
+                <div className="mb-6">
+                    <NsAlert type={alert.type} onClose={() => setAlert(null)}>
+                        {alert.message}
+                    </NsAlert>
                 </div>
             )}
 
-            {showModal && (
-                <NewInterviewModal onClose={() => setShowModal(false)} onCreated={load} />
+            {interviews.length === 0 ? (
+                <EmptyState icon="📅" message="No tienes entrevistas programadas actualmente." />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {interviews.map((item) => {
+                        const date = new Date(item.interview_at);
+                        const status = getStatusProps(item.status);
+                        const isCancelled = item.status === 'cancelada';
+
+                        return (
+                            <NsCard
+                                key={item.id}
+                                className={`flex flex-col h-full border-l-4 transition-all duration-300 ${isCancelled
+                                    ? 'border-l-gray-400 bg-gray-50 opacity-60 grayscale'
+                                    : 'border-l-brand-500'
+                                    }`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                                            {date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        </p>
+                                        <h3 className={`text-lg font-bold leading-tight ${isCancelled ? 'text-gray-600' : 'text-gray-800'}`}>
+                                            {item.internship_title || 'Entrevista de Prácticas'}
+                                        </h3>
+                                    </div>
+                                    {/* CORRECCIÓN: Usamos "type" en lugar de "variant" */}
+                                    <NsBadge type={status.variant}>{status.label}</NsBadge>
+                                </div>
+
+                                <div className="space-y-2 mb-6 flex-grow text-sm">
+                                    <div className="flex items-center text-gray-600">
+                                        <span className="font-semibold w-24">Alumno:</span>
+                                        <span>{item.student_name}</span>
+                                    </div>
+                                    <div className="flex items-center text-gray-600">
+                                        <span className="font-semibold w-24">Hora:</span>
+                                        <span>{date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}h</span>
+                                    </div>
+                                    <div className="flex items-start text-gray-600">
+                                        <span className="font-semibold w-24">Lugar/Link:</span>
+                                        <span className="flex-1 italic">{item.location_text || 'No especificado'}</span>
+                                    </div>
+                                </div>
+
+                                {/* Acciones según Rol */}
+                                <div className="flex gap-2 pt-4 border-t border-gray-50">
+                                    {user.role === 'alumno' && item.status === 'programada' && (
+                                        <NsButton size="sm" className="w-full" onClick={() => handleStatusUpdate(item.id, 'confirmada')}>
+                                            Confirmar Asistencia
+                                        </NsButton>
+                                    )}
+
+                                    {(user.role === 'empresa' || user.role === 'centro') && item.status === 'confirmada' && (
+                                        <NsButton variant="brand" size="sm" className="w-full" onClick={() => handleStatusUpdate(item.id, 'realizada')}>
+                                            Marcar Realizada
+                                        </NsButton>
+                                    )}
+
+                                    {!isCancelled && item.status !== 'realizada' && (
+                                        <NsButton variant="ghost" size="sm" onClick={() => handleStatusUpdate(item.id, 'cancelada')}>
+                                            Cancelar
+                                        </NsButton>
+                                    )}
+                                </div>
+                            </NsCard>
+                        );
+                    })}
+                </div>
             )}
         </div>
     );
