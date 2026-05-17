@@ -102,6 +102,30 @@ function ApplicationDetailModal({
     const [scheduling, setScheduling] = useState(false);
     const [scheduleMsg, setScheduleMsg] = useState(null);
 
+    // Estados para Formalizar Asignación (HD5)
+    const [formalizing, setFormalizing] = useState(false);
+    const [formalizeMsg, setFormalizeMsg] = useState(null);
+
+    const handleFormalize = async () => {
+        setFormalizing(true);
+        setFormalizeMsg(null);
+        try {
+            await api.createAssignment({
+                practica_id: application.internship_id || application.practica_id, // ensure fallback if property name differs
+                alumno_id: application.student_id || application.alumno_id,
+                empresa_id: application.company_id || application.empresa_id,
+                centro_id: application.center_id,
+                candidatura_id: application.id
+            });
+            setFormalizeMsg({ type: 'success', message: 'Asignación formalizada con éxito. Ahora puedes gestionarla en Expedientes.' });
+            if (onRefresh) onRefresh();
+        } catch (err) {
+            setFormalizeMsg({ type: 'error', message: err.message || 'Error al formalizar la asignación' });
+        } finally {
+            setFormalizing(false);
+        }
+    };
+
     const handleScheduleInterview = async (e) => {
         e.preventDefault();
         setScheduling(true);
@@ -284,6 +308,26 @@ function ApplicationDetailModal({
                                     </div>
                                 </form>
                             )}
+                        </NsCard>
+                    )}
+
+                    {/* NUEVO: Módulo de Asignación Formal (HD5) */}
+                    {(user?.role === 'empresa' || user?.role === 'centro') && application?.status === 'aceptada' && (
+                        <NsCard padding="p-6" className="border-t-4 border-t-indigo-500 bg-indigo-50/30">
+                            <h4 className="font-bold text-gray-900 mb-2">Formalizar Asignación</h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Esta candidatura ha sido aceptada. El siguiente paso es formalizar el expediente para hacer el seguimiento documental y administrativo.
+                            </p>
+                            
+                            {formalizeMsg && (
+                                <div className="mb-4">
+                                    <NsAlert type={formalizeMsg.type} onClose={() => setFormalizeMsg(null)}>{formalizeMsg.message}</NsAlert>
+                                </div>
+                            )}
+
+                            <NsButton size="sm" onClick={handleFormalize} loading={formalizing}>
+                                Formalizar Asignación
+                            </NsButton>
                         </NsCard>
                     )}
 

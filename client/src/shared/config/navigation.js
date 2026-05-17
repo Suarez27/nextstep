@@ -64,6 +64,17 @@ export const NAV_ITEMS = [
         icon: '&#128197;',
     },
     {
+        key: 'assignments',
+        to: '/assignments',
+        label: {
+            [ROLES.ADMIN]: 'Expedientes',
+            [ROLES.CENTRO]: 'Expedientes',
+            [ROLES.EMPRESA]: 'Expedientes',
+            [ROLES.ALUMNO]: 'Mis Asignaciones',
+        },
+        icon: '&#128193;',
+    },
+    {
         key: 'agreements',
         to: '/agreements',
         label: {

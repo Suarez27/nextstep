@@ -529,14 +529,14 @@ function StudentProfileHd1() {
             message="No hay tipos de documento activos para mostrar."
           />
         ) : (
-          <div className="student-documents-grid">
+          <div className="student-documents-grid grid grid-cols-1 lg:grid-cols-3 gap-6">
             {documentRows.map((row) => {
               const document = row.document;
               const status = normalizeStatus(document?.status, Boolean(document));
               const isUploading = Boolean(uploadingByType[row.type.id]);
 
               return (
-                <article key={row.id} className={`student-document-card status-${status}`}>
+                <article key={row.id} className={`student-document-card status-${status} flex flex-col h-full`}>
                   <div className="student-document-head">
                     <div>
                       <h3>{row.type.label || 'Documento'}</h3>
@@ -556,45 +556,53 @@ function StudentProfileHd1() {
                     </div>
                   </dl>
 
-                  {document?.notes && (
-                    <div className="document-notes">
-                      <span>Observaciones</span>
-                      <p>{document.notes}</p>
-                    </div>
-                  )}
-
-                  <div className="document-actions">
-                    {document?.file_url && (
-                      <a className="btn-ghost document-open-link" href={resolveFileUrl(document.file_url)} target="_blank" rel="noreferrer">
-                        Abrir documento
-                      </a>
+                  <div className="mt-auto flex flex-col gap-4">
+                    {(!document?.notes || document.notes === 'NULL') ? (
+                      <div className="text-sm text-gray-400 italic">
+                        Sin observaciones
+                      </div>
+                    ) : (
+                      <div className="document-notes">
+                        <span className="block font-semibold text-gray-700 mb-1">Observaciones</span>
+                        <p className="text-sm text-gray-600">{document.notes}</p>
+                      </div>
                     )}
 
-                    <FormField
-                      label={document ? 'Reemplazar PDF' : 'Subir PDF'}
-                      hint={isUploading ? 'Subiendo...' : 'Maximo 5MB'}
-                    >
-                      <input
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        onChange={(e) => handleDocumentChange(row, e)}
-                        disabled={isUploading}
-                      />
-                    </FormField>
-                  </div>
+                    <div className="document-actions flex flex-col gap-3">
+                      {document?.file_url && (
+                        <a className="btn-ghost document-open-link text-center w-full" href={resolveFileUrl(document.file_url)} target="_blank" rel="noreferrer">
+                          Abrir documento
+                        </a>
+                      )}
 
-                  <FormField label="Notas para esta entrega">
-                    <input
-                      type="text"
-                      maxLength={500}
-                      value={notesByType[row.type.id] || ''}
-                      onChange={(e) => setNotesByType((current) => ({
-                        ...current,
-                        [row.type.id]: e.target.value,
-                      }))}
-                      placeholder="Opcional"
-                    />
-                  </FormField>
+                      <FormField
+                        label={document ? 'Reemplazar PDF' : 'Subir PDF'}
+                        hint={isUploading ? 'Subiendo...' : 'Máximo 5MB'}
+                      >
+                        <input
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          onChange={(e) => handleDocumentChange(row, e)}
+                          disabled={isUploading}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+                        />
+                      </FormField>
+
+                      <FormField label="Notas para esta entrega">
+                        <input
+                          type="text"
+                          maxLength={500}
+                          value={notesByType[row.type.id] || ''}
+                          onChange={(e) => setNotesByType((current) => ({
+                            ...current,
+                            [row.type.id]: e.target.value,
+                          }))}
+                          placeholder="Opcional"
+                          className="w-full"
+                        />
+                      </FormField>
+                    </div>
+                  </div>
                 </article>
               );
             })}

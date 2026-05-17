@@ -387,8 +387,8 @@ export const api = {
     return res.data;
   },
 
-  getFollowups: async (studentId) => {
-    const res = await req(`/api/followups/${studentId}`);
+  getFollowups: async (assignmentId) => {
+    const res = await req(`/api/followups/assignment/${assignmentId}`);
     return res.data;
   },
 
@@ -420,6 +420,42 @@ export const api = {
     const res = await req(`/api/interviews/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    });
+    return res.data;
+  },
+
+  // --- ASIGNACIONES ---
+  getAssignments: async () => {
+    const res = await req('/api/assignments');
+    return res.data;
+  },
+
+  createAssignment: async (payload) => {
+    const res = await req('/api/assignments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  },
+
+  updateAssignmentStatus: async (id, status) => {
+    const res = await req(`/api/assignments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    return res.data;
+  },
+
+  // --- EVALUACIONES FINALES ---
+  getEvaluation: async (assignmentId) => {
+    const res = await req(`/api/evaluations/assignment/${assignmentId}`);
+    return res.data;
+  },
+
+  createEvaluation: async (payload) => {
+    const res = await req('/api/evaluations', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
     return res.data;
   },

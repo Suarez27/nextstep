@@ -3,7 +3,8 @@ function createFollowupsService({ followupsRepository, nowIso }) {
         create(authUser, payload) {
             return {
                 id: followupsRepository.create({
-                    studentId: payload.student_id,
+                    assignmentId: payload.assignment_id,
+                    studentId: payload.student_id, // opcional
                     authorUserId: authUser.id,
                     content: payload.content,
                     progress: payload.progress,
@@ -12,8 +13,8 @@ function createFollowupsService({ followupsRepository, nowIso }) {
             };
         },
 
-        list(studentId) {
-            return followupsRepository.listByStudentId(studentId);
+        list(assignmentId) {
+            return followupsRepository.listByAssignmentId(assignmentId);
         },
     };
 }

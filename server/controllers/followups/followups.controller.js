@@ -8,7 +8,7 @@ function createFollowupsController({ followupsService }) {
         },
 
         list(req, res) {
-            const result = followupsService.list(Number(req.params.studentId));
+            const result = followupsService.list(Number(req.params.id));
             return ok(res, result);
         },
     };

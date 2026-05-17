@@ -15,7 +15,7 @@ function createFollowupsRoutes({ followupsController }) {
         followupsController.create
     );
 
-    router.get("/:studentId", authRequired, followupsController.list);
+    router.get("/assignment/:id", authRequired, followupsController.list);
 
     return router;
 }

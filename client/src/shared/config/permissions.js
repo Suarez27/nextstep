@@ -9,6 +9,7 @@ export const PERMISSIONS = {
     students: [ROLES.ADMIN, ROLES.CENTRO],
     interviews: [ROLES.ADMIN, ROLES.CENTRO, ROLES.EMPRESA, ROLES.ALUMNO],
     agreements: [ROLES.ADMIN, ROLES.CENTRO, ROLES.EMPRESA],
+    assignments: [ROLES.ADMIN, ROLES.CENTRO, ROLES.EMPRESA, ROLES.ALUMNO],
 
     // Acciones concretas
     internshipCreate: [ROLES.EMPRESA],

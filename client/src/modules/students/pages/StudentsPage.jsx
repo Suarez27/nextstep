@@ -495,10 +495,14 @@ export default function Students() {
                                                                 <StatusBadge status={status} />
                                                             </div>
 
-                                                            {document?.notes && (
+                                                            {(!document?.notes || document.notes === 'NULL') ? (
+                                                                <div className="document-notes text-sm text-gray-400 italic">
+                                                                    Sin observaciones
+                                                                </div>
+                                                            ) : (
                                                                 <div className="document-notes">
-                                                                    <span>Observaciones</span>
-                                                                    <p>{document.notes}</p>
+                                                                    <span className="block font-semibold text-gray-700 mb-1">Observaciones</span>
+                                                                    <p className="text-sm text-gray-600">{document.notes}</p>
                                                                 </div>
                                                             )}
 

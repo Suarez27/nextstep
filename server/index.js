@@ -77,7 +77,15 @@ const { createPracticeMatchesService } = require("./services/practiceMatches/pra
 const { createPracticeMatchesController } = require("./controllers/practiceMatches/practiceMatches.controller");
 const { createPracticeMatchesRoutes } = require("./routes/practiceMatches.routes");
 
+const { createAssignmentsRepository } = require("./repositories/assignments/assignments.repository");
+const { createAssignmentsService } = require("./services/assignments/assignments.service");
+const { createAssignmentsController } = require("./controllers/assignments/assignments.controller");
+const { createAssignmentsRoutes } = require("./routes/assignments.routes");
 
+const { createEvaluationsRepository } = require("./repositories/evaluations/evaluations.repository");
+const { createEvaluationsService } = require("./services/evaluations/evaluations.service");
+const { createEvaluationsController } = require("./controllers/evaluations/evaluations.controller");
+const { createEvaluationsRoutes } = require("./routes/evaluations.routes");
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || "nextstep-dev-secret";
 const DB_CLIENT = (process.env.DB_CLIENT || "mysql").toLowerCase();
@@ -887,8 +895,29 @@ function initSchema() {
           FROM eventos_candidatura`);
 
     run(`CREATE OR REPLACE VIEW followups AS
-         SELECT id, alumno_id AS student_id, usuario_autor_id AS author_user_id, contenido AS content, progreso AS progress, creado_en AS created_at
+         SELECT 
+            id, 
+            asignacion_id AS assignment_id,
+            alumno_id AS student_id, 
+            usuario_autor_id AS author_user_id, 
+            contenido AS content, 
+            progreso AS progress, 
+            creado_en AS created_at
          FROM seguimientos`);
+
+    // ---> NUEVA VISTA DE EVALUACIONES FINALES <---
+    run(`CREATE OR REPLACE VIEW final_evaluations AS 
+         SELECT 
+             id,
+             asignacion_id AS assignment_id,
+             usuario_autor_id AS author_user_id,
+             resultado AS result,
+             calificacion AS score,
+             resumen AS summary,
+             detalles AS details,
+             creado_en AS created_at,
+             actualizado_en AS updated_at
+         FROM evaluaciones_finales`);
 
     return;
   }
@@ -1294,6 +1323,39 @@ async function start() {
     practiceMatchesService,
   });
 
+  const assignmentsRepository = createAssignmentsRepository({
+    get,
+    all,
+    run,
+    lastInsertId,
+  });
+
+  const assignmentsService = createAssignmentsService({
+    assignmentsRepository,
+    applicationsService,
+    nowIso,
+  });
+
+  const assignmentsController = createAssignmentsController({
+    assignmentsService,
+  });
+
+  const evaluationsRepository = createEvaluationsRepository({
+    get,
+    run,
+    lastInsertId,
+  });
+
+  const evaluationsService = createEvaluationsService({
+    evaluationsRepository,
+    assignmentsService,
+    nowIso,
+  });
+
+  const evaluationsController = createEvaluationsController({
+    evaluationsService,
+  });
+
   app.use(helmet());
   app.use(cors());
   app.use(express.json({ limit: "1mb" }));
@@ -1336,12 +1398,14 @@ async function start() {
 
   app.use("/api/internships", createInternshipsRoutes({ internshipsController }));
   app.use("/api/internships", createPracticeMatchesRoutes({ practiceMatchesController }));
+  app.use("/api/assignments", createAssignmentsRoutes({ assignmentsController }));
   app.use("/api/admin/internships", createAdminInternshipsRoutes({ internshipsController }));
   app.use("/api/applications", createApplicationsRoutes({ applicationsController }));
 
   app.use("/api/interviews", createInterviewsRoutes({ interviewsController }));
   app.use("/api/agreements", createAgreementsRoutes({ agreementsController }));
   app.use("/api/followups", createFollowupsRoutes({ followupsController }));
+  app.use("/api/evaluations", createEvaluationsRoutes({ evaluationsController }));
   app.use("/api/admin/catalogs", createCatalogsRoutes({ catalogsController }));
   app.use("/api/admin/catalog-items", createCatalogItemsRoutes({ catalogItemsController }));
   app.use("/api/admin/verification-audits", createVerificationAuditsRoutes({ verificationAuditsController }));
